@@ -1,10 +1,10 @@
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from typing import Dict, Any
 
 app = FastAPI()
 
 @app.post("/webhook")
-async def webhook(request: Request):
-    data = await request.json()
+def webhook(data: Dict[str, Any]):
     print(data)
     return "success"
