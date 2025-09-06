@@ -162,4 +162,3 @@ cython_debug/
 #.idea/
 *test.py
 my_private_config.py
-*.txt
