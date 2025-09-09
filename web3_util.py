@@ -8,7 +8,7 @@ except Exception as e:
 from eth_abi import decode
 from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_bytes
 
-from my_conf import client_private_key,deposit_private_key,deployer,vault,client
+from my_conf import client_private_key,deployer_private_key,deployer,vault,client
 
 def get_bytes32_address(address):
     #暂时支持evm
@@ -60,6 +60,32 @@ def get_recipient_vaild_address(recipient):
             res = to_checksum_address(recipient_replace)
     return res
 
+def get_decode_calldata(calldata):
+    res = {}
+    method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
+    method_id = calldata[:10]
+    encoded_data = calldata[10:]
+    if method_id == method_id_transfer_deposit:
+        function_abi = [
+            {"type": "address", "name": "vault"},
+            {"type": "bytes32", "name": "recipient"},
+            {"type": "address", "name": "inputToken"},
+            {"type": "uint256", "name": "inputAmount"},
+            {"type": "uint256", "name": "destinationChainId"},
+            {"type": "bytes", "name": "message"},
+        ]
+        abi_types = [item["type"] for item in function_abi]
+        decoded_data = decode(abi_types, decode_hex(encoded_data))
+        vault,recipient,inputToken,inputAmount,destinationChainId,message = decoded_data
+        res = {
+            'vault':to_checksum_address(vault),
+            'recipient':get_recipient_vaild_address(recipient),
+            'inputToken':to_checksum_address(inputToken),
+            'inputAmount':inputAmount,
+            'destinationChainId':destinationChainId,
+            'message':message
+        }
+    return res
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, deposit_address, w3, private_key):
     deposit_abi = [
@@ -113,29 +139,5 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
             print(f"Call 错误: {call_error}")
         raise
 
-def get_decode_calldata(calldata):
-    res = {}
-    method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
-    method_id = calldata[:10]
-    encoded_data = calldata[10:]
-    if method_id == method_id_transfer_deposit:
-        function_abi = [
-            {"type": "address", "name": "vault"},
-            {"type": "bytes32", "name": "recipient"},
-            {"type": "address", "name": "inputToken"},
-            {"type": "uint256", "name": "inputAmount"},
-            {"type": "uint256", "name": "destinationChainId"},
-            {"type": "bytes", "name": "message"},
-        ]
-        abi_types = [item["type"] for item in function_abi]
-        decoded_data = decode(abi_types, decode_hex(encoded_data))
-        vault,recipient,inputToken,inputAmount,destinationChainId,message = decoded_data
-        res = {
-            'vault':to_checksum_address(vault),
-            'recipient':get_recipient_vaild_address(recipient),
-            'inputToken':to_checksum_address(inputToken),
-            'inputAmount':inputAmount,
-            'destinationChainId':destinationChainId,
-            'message':message
-        }
-    return res
+def call_fill_replay(vault, recipient, inputToken, inputAmount, destinationChainId, message, deposit_address, w3, private_key):
+    pass
