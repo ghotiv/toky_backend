@@ -21,8 +21,8 @@ def test_call_deposit():
     chain_id = 11155111
     w3 = get_w3(chain_id=chain_id)
     inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
-    inputAmount = get_wei_amount(0.0001)
-    # inputAmount = get_wei_amount(1000)
+    # inputAmount = get_wei_amount(0.0001)
+    inputAmount = get_wei_amount(1000)
     destinationChainId = 84532
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(client)
@@ -47,6 +47,6 @@ def test_call_fill_replay():
 
 
 if __name__ == '__main__':
-    # test_call_deposit()
+    test_call_deposit()
     # test_get_decode_calldata()
-    test_call_fill_replay()
+    # test_call_fill_replay()
