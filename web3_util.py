@@ -11,7 +11,7 @@ from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_by
 from my_conf import client_private_key,deployer_private_key,deployer,vault,client
 
 def get_wei_amount(human_amount, decimals=18):
-    return human_amount * 10**decimals
+    return int(human_amount * 10**decimals)
 
 def get_bytes32_address(address):
     #暂时支持evm
