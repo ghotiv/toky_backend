@@ -18,8 +18,7 @@ def test_get_decode_calldata():
     print(res_decode_calldata)
 
 def test_call_deposit():
-    chain_id = 11155111
-    w3 = get_w3(chain_id=chain_id)
+    block_chainid = 11155111
     inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     inputAmount = get_wei_amount(0.0001)
     # inputAmount = get_wei_amount(1000)
@@ -29,11 +28,10 @@ def test_call_deposit():
     contract_address = '0x5bD6e85cD235d4c01E04344897Fc97DBd9011155'
     call_deposit(vault, recipient_bytes32, inputToken, inputAmount, 
                     destinationChainId, message, contract_address, 
-                    w3, private_key=client_private_key)
+                    block_chainid, private_key=client_private_key)
 
 def test_call_fill_replay():
-    chain_id = 84532
-    w3 = get_w3(chain_id=chain_id)
+    block_chainid = 84532
     outputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     outputAmount = get_wei_amount(0.0001*0.9)
     # inputAmount = get_wei_amount(1000)
@@ -43,7 +41,7 @@ def test_call_fill_replay():
     contract_address = to_checksum_address('0x707ac01d82c3f38e513675c26f487499280d84b8')
     depositHash = get_bytes32_address('0x505972ce768406f4b58c25f49439c91664e4e8e5cb51ccfb13f192f5308accc3')
     call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        contract_address, w3, private_key=vault_private_key)
+                        contract_address, block_chainid, private_key=vault_private_key)
 
 
 if __name__ == '__main__':

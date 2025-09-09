@@ -139,8 +139,9 @@ def check_deposit_validity(vault, recipient, inputToken, inputAmount, destinatio
     return checks
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
-                    contract_address, w3, private_key=None):
+                    contract_address, block_chainid, private_key=None):
     res = None
+    w3 = get_w3(chain_id=block_chainid)
     deposit_abi = [
         {
             "inputs": [
@@ -215,8 +216,9 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
         return None
 
 def call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        contract_address, w3, private_key, check_before_send=True):
+                        contract_address, block_chainid, private_key, check_before_send=True):
     res = None
+    w3 = get_w3(chain_id=block_chainid)
     if check_before_send:
         relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
         if relay_filled is True:
