@@ -1,5 +1,3 @@
-from my_conf import client_private_key
-
 from web3 import Web3
 
 try:
@@ -9,6 +7,8 @@ except Exception as e:
 
 from eth_abi import decode
 from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_bytes
+
+from my_conf import client_private_key,deposit_private_key,deployer,vault,client
 
 def get_bytes32_address(address):
     #暂时支持evm
@@ -60,34 +60,6 @@ def get_recipient_vaild_address(recipient):
             res = to_checksum_address(recipient_replace)
     return res
 
-chain_id = 11155111
-w3 = get_w3(chain_id=chain_id)
-
-'''
-function deposit(
-    address vault,
-    bytes32 recipient,
-    address inputToken,
-    uint256 inputAmount,
-    uint256 destinationChainId,
-    bytes memory message
-)
-'''
-
-deployer = to_checksum_address('0x2d6B8B24057aF70a255a61909aC45C82e72f8EDF')
-vault = to_checksum_address('0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D')
-client = to_checksum_address('0xd45F62ae86E01Da43a162AA3Cd320Fca3C1B178d')
-
-inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
-inputAmount = int(0.0001*10**18)
-# inputAmount = int(1000*10**18)
-destinationChainId = 11155111
-message = b'hello'
-recipient_bytes32 = get_bytes32_address(client)
-# recipient_bytes32 = '"0x000000000000000000000000d45f62ae86e01da43a162aa3cd320fca3c1b178d"'
-# print(recipient_bytes32)
-# print(recipient_bytes32.hex())
-deposit_address = '0x5bD6e85cD235d4c01E04344897Fc97DBd9011155'
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, deposit_address, w3, private_key):
     deposit_abi = [
@@ -141,9 +113,6 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
             print(f"Call 错误: {call_error}")
         raise
 
-#call_deposit test
-call_deposit(vault, recipient_bytes32, inputToken, inputAmount, destinationChainId, message, deposit_address, w3, private_key=client_private_key)
-
 def get_decode_calldata(calldata):
     res = {}
     method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
@@ -170,7 +139,3 @@ def get_decode_calldata(calldata):
             'message':message
         }
     return res
-
-# calldata = '0xeef40c38000000000000000000000000ba37d7ed1cff3ddab5f23ee99525291dca00999d000000000000000000000000d45f62ae86e01da43a162aa3cd320fca3c1b178d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005af3107a40000000000000000000000000000000000000000000000000000000000000aa36a700000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000'
-# res_decode_calldata = get_decode_calldata(calldata)
-# print(res_decode_calldata)
