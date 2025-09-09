@@ -22,6 +22,28 @@ def get_bytes32_address(address):
 def get_method_id(func_sign):
     return '0x'+keccak(text=func_sign).hex()[:8]
 
+def simulate_transaction(contract_function, tx_params, function_name="transaction"):
+    """模拟交易执行，检查是否会成功"""
+    try:
+        print(f"🔍 模拟执行{function_name}...")
+        call_result = contract_function.call(tx_params)
+        print(f"✅ 模拟执行成功，可以发送交易")
+        return True
+    except Exception as call_error:
+        print(f"❌ 模拟执行失败: {call_error}")
+        return False
+
+#暂时只支持evm地址
+def get_recipient_vaild_address(recipient):
+    res = None
+    recipient_str = recipient.hex()
+    if 24*'0' in recipient_str:
+        recipient_replace = recipient_str.replace(24*'0','')
+        if is_address(recipient_replace):
+            #自动加0x前缀
+            res = to_checksum_address(recipient_replace)
+    return res
+
 #just test
 def get_chain(chain_id):
     res_dicts = [
@@ -52,16 +74,6 @@ def get_w3(rpc_url='',chain_id=''):
     # print(w3.isConnected())
     return w3
 
-#暂时只支持evm地址
-def get_recipient_vaild_address(recipient):
-    res = None
-    recipient_str = recipient.hex()
-    if 24*'0' in recipient_str:
-        recipient_replace = recipient_str.replace(24*'0','')
-        if is_address(recipient_replace):
-            #自动加0x前缀
-            res = to_checksum_address(recipient_replace)
-    return res
 
 def get_decode_calldata(calldata):
     res = {}
@@ -127,7 +139,8 @@ def check_deposit_validity(vault, recipient, inputToken, inputAmount, destinatio
     return checks
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
-                    contract_address, w3, private_key=None, check_before_send=True):
+                    contract_address, w3, private_key=None):
+    res = None
     deposit_abi = [
         {
             "inputs": [
@@ -148,31 +161,6 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
-    # 预检查参数有效性
-    if check_before_send:
-        print(f"检查deposit参数有效性...")
-        checks = check_deposit_validity(vault, recipient, inputToken, inputAmount, 
-                                      destinationChainId, contract_address, w3, account_address)
-        
-        print(f"✅ 检查结果: {checks}")
-        
-        # 如果关键检查失败，提前返回
-        if not checks['vault_valid']:
-            print("❌ Vault地址无效")
-            return None
-        if not checks['amount_valid']:
-            print("❌ 金额必须大于0")
-            return None
-        if not checks['balance_sufficient']:
-            print("❌ 余额不足")
-            return None
-        if not checks['chain_supported']:
-            print("❌ 不支持的目标链")
-            return None
-            
-        print("✅ 所有检查通过，继续执行...")
-    
-    # 构建交易，添加必要参数
     tx_params = {
         'from': account_address,
         'gas': 300000,
@@ -180,9 +168,12 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         'nonce': w3.eth.get_transaction_count(account_address),
     }
     
-    # 如果inputToken是0x0000...（ETH），需要添加value
     if inputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = inputAmount
+    
+    deposit_func = contract.functions.deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message)
+    if not simulate_transaction(deposit_func, tx_params, "deposit"):
+        return None
     
     try:
         tx = contract.functions.deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message).build_transaction(tx_params)
@@ -192,16 +183,11 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         print(f"交易已发送，哈希: {tx_hash.hex()}")
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         print(f"交易确认，状态: {receipt.status}")
-        return receipt
-        
+        res = tx_hash.hex()
     except Exception as e:
         print(f"交易失败: {e}")
-        # 尝试调用查看可能的错误
-        try:
-            contract.functions.deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message).call(tx_params)
-        except Exception as call_error:
-            print(f"Call 错误: {call_error}")
         raise
+    return res
 
 def check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3):
     """检查relay是否已经被填充"""
@@ -230,23 +216,13 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
 
 def call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         contract_address, w3, private_key, check_before_send=True):
-    
+    res = None
     if check_before_send:
-        print(f"检查relay状态: depositHash={depositHash.hex()}, originChainId={originChainId}")
         relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
-        
         if relay_filled is True:
-            print("❌ RelayAlreadyFilled: 这个relay已经被填充过了")
-            return {
-                'status': 'already_filled',
-                'message': 'RelayAlreadyFilled',
-                'tx_hash': None
-            }
-        elif relay_filled is False:
-            print("✅ Relay未被填充，可以继续")
-        else:
-            print("⚠️ 无法检查relay状态，继续执行...")
-    
+            print(f"❌ RelayAlreadyFilled: 这个relay已经被填充过了,{depositHash.hex()}")
+            return None
+            
     fill_replay_abi = [
         {
             "inputs": [
@@ -263,6 +239,7 @@ def call_fill_replay(recipient, outputToken, outputAmount, originChainId, deposi
             "type": "function"
         }
     ]
+
     contract = w3.eth.contract(address=contract_address, abi=fill_replay_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
@@ -274,6 +251,11 @@ def call_fill_replay(recipient, outputToken, outputAmount, originChainId, deposi
     }
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
+    
+    fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
+    if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
+        return None
+    
     try:
         tx = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId,
                      depositHash, message).build_transaction(tx_params)
@@ -282,17 +264,8 @@ def call_fill_replay(recipient, outputToken, outputAmount, originChainId, deposi
         print(f"交易已发送，哈希: {tx_hash.hex()}")
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         print(f"交易确认，状态: {receipt.status}")
-        return {
-            'status': 'success',
-            'message': 'FillRelay completed',
-            'tx_hash': tx_hash.hex(),
-            'receipt': receipt
-        }
+        res = tx_hash.hex()
     except Exception as e:
         print(f"交易失败: {e}")
-        # 尝试调用查看可能的错误
-        try:
-            contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message).call(tx_params)
-        except Exception as call_error:
-            print(f"Call 错误: {call_error}")
         raise
+    return res
