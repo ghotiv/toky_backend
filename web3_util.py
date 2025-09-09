@@ -8,7 +8,7 @@ except Exception as e:
 from eth_abi import decode
 from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_bytes
 
-from my_conf import client_private_key,deployer_private_key,deployer,vault,client
+from my_conf import client_private_key,vault_private_key,deployer_private_key,deployer,vault,client
 
 def get_wei_amount(human_amount, decimals=18):
     return int(human_amount * 10**decimals)
@@ -65,6 +65,17 @@ def get_chain(chain_id):
     ]
     return next((item for item in res_dicts if item['chain_id'] == chain_id), None)
 
+def get_chain_by_alchemy_network(alchemy_network):
+    network_chain = {
+        'ETH_SEPOLIA': 11155111,
+        'BASE_SEPOLIA': 84532,
+        'ZKSYNC_ERA_SEPOLIA': 300,
+    }
+    return network_chain.get(alchemy_network, None)
+
+
+
+
 def get_w3(rpc_url='',chain_id=''):
     if chain_id:
         rpc_url = get_chain(chain_id).get('rpc_url','')
@@ -101,42 +112,6 @@ def get_decode_calldata(calldata):
             'message':message
         }
     return res
-
-def check_deposit_validity(vault, recipient, inputToken, inputAmount, destinationChainId, 
-                          contract_address, w3, account_address):
-    """检查deposit参数是否有效"""
-    checks = {
-        'vault_valid': False,
-        'amount_valid': False,
-        'balance_sufficient': False,
-        'chain_supported': False
-    }
-    
-    try:
-        # 检查vault地址是否有效
-        checks['vault_valid'] = is_address(vault)
-        
-        # 检查金额是否大于0
-        checks['amount_valid'] = inputAmount > 0
-        
-        # 检查余额是否足够
-        if inputToken == '0x0000000000000000000000000000000000000000':
-            # ETH余额检查
-            balance = w3.eth.get_balance(account_address)
-            gas_cost = 300000 * w3.to_wei('20', 'gwei')  # 估算gas费用
-            checks['balance_sufficient'] = balance >= (inputAmount + gas_cost)
-        else:
-            # ERC20代币余额检查(需要代币合约ABI)
-            checks['balance_sufficient'] = True  # 暂时跳过ERC20检查
-        
-        # 检查目标链是否支持
-        supported_chains = [11155111, 84532, 300]  # sepolia, base sepolia, zksync sepolia
-        checks['chain_supported'] = destinationChainId in supported_chains
-        
-    except Exception as e:
-        print(f"预检查失败: {e}")
-    
-    return checks
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
                     contract_address, block_chainid, private_key=None):
@@ -270,4 +245,30 @@ def call_fill_replay(recipient, outputToken, outputAmount, originChainId, deposi
     except Exception as e:
         print(f"交易失败: {e}")
         raise
+    return res
+
+def call_fill_replay_by_alchemy(data):
+    '''
+        calldata_dict = {'vault': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D', 
+            'recipient': '0xd45F62ae86E01Da43a162AA3Cd320Fca3C1B178d', 
+            'inputToken': '0x0000000000000000000000000000000000000000', 
+            'inputAmount': 100000000000000, 
+            'destinationChainId': 84532, 'message': b'hello'}
+    '''
+    res = None
+    
+    transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
+    alchemy_network = data['event']['network']
+    calldata_dict = get_decode_calldata(transaction_dict['inputData'])
+
+    block_chainid = calldata_dict['destinationChainId']
+    outputToken = calldata_dict['inputToken']
+    outputAmount = int(calldata_dict['inputAmount']*0.9)
+    originChainId = get_chain_by_alchemy_network(alchemy_network)
+    message = b''
+    recipient = to_checksum_address(calldata_dict['recipient'])
+    contract_address = to_checksum_address('0x707ac01d82c3f38e513675c26f487499280d84b8')
+    depositHash = get_bytes32_address(transaction_dict['hash'])
+    res =call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+                        contract_address, block_chainid, private_key=vault_private_key)
     return res
