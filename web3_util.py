@@ -10,6 +10,9 @@ from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_by
 
 from my_conf import client_private_key,deployer_private_key,deployer,vault,client
 
+def get_wei_amount(human_amount, decimals=18):
+    return human_amount * 10**decimals
+
 def get_bytes32_address(address):
     #暂时支持evm
     #有没'0x'都支持
@@ -87,7 +90,8 @@ def get_decode_calldata(calldata):
         }
     return res
 
-def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, deposit_address, w3, private_key):
+def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
+                    contract_address, w3, private_key=None):
     deposit_abi = [
         {
             "inputs": [
@@ -104,7 +108,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
             "type": "function"
         }
     ]
-    contract = w3.eth.contract(address=deposit_address, abi=deposit_abi)
+    contract = w3.eth.contract(address=contract_address, abi=deposit_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
@@ -139,5 +143,49 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
             print(f"Call 错误: {call_error}")
         raise
 
-def call_fill_replay(vault, recipient, inputToken, inputAmount, destinationChainId, message, deposit_address, w3, private_key):
-    pass
+def call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+                        contract_address, w3, private_key):
+    fill_replay_abi = [
+        {
+            "inputs": [
+                {"name": "recipient", "type": "address"},
+                {"name": "outputToken", "type": "address"},
+                {"name": "outputAmount", "type": "uint256"},
+                {"name": "originChainId", "type": "uint256"},
+                {"name": "depositHash", "type": "bytes32"},
+                {"name": "message", "type": "bytes"}
+            ],
+            "name": "fillRelay",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        }
+    ]
+    contract = w3.eth.contract(address=contract_address, abi=fill_replay_abi)
+    account = w3.eth.account.from_key(private_key)
+    account_address = account.address
+    tx_params = {
+        'from': account_address,
+        'gas': 300000,
+        'gasPrice': w3.to_wei('20', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(account_address),
+    }
+    if outputToken == '0x0000000000000000000000000000000000000000':
+        tx_params['value'] = outputAmount
+    try:
+        tx = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId,
+                     depositHash, message).build_transaction(tx_params)
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        print(f"交易已发送，哈希: {tx_hash.hex()}")
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        print(f"交易确认，状态: {receipt.status}")
+        return receipt
+    except Exception as e:
+        print(f"交易失败: {e}")
+        # 尝试调用查看可能的错误
+        try:
+            contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message).call(tx_params)
+        except Exception as call_error:
+            print(f"Call 错误: {call_error}")
+        raise
