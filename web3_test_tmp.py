@@ -47,6 +47,6 @@ def test_call_fill_replay():
 
 
 if __name__ == '__main__':
-    # test_call_deposit()
-    test_get_decode_calldata()
+    test_call_deposit()
+    # test_get_decode_calldata()
     # test_call_fill_replay()
