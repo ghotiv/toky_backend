@@ -40,7 +40,7 @@ def test_call_fill_replay():
     originChainId = 11155111
     message = b'hello'
     recipient = to_checksum_address(client)
-    contract_address = '0x707ac01d82c3f38e513675c26f487499280d84b8'
+    contract_address = to_checksum_address('0x707ac01d82c3f38e513675c26f487499280d84b8')
     depositHash = get_bytes32_address('0x505972ce768406f4b58c25f49439c91664e4e8e5cb51ccfb13f192f5308accc3')
     call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         contract_address, w3, private_key=vault_private_key)
