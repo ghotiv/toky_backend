@@ -35,18 +35,20 @@ def test_call_deposit():
 
 def test_call_fill_relay():
     block_chainid = 84532
-    outputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
+    # outputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
+    outputToken = to_checksum_address('0xc4C5896a32e75ed3b59C48620E3b0833D0f98820')
     outputAmount = get_wei_amount(0.0001*0.9)
     # inputAmount = get_wei_amount(1000)
     originChainId = 11155111
     message = b'hello'
     recipient = to_checksum_address(client)
-    depositHash = get_bytes32_address('0x505972ce768406f4b58c25f49439c91664e4e8e5cb51ccfb13f192f5308accc3')
+    # depositHash = get_bytes32_address('0x505972ce768406f4b58c25f49439c91664e4e8e5cb51ccfb13f192f5308accc3')
+    depositHash = b'\xe4QowE\xbd\xb4\x8b$+\x15\xec\x12*oh\xab\xde<G\xfb\xb3\xeb\xad\x13\x13\x9a(\xad\xc1\x94\xd3'
     call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         block_chainid, private_key=vault_private_key, is_mainnet=False)
 
 
 if __name__ == '__main__':
-    test_call_deposit()
+    # test_call_deposit()
     # test_get_decode_calldata()
-    # test_call_fill_relay()
+    test_call_fill_relay()

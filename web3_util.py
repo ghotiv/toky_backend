@@ -268,7 +268,7 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
 
 def call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         block_chainid, private_key, check_before_send=True,
-                        is_mainnet=False):
+                        is_mainnet=True):
     res = None
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     contract_address = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)['contract_fillRelay']
