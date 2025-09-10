@@ -313,6 +313,8 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         return None
     
     try:
+        print(f"交易参数: {tx_params}")
+        print(f"交易函数: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash}, {message}")
         tx = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId,
                      depositHash, message).build_transaction(tx_params)
         signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
