@@ -354,7 +354,6 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
             "type": "function"
         }
     ]
-    
     try:
         contract = w3.eth.contract(address=contract_address, abi=check_abi)
         is_filled = contract.functions.isRelayFilled(originChainId, depositHash, recipient, outputToken).call()
@@ -451,11 +450,11 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         print(f"✅ 授权充足：当前授权: {current_allowance}, 需要: {required}")
     else:
         print(f"⚠️ 无法检查授权，继续执行...")
-    
-    # fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
-    # if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
-    #     return None
     '''
+    
+    fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
+    if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
+        return None
     
     try:
         # print(f"交易参数: {tx_params}")
