@@ -126,6 +126,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
                     contract_address, block_chainid, private_key=None):
     res = None
     w3 = get_w3(chain_id=block_chainid)
+    print(f"w3: {w3}")
     deposit_abi = [
         {
             "inputs": [
