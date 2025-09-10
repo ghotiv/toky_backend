@@ -37,7 +37,7 @@ def test_call_fill_relay():
     block_chainid = 84532
     # outputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     outputToken = to_checksum_address('0xc4C5896a32e75ed3b59C48620E3b0833D0f98820')
-    outputAmount = get_wei_amount(0.0001*0.9)
+    outputAmount = get_wei_amount(1*0.9)
     # inputAmount = get_wei_amount(1000)
     originChainId = 11155111
     message = b'hello'
