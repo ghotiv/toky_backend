@@ -49,6 +49,6 @@ def test_call_fill_relay():
 
 
 if __name__ == '__main__':
-    # test_call_deposit()
+    test_call_deposit()
     # test_get_decode_calldata()
-    test_call_fill_relay()
+    # test_call_fill_relay()

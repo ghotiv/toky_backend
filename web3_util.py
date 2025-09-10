@@ -401,7 +401,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         'from': account_address,
         'gas': 300000,
         'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(account_address),
+        'nonce': get_safe_nonce(w3, account_address),
     }
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
