@@ -99,7 +99,10 @@ def get_w3(rpc_url='',chain_id='',is_mainnet=True):
 
 def get_token(chain_id=None,token_name=None,token_address=None,is_mainnet=True):
     res = {}
-    token_name = token_name.upper()
+    if token_name:
+        token_name = token_name.upper()
+    if token_address:
+        token_address = to_checksum_address(token_address)
     res_dicts = [
         {
             'chain_id': 11155111,
