@@ -407,7 +407,6 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
     
-    '''
     # 检查代币授权
     print(f"🔐 检查代币授权...")
     print(f"  代币合约: {outputToken}")
@@ -450,7 +449,6 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         print(f"✅ 授权充足：当前授权: {current_allowance}, 需要: {required}")
     else:
         print(f"⚠️ 无法检查授权，继续执行...")
-    '''
     
     fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
     if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
