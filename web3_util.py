@@ -451,9 +451,9 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     else:
         print(f"⚠️ 无法检查授权，继续执行...")
     
-    fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
-    if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
-        return None
+    # fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
+    # if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
+    #     return None
     
     try:
         # print(f"交易参数: {tx_params}")
