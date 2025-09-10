@@ -45,7 +45,7 @@ def get_recipient_vaild_address(recipient):
             res = to_checksum_address(recipient_replace)
     return res
 
-#just test
+#todo:数据来自数据库
 def get_chain(chain_id):
     res_dicts = [
         #sepolia
@@ -66,6 +66,7 @@ def get_chain(chain_id):
     ]
     return next((item for item in res_dicts if item['chain_id'] == chain_id), None)
 
+#todo my_conf.py alchemy_network_chain_mainnet 待完善
 def get_chain_by_alchemy_network(alchemy_network,is_testnet=False):
     if not is_testnet:
         return alchemy_network_chain_mainnet.get(alchemy_network, None)
@@ -186,7 +187,7 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
         print(f"检查relay状态失败: {e}")
         return None
 
-def call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+def call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         contract_address, block_chainid, private_key, check_before_send=True):
     res = None
     w3 = get_w3(chain_id=block_chainid)
@@ -196,7 +197,7 @@ def call_fill_replay(recipient, outputToken, outputAmount, originChainId, deposi
             print(f"❌ RelayAlreadyFilled: 这个relay已经被填充过了,{depositHash.hex()}")
             return None
             
-    fill_replay_abi = [
+    fill_relay_abi = [
         {
             "inputs": [
                 {"name": "recipient", "type": "address"},
@@ -213,7 +214,7 @@ def call_fill_replay(recipient, outputToken, outputAmount, originChainId, deposi
         }
     ]
 
-    contract = w3.eth.contract(address=contract_address, abi=fill_replay_abi)
+    contract = w3.eth.contract(address=contract_address, abi=fill_relay_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     tx_params = {
@@ -243,7 +244,7 @@ def call_fill_replay(recipient, outputToken, outputAmount, originChainId, deposi
         raise
     return res
 
-def call_fill_replay_by_alchemy(data):
+def call_fill_relay_by_alchemy(data):
     '''
         calldata_dict = {'vault': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D', 
             'recipient': '0xd45F62ae86E01Da43a162AA3Cd320Fca3C1B178d', 
@@ -265,6 +266,6 @@ def call_fill_replay_by_alchemy(data):
     recipient = to_checksum_address(calldata_dict['recipient'])
     contract_address = to_checksum_address('0x707ac01d82c3f38e513675c26f487499280d84b8')
     depositHash = get_bytes32_address(transaction_dict['hash'])
-    res =call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+    res =call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         contract_address, block_chainid, private_key=vault_private_key)
     return res

@@ -30,7 +30,7 @@ def test_call_deposit():
                     destinationChainId, message, contract_address, 
                     block_chainid, private_key=client_private_key)
 
-def test_call_fill_replay():
+def test_call_fill_relay():
     block_chainid = 84532
     outputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     outputAmount = get_wei_amount(0.0001*0.9)
@@ -40,11 +40,11 @@ def test_call_fill_replay():
     recipient = to_checksum_address(client)
     contract_address = to_checksum_address('0x707ac01d82c3f38e513675c26f487499280d84b8')
     depositHash = get_bytes32_address('0x505972ce768406f4b58c25f49439c91664e4e8e5cb51ccfb13f192f5308accc3')
-    call_fill_replay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+    call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         contract_address, block_chainid, private_key=vault_private_key)
 
 
 if __name__ == '__main__':
     test_call_deposit()
     # test_get_decode_calldata()
-    # test_call_fill_replay()
+    # test_call_fill_relay()
