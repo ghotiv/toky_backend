@@ -97,7 +97,7 @@ def get_w3(rpc_url='',chain_id='',is_mainnet=True):
     return w3
 
 
-def get_token(chain_id,token_name,token_address,is_mainnet=True):
+def get_token(chain_id=None,token_name=None,token_address=None,is_mainnet=True):
     res = {}
     token_name = token_name.upper()
     res_dicts = [
@@ -347,7 +347,7 @@ def call_fill_relay_by_alchemy(data):
 
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
                                     is_mainnet=is_mainnet)['token_name']
-                                    
+
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
                                     is_mainnet=is_mainnet)['token_address']
 
