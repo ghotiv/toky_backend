@@ -48,8 +48,21 @@ def test_call_fill_relay():
     call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         block_chainid, private_key=vault_private_key, is_mainnet=False)
 
+def check_erc20_allowance_test():
+    # 代币合约: 0xc4C5896a32e75ed3b59C48620E3b0833D0f98820
+    # 所有者: 0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D
+    # 被授权者(fillRelay合约): 0x707aC01D82C3F38e513675C26F487499280D84B8
+    # 需要授权金额: 90000000000000
+    block_chainid = 84532
+    w3 = get_w3(chain_id=block_chainid,is_mainnet=False)
+    outputToken = to_checksum_address('0xc4C5896a32e75ed3b59C48620E3b0833D0f98820')
+    outputAmount = get_wei_amount(1*0.9)
+    res = check_erc20_allowance(outputToken, vault, '0x707aC01D82C3F38e513675C26F487499280D84B8', outputAmount, w3)
+    print(res)
+
 
 if __name__ == '__main__':
-    test_call_deposit()
+    check_erc20_allowance_test()
+    # test_call_deposit()
     # test_get_decode_calldata()
     # test_call_fill_relay()
