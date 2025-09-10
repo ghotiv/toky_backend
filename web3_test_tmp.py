@@ -25,7 +25,7 @@ def test_call_deposit():
     destinationChainId = 84532
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(client)
-    contract_address = '0x5bD6e85cD235d4c01E04344897Fc97DBd9011155'
+    contract_address = get_chain(chain_id=block_chainid,is_testnet=True)['contract_deposit']
     call_deposit(vault, recipient_bytes32, inputToken, inputAmount, 
                     destinationChainId, message, contract_address, 
                     block_chainid, private_key=client_private_key)
