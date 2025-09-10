@@ -8,7 +8,7 @@ app = FastAPI()
 
 @app.post("/webhook")
 def webhook(data: Dict[str, Any]):
-    print(data)
+    print('data: ', data)
     tx_hash = call_fill_relay_by_alchemy(data)
-    print(tx_hash)
+    print('tx_hash: ', tx_hash)
     return "success"
