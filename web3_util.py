@@ -369,7 +369,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     contract_address = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)['contract_fillRelay']
 
-    print(f"入参: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash}, {message}")
+    print(f"入参: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash.hex()}, {message}")
 
     if check_before_send:
         relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
@@ -406,6 +406,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
     
+    '''
     # 检查代币授权
     print(f"🔐 检查代币授权...")
     print(f"  代币合约: {outputToken}")
@@ -452,6 +453,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
     if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
         return None
+    '''
     
     try:
         # print(f"交易参数: {tx_params}")
@@ -493,10 +495,9 @@ def call_fill_relay_by_alchemy(data):
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
                                     is_mainnet=is_mainnet)['token_address']
     outputAmount = int(calldata_dict['inputAmount']*fill_rate)
-
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
     depositHash = get_bytes32_address(transaction_dict['hash'])
-    res =call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+    res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                             block_chainid, private_key=vault_private_key, is_mainnet=is_mainnet)
     return res
