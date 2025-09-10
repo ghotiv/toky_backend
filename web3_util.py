@@ -22,6 +22,19 @@ def get_bytes32_address(address):
 def get_method_id(func_sign):
     return '0x'+keccak(text=func_sign).hex()[:8]
 
+def get_safe_nonce(w3, account_address):
+    """获取安全的nonce，避免nonce冲突"""
+    # 获取链上确认的nonce
+    confirmed_nonce = w3.eth.get_transaction_count(account_address, 'latest')
+    # 获取待处理的nonce  
+    pending_nonce = w3.eth.get_transaction_count(account_address, 'pending')
+    
+    # 使用较大的nonce以避免冲突
+    safe_nonce = max(confirmed_nonce, pending_nonce)
+    
+    print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}")
+    return safe_nonce
+
 def check_erc20_allowance(token_address, owner_address, spender_address, amount, w3):
     """检查ERC20代币授权额度"""
     if token_address == '0x0000000000000000000000000000000000000000':
@@ -89,7 +102,7 @@ def approve_erc20_token(token_address, spender_address, amount, w3, private_key)
             'from': account_address,
             'gas': 100000,
             'gasPrice': w3.to_wei('20', 'gwei'),
-            'nonce': w3.eth.get_transaction_count(account_address),
+            'nonce': get_safe_nonce(w3, account_address),
         }
         
         tx = contract.functions.approve(spender_address, amount).build_transaction(tx_params)
@@ -298,7 +311,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         'from': account_address,
         'gas': 300000,
         'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(account_address),
+        'nonce': get_safe_nonce(w3, account_address),
     }
     
     if inputToken == '0x0000000000000000000000000000000000000000':
