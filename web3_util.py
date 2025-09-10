@@ -86,6 +86,7 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
         res = next((item for item in res_dicts if item['alchemy_network'] == alchemy_network), {})
     return res
 
+
 def get_w3(rpc_url='',chain_id='',is_mainnet=True):
     if chain_id:
         rpc_url = get_chain(chain_id=chain_id,is_mainnet=is_mainnet).get('rpc_url','')
@@ -94,6 +95,59 @@ def get_w3(rpc_url='',chain_id='',is_mainnet=True):
     w3 = Web3(Web3.HTTPProvider(rpc_url))
     # print(w3.isConnected())
     return w3
+
+
+def get_token(chain_id,token_name,token_address,is_mainnet=True):
+    res = {}
+    token_name = token_name.upper()
+    res_dicts = [
+        {
+            'chain_id': 11155111,
+            'token_name': 'MBT',
+            'token_address': '0xF904709e8a2E0825FcE724002bE52Dd853202750',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 11155111,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 84532,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 84532,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 300,
+            'token_name': 'MBT',
+            'token_address': '0x0c0CB7D85a0fADD43Be91656cAF933Fd18e98168',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 300,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+    ]
+    if is_mainnet:
+        res_dicts = [item for item in res_dicts if item['is_mainnet'] == True]
+    else:
+        res_dicts = [item for item in res_dicts if item['is_mainnet'] == False]
+    if chain_id and token_name:
+        res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_name'] == token_name), {})
+    if chain_id and token_address:
+        res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_address'] == token_address), {})
+    return res
+
 
 def get_decode_calldata(calldata):
     res = {}
@@ -121,6 +175,7 @@ def get_decode_calldata(calldata):
             'message':message
         }
     return res
+
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
                     block_chainid, private_key=None, is_mainnet=True):
@@ -181,6 +236,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         raise
     return res
 
+
 def check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3):
     """检查relay是否已经被填充"""
     check_abi = [
@@ -205,6 +261,7 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
     except Exception as e:
         print(f"检查relay状态失败: {e}")
         return None
+
 
 def call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                         block_chainid, private_key, check_before_send=True,
@@ -266,7 +323,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         raise
     return res
 
-#to do  contract_address map
+
 def call_fill_relay_by_alchemy(data):
     '''
         calldata_dict = {'vault': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D', 
@@ -285,9 +342,17 @@ def call_fill_relay_by_alchemy(data):
     alchemy_network = data['event']['network']
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
     block_chainid = calldata_dict['destinationChainId']
-    outputToken = calldata_dict['inputToken']
-    outputAmount = int(calldata_dict['inputAmount']*fill_rate)
+
     originChainId = get_chain(alchemy_network=alchemy_network,is_mainnet=is_mainnet)['chain_id']
+
+    token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
+                                    is_mainnet=is_mainnet)['token_name']
+                                    
+    outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
+                                    is_mainnet=is_mainnet)['token_address']
+
+    outputAmount = int(calldata_dict['inputAmount']*fill_rate)
+
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
     depositHash = get_bytes32_address(transaction_dict['hash'])
