@@ -30,107 +30,9 @@ def get_safe_nonce(w3, account_address):
     confirmed_nonce = w3.eth.get_transaction_count(account_address, 'latest')
     # 获取待处理的nonce  
     pending_nonce = w3.eth.get_transaction_count(account_address, 'pending')
-    
-    # 使用较大的nonce以避免冲突
     safe_nonce = max(confirmed_nonce, pending_nonce)
-    
     print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}")
     return safe_nonce
-
-def check_erc20_allowance(token_address, owner_address, spender_address, amount, w3):
-    """检查ERC20代币授权额度"""
-    if token_address == '0x0000000000000000000000000000000000000000':
-        # ETH不需要授权
-        return True, 0, 0
-    
-    erc20_abi = [
-        {
-            "constant": True,
-            "inputs": [
-                {"name": "_owner", "type": "address"},
-                {"name": "_spender", "type": "address"}
-            ],
-            "name": "allowance",
-            "outputs": [{"name": "", "type": "uint256"}],
-            "type": "function"
-        },
-        {
-            "constant": True,
-            "inputs": [],
-            "name": "decimals",
-            "outputs": [{"name": "", "type": "uint8"}],
-            "type": "function"
-        }
-    ]
-    
-    try:
-        contract = w3.eth.contract(address=token_address, abi=erc20_abi)
-        allowance = contract.functions.allowance(owner_address, spender_address).call()
-        decimals = contract.functions.decimals().call()
-        
-        allowance_readable = allowance / (10 ** decimals)
-        amount_readable = amount / (10 ** decimals)
-        
-        return allowance >= amount, allowance_readable, amount_readable
-    except Exception as e:
-        print(f"检查ERC20授权失败: {e}")
-        return None, 0, 0
-
-def approve_erc20_token(token_address, spender_address, amount, w3, private_key):
-    """授权ERC20代币"""
-    if token_address == '0x0000000000000000000000000000000000000000':
-        print("ETH不需要授权")
-        return None
-    
-    erc20_abi = [
-        {
-            "constant": False,
-            "inputs": [
-                {"name": "_spender", "type": "address"},
-                {"name": "_value", "type": "uint256"}
-            ],
-            "name": "approve",
-            "outputs": [{"name": "", "type": "bool"}],
-            "type": "function"
-        }
-    ]
-    
-    try:
-        contract = w3.eth.contract(address=token_address, abi=erc20_abi)
-        account = w3.eth.account.from_key(private_key)
-        account_address = account.address
-        
-        tx_params = {
-            'from': account_address,
-            'gas': 100000,
-            'gasPrice': w3.to_wei('20', 'gwei'),
-            'nonce': get_safe_nonce(w3, account_address),
-        }
-        
-        tx = contract.functions.approve(spender_address, amount).build_transaction(tx_params)
-        signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        
-        print(f"授权交易已发送，哈希: {tx_hash.hex()}")
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-        print(f"授权交易确认，状态: {receipt.status}")
-        
-        return tx_hash.hex()
-    except Exception as e:
-        print(f"授权失败: {e}")
-        return None
-
-def simulate_transaction(contract_function, tx_params, function_name="transaction"):
-    """模拟交易执行，检查是否会成功"""
-    try:
-        print(f"🔍 模拟执行{function_name}...")
-        call_result = contract_function.call(tx_params)
-        print(f"模拟执行结果: {call_result}")
-        print(f"✅ 模拟执行成功，可以发送交易")
-        return True
-    except Exception as call_error:
-        print(f"❌ 模拟执行失败: {call_error}")
-        return False
 
 #暂时只支持evm地址
 def get_recipient_vaild_address(recipient):
@@ -319,8 +221,13 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     if inputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = inputAmount
     
-    deposit_func = contract.functions.deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message)
-    if not simulate_transaction(deposit_func, tx_params, "deposit"):
+    try:
+        print(f"🔍 模拟执行deposit...")
+        call_result = contract.functions.deposit(vault, recipient, inputToken, 
+                        inputAmount, destinationChainId, message).call(tx_params)
+        print(f"🔍 模拟执行deposit成功: {call_result}, 可以发送交易")
+    except Exception as call_error:
+        print(f"❌ 模拟执行deposit失败: {call_error}")
         return None
     
     try:
@@ -407,54 +314,15 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
     
-    # 检查代币授权
-    print(f"🔐 检查代币授权...")
-    print(f"  代币合约: {outputToken}")
-    print(f"  所有者: {account_address}")
-    print(f"  被授权者(fillRelay合约): {contract_address}")
-    print(f"  需要授权金额: {outputAmount}")
-    
-    sufficient_allowance, current_allowance, required = check_erc20_allowance(
-        outputToken, account_address, contract_address, outputAmount, w3)
-    
-    if sufficient_allowance is False:
-        pass
-        # print(f"❌ 授权不足！当前授权: {current_allowance}, 需要: {required}")
-        # print(f"🔧 自动执行授权...")
-        
-        # # 自动授权（授权更大的金额以避免频繁授权）
-        # approve_amount = max(outputAmount * 10, 10**18)  # 授权10倍金额或1个单位
-        # approve_result = approve_erc20_token(
-        #     token_address=outputToken,
-        #     spender_address=contract_address,
-        #     amount=approve_amount,
-        #     w3=w3,
-        #     private_key=private_key
-        # )
-        
-        # if approve_result:
-        #     print(f"✅ 授权成功！交易哈希: {approve_result}")
-        #     print(f"🔄 重新检查授权...")
-        #     # 重新检查授权
-        #     sufficient_allowance, current_allowance, required = check_erc20_allowance(
-        #         outputToken, account_address, contract_address, outputAmount, w3)
-        #     if sufficient_allowance:
-        #         print(f"✅ 授权验证成功：当前授权: {current_allowance}, 需要: {required}")
-        #     else:
-        #         print(f"❌ 授权验证失败")
-        #         return None
-        # else:
-        #     print(f"❌ 授权失败")
-        #     return None
-    elif sufficient_allowance is True:
-        print(f"✅ 授权充足：当前授权: {current_allowance}, 需要: {required}")
-    else:
-        print(f"⚠️ 无法检查授权，继续执行...")
-    
-    fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
-    if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
+    try:
+        print(f"🔍 模拟执行fillRelay...")
+        call_result = contract.functions.fillRelay(recipient, outputToken, 
+                    outputAmount, originChainId, depositHash, message).call(tx_params)
+        print(f"🔍 模拟执行fillRelay成功: {call_result}, 可以发送交易")
+    except Exception as call_error:
+        print(f"❌ 模拟执行fillRelay失败: {call_error}")
         return None
-    
+
     try:
         # print(f"交易参数: {tx_params}")
         tx = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId,
