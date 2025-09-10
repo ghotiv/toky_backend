@@ -22,6 +22,89 @@ def get_bytes32_address(address):
 def get_method_id(func_sign):
     return '0x'+keccak(text=func_sign).hex()[:8]
 
+def check_erc20_allowance(token_address, owner_address, spender_address, amount, w3):
+    """检查ERC20代币授权额度"""
+    if token_address == '0x0000000000000000000000000000000000000000':
+        # ETH不需要授权
+        return True, 0, 0
+    
+    erc20_abi = [
+        {
+            "constant": True,
+            "inputs": [
+                {"name": "_owner", "type": "address"},
+                {"name": "_spender", "type": "address"}
+            ],
+            "name": "allowance",
+            "outputs": [{"name": "", "type": "uint256"}],
+            "type": "function"
+        },
+        {
+            "constant": True,
+            "inputs": [],
+            "name": "decimals",
+            "outputs": [{"name": "", "type": "uint8"}],
+            "type": "function"
+        }
+    ]
+    
+    try:
+        contract = w3.eth.contract(address=token_address, abi=erc20_abi)
+        allowance = contract.functions.allowance(owner_address, spender_address).call()
+        decimals = contract.functions.decimals().call()
+        
+        allowance_readable = allowance / (10 ** decimals)
+        amount_readable = amount / (10 ** decimals)
+        
+        return allowance >= amount, allowance_readable, amount_readable
+    except Exception as e:
+        print(f"检查ERC20授权失败: {e}")
+        return None, 0, 0
+
+def approve_erc20_token(token_address, spender_address, amount, w3, private_key):
+    """授权ERC20代币"""
+    if token_address == '0x0000000000000000000000000000000000000000':
+        print("ETH不需要授权")
+        return None
+    
+    erc20_abi = [
+        {
+            "constant": False,
+            "inputs": [
+                {"name": "_spender", "type": "address"},
+                {"name": "_value", "type": "uint256"}
+            ],
+            "name": "approve",
+            "outputs": [{"name": "", "type": "bool"}],
+            "type": "function"
+        }
+    ]
+    
+    try:
+        contract = w3.eth.contract(address=token_address, abi=erc20_abi)
+        account = w3.eth.account.from_key(private_key)
+        account_address = account.address
+        
+        tx_params = {
+            'from': account_address,
+            'gas': 100000,
+            'gasPrice': w3.to_wei('20', 'gwei'),
+            'nonce': w3.eth.get_transaction_count(account_address),
+        }
+        
+        tx = contract.functions.approve(spender_address, amount).build_transaction(tx_params)
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        
+        print(f"授权交易已发送，哈希: {tx_hash.hex()}")
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        print(f"授权交易确认，状态: {receipt.status}")
+        
+        return tx_hash.hex()
+    except Exception as e:
+        print(f"授权失败: {e}")
+        return None
+
 def simulate_transaction(contract_function, tx_params, function_name="transaction"):
     """模拟交易执行，检查是否会成功"""
     try:
@@ -310,6 +393,25 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
     
+    # 检查代币授权
+    print(f"🔐 检查代币授权...")
+    print(f"  代币合约: {outputToken}")
+    print(f"  所有者: {account_address}")
+    print(f"  被授权者(fillRelay合约): {contract_address}")
+    print(f"  需要授权金额: {outputAmount}")
+    
+    sufficient_allowance, current_allowance, required = check_erc20_allowance(
+        outputToken, account_address, contract_address, outputAmount, w3)
+    
+    if sufficient_allowance is False:
+        print(f"❌ 授权不足！当前授权: {current_allowance}, 需要: {required}")
+        print(f"💡 解决方案: 需要先调用 approve({contract_address}, {outputAmount})")
+        return None
+    elif sufficient_allowance is True:
+        print(f"✅ 授权充足：当前授权: {current_allowance}, 需要: {required}")
+    else:
+        print(f"⚠️ 无法检查授权，继续执行...")
+    
     fillrelay_func = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId, depositHash, message)
     if not simulate_transaction(fillrelay_func, tx_params, "fillRelay"):
         return None
@@ -348,15 +450,11 @@ def call_fill_relay_by_alchemy(data):
     alchemy_network = data['event']['network']
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
     block_chainid = calldata_dict['destinationChainId']
-
     originChainId = get_chain(alchemy_network=alchemy_network,is_mainnet=is_mainnet)['chain_id']
-
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
                                     is_mainnet=is_mainnet)['token_name']
-
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
                                     is_mainnet=is_mainnet)['token_address']
-
     outputAmount = int(calldata_dict['inputAmount']*fill_rate)
 
     message = b''
