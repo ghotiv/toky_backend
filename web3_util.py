@@ -8,7 +8,7 @@ except Exception as e:
 from eth_abi import decode
 from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_bytes
 
-from my_conf import client_private_key,vault_private_key,deployer_private_key,deployer,vault,client
+from my_conf import *
 
 def get_wei_amount(human_amount, decimals=18):
     return int(human_amount * 10**decimals)
@@ -27,6 +27,7 @@ def simulate_transaction(contract_function, tx_params, function_name="transactio
     try:
         print(f"🔍 模拟执行{function_name}...")
         call_result = contract_function.call(tx_params)
+        print(f"模拟执行结果: {call_result}")
         print(f"✅ 模拟执行成功，可以发送交易")
         return True
     except Exception as call_error:
@@ -65,16 +66,11 @@ def get_chain(chain_id):
     ]
     return next((item for item in res_dicts if item['chain_id'] == chain_id), None)
 
-def get_chain_by_alchemy_network(alchemy_network):
-    network_chain = {
-        'ETH_SEPOLIA': 11155111,
-        'BASE_SEPOLIA': 84532,
-        'ZKSYNC_ERA_SEPOLIA': 300,
-    }
-    return network_chain.get(alchemy_network, None)
-
-
-
+def get_chain_by_alchemy_network(alchemy_network,is_testnet=False):
+    if not is_testnet:
+        return alchemy_network_chain_mainnet.get(alchemy_network, None)
+    else:
+        return alchemy_network_chain_testnet.get(alchemy_network, None)
 
 def get_w3(rpc_url='',chain_id=''):
     if chain_id:
@@ -256,7 +252,7 @@ def call_fill_replay_by_alchemy(data):
             'destinationChainId': 84532, 'message': b'hello'}
     '''
     res = None
-    
+
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
     alchemy_network = data['event']['network']
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
@@ -264,7 +260,7 @@ def call_fill_replay_by_alchemy(data):
     block_chainid = calldata_dict['destinationChainId']
     outputToken = calldata_dict['inputToken']
     outputAmount = int(calldata_dict['inputAmount']*0.9)
-    originChainId = get_chain_by_alchemy_network(alchemy_network)
+    originChainId = get_chain_by_alchemy_network(alchemy_network,is_testnet=True)
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
     contract_address = to_checksum_address('0x707ac01d82c3f38e513675c26f487499280d84b8')
