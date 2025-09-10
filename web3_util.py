@@ -46,7 +46,7 @@ def get_recipient_vaild_address(recipient):
     return res
 
 #todo:数据来自数据库
-def get_chain(chain_id=None,alchemy_network=None,is_testnet=False):
+def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
     res_dicts = [
         #sepolia
         {
@@ -55,7 +55,7 @@ def get_chain(chain_id=None,alchemy_network=None,is_testnet=False):
             'contract_deposit': '0x5bD6e85cD235d4c01E04344897Fc97DBd9011155',
             'contract_fillRelay': '0x460a94c037CD5DFAFb043F0b9F24c1867957AA5c',
             'alchemy_network': 'ETH_SEPOLIA',
-            'is_testnet': True,
+            'is_mainnet': False,
         },
         #base sepolia
         {
@@ -64,7 +64,7 @@ def get_chain(chain_id=None,alchemy_network=None,is_testnet=False):
             'contract_deposit': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
             'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
             'alchemy_network': 'BASE_SEPOLIA',
-            'is_testnet': True,
+            'is_mainnet': False,
         },
         #zksync sepolia
         {
@@ -73,22 +73,22 @@ def get_chain(chain_id=None,alchemy_network=None,is_testnet=False):
             'contract_deposit': '0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea',
             'contract_fillRelay': '0xEE89DAD29eb36835336d8A5C212FD040336B0dCb',
             'alchemy_network': 'ZKSYNC_SEPOLIA',
-            'is_testnet': True,
+            'is_mainnet': False,
         },
     ]
-    if is_testnet:
-        res_dicts = [item for item in res_dicts if item['is_testnet'] == True]
+    if is_mainnet:
+        res_dicts = [item for item in res_dicts if item['is_mainnet'] == True]
     else:
-        res_dicts = [item for item in res_dicts if item['is_testnet'] == False]
+        res_dicts = [item for item in res_dicts if item['is_mainnet'] == False]
     if chain_id:
         res = next((item for item in res_dicts if item['chain_id'] == chain_id), {})
     if alchemy_network:
         res = next((item for item in res_dicts if item['alchemy_network'] == alchemy_network), {})
     return res
 
-def get_w3(rpc_url='',chain_id=''):
+def get_w3(rpc_url='',chain_id='',is_mainnet=True):
     if chain_id:
-        rpc_url = get_chain(chain_id).get('rpc_url','')
+        rpc_url = get_chain(chain_id=chain_id,is_mainnet=is_mainnet).get('rpc_url','')
     if not rpc_url:
         return
     w3 = Web3(Web3.HTTPProvider(rpc_url))
@@ -123,9 +123,14 @@ def get_decode_calldata(calldata):
     return res
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
-                    contract_address, block_chainid, private_key=None):
+                    block_chainid, private_key=None, is_mainnet=True):
     res = None
-    w3 = get_w3(chain_id=block_chainid)
+
+    is_mainnet = True
+    if DEBUG_MODE:
+        is_mainnet = False
+
+    w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     print(f"w3: {w3}")
     deposit_abi = [
         {
@@ -143,6 +148,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
             "type": "function"
         }
     ]
+    contract_address = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)['contract_deposit']
     contract = w3.eth.contract(address=contract_address, abi=deposit_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
@@ -201,9 +207,12 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
         return None
 
 def call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        contract_address, block_chainid, private_key, check_before_send=True):
+                        block_chainid, private_key, check_before_send=True,
+                        is_mainnet=False):
     res = None
-    w3 = get_w3(chain_id=block_chainid)
+    w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
+    contract_address = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)['contract_fillRelay']
+
     if check_before_send:
         relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
         if relay_filled is True:
@@ -267,6 +276,10 @@ def call_fill_relay_by_alchemy(data):
             'destinationChainId': 84532, 'message': b'hello'}
     '''
     res = None
+    
+    is_mainnet = True
+    if DEBUG_MODE:
+        is_mainnet = False
 
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
     alchemy_network = data['event']['network']
@@ -274,11 +287,10 @@ def call_fill_relay_by_alchemy(data):
     block_chainid = calldata_dict['destinationChainId']
     outputToken = calldata_dict['inputToken']
     outputAmount = int(calldata_dict['inputAmount']*fill_rate)
-    originChainId = get_chain(alchemy_network=alchemy_network,is_testnet=True)['chain_id']
+    originChainId = get_chain(alchemy_network=alchemy_network,is_mainnet=is_mainnet)['chain_id']
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
-    contract_address = to_checksum_address(get_chain(chain_id=block_chainid,is_testnet=True)['contract_fillRelay'])
     depositHash = get_bytes32_address(transaction_dict['hash'])
     res =call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        contract_address, block_chainid, private_key=vault_private_key)
+                            block_chainid, private_key=vault_private_key, is_mainnet=is_mainnet)
     return res

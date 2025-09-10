@@ -25,10 +25,9 @@ def test_call_deposit():
     destinationChainId = 84532
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(client)
-    contract_address = get_chain(chain_id=block_chainid,is_testnet=True)['contract_deposit']
     call_deposit(vault, recipient_bytes32, inputToken, inputAmount, 
-                    destinationChainId, message, contract_address, 
-                    block_chainid, private_key=client_private_key)
+                    destinationChainId, message, block_chainid, is_mainnet=False,
+                    private_key=client_private_key)
 
 def test_call_fill_relay():
     block_chainid = 84532
@@ -38,10 +37,9 @@ def test_call_fill_relay():
     originChainId = 11155111
     message = b'hello'
     recipient = to_checksum_address(client)
-    contract_address = to_checksum_address('0x707ac01d82c3f38e513675c26f487499280d84b8')
     depositHash = get_bytes32_address('0x505972ce768406f4b58c25f49439c91664e4e8e5cb51ccfb13f192f5308accc3')
     call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        contract_address, block_chainid, private_key=vault_private_key)
+                        block_chainid, private_key=vault_private_key, is_mainnet=False)
 
 
 if __name__ == '__main__':
