@@ -273,6 +273,8 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     contract_address = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)['contract_fillRelay']
 
+    print(f"入参: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash}, {message}")
+
     if check_before_send:
         relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
         if relay_filled is True:
@@ -313,8 +315,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         return None
     
     try:
-        print(f"交易参数: {tx_params}")
-        print(f"交易函数: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash}, {message}")
+        # print(f"交易参数: {tx_params}")
         tx = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId,
                      depositHash, message).build_transaction(tx_params)
         signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
