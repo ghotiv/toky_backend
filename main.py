@@ -1,3 +1,4 @@
+import time
 
 from fastapi import FastAPI
 from typing import Dict, Any
@@ -9,7 +10,7 @@ app = FastAPI()
 @app.post("/webhook")
 def webhook(data: Dict[str, Any]):
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
-    print('depositHash: ', transaction_dict['hash'])
+    print('time: ', time.time(), 'depositHash: ', transaction_dict['hash'])
     tx_hash = call_fill_relay_by_alchemy(data)
-    print('tx_hash: ', tx_hash)
+    print('time: ', time.time(), 'tx_hash: ', tx_hash)
     return "success"
