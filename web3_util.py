@@ -9,6 +9,8 @@ from eth_abi import decode
 from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_bytes
 
 from my_conf import *
+import time
+import json
 
 def get_wei_amount(human_amount, decimals=18):
     return int(human_amount * 10**decimals)
@@ -21,6 +23,34 @@ def get_bytes32_address(address):
 
 def get_method_id(func_sign):
     return '0x'+keccak(text=func_sign).hex()[:8]
+
+# 全局缓存，记录已处理的请求
+_processed_requests = {}
+_cache_ttl = 3600  # 缓存1小时
+
+def is_request_processed(request_id):
+    """检查请求是否已经处理过"""
+    current_time = time.time()
+    
+    # 清理过期的缓存
+    expired_keys = [k for k, v in _processed_requests.items() if current_time - v['timestamp'] > _cache_ttl]
+    for key in expired_keys:
+        del _processed_requests[key]
+    
+    # 检查是否已处理
+    if request_id in _processed_requests:
+        print(f"🚫 请求已处理过: {request_id} (时间: {_processed_requests[request_id]['timestamp']})")
+        return True
+    
+    return False
+
+def mark_request_processed(request_id, result=None):
+    """标记请求已处理"""
+    _processed_requests[request_id] = {
+        'timestamp': time.time(),
+        'result': result
+    }
+    print(f"✅ 标记请求已处理: {request_id}")
 
 def get_safe_nonce(w3, account_address):
     """获取安全的nonce，避免nonce冲突"""
@@ -485,6 +515,17 @@ def call_fill_relay_by_alchemy(data):
 
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
     alchemy_network = data['event']['network']
+    
+    # 创建唯一的请求ID (使用交易hash + 网络)
+    request_id = f"{transaction_dict['hash']}_{alchemy_network}"
+    
+    # 检查是否已经处理过
+    if is_request_processed(request_id):
+        print(f"⏭️ 跳过重复请求: {request_id}")
+        return _processed_requests[request_id].get('result')
+    
+    print(f"🆕 处理新请求: {request_id}")
+    
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
     block_chainid = calldata_dict['destinationChainId']
     originChainId = get_chain(alchemy_network=alchemy_network,is_mainnet=is_mainnet)['chain_id']
@@ -496,6 +537,12 @@ def call_fill_relay_by_alchemy(data):
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
     depositHash = get_bytes32_address(transaction_dict['hash'])
+    
+    # 执行fillRelay
     res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                            block_chainid, private_key=vault_private_key, is_mainnet=is_mainnet)
+                             block_chainid, private_key=vault_private_key, is_mainnet=is_mainnet)
+    
+    # 标记请求已处理
+    mark_request_processed(request_id, res)
+    
     return res
