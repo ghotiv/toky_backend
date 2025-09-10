@@ -418,33 +418,34 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         outputToken, account_address, contract_address, outputAmount, w3)
     
     if sufficient_allowance is False:
-        print(f"❌ 授权不足！当前授权: {current_allowance}, 需要: {required}")
-        print(f"🔧 自动执行授权...")
+        pass
+        # print(f"❌ 授权不足！当前授权: {current_allowance}, 需要: {required}")
+        # print(f"🔧 自动执行授权...")
         
-        # 自动授权（授权更大的金额以避免频繁授权）
-        approve_amount = max(outputAmount * 10, 10**18)  # 授权10倍金额或1个单位
-        approve_result = approve_erc20_token(
-            token_address=outputToken,
-            spender_address=contract_address,
-            amount=approve_amount,
-            w3=w3,
-            private_key=private_key
-        )
+        # # 自动授权（授权更大的金额以避免频繁授权）
+        # approve_amount = max(outputAmount * 10, 10**18)  # 授权10倍金额或1个单位
+        # approve_result = approve_erc20_token(
+        #     token_address=outputToken,
+        #     spender_address=contract_address,
+        #     amount=approve_amount,
+        #     w3=w3,
+        #     private_key=private_key
+        # )
         
-        if approve_result:
-            print(f"✅ 授权成功！交易哈希: {approve_result}")
-            print(f"🔄 重新检查授权...")
-            # 重新检查授权
-            sufficient_allowance, current_allowance, required = check_erc20_allowance(
-                outputToken, account_address, contract_address, outputAmount, w3)
-            if sufficient_allowance:
-                print(f"✅ 授权验证成功：当前授权: {current_allowance}, 需要: {required}")
-            else:
-                print(f"❌ 授权验证失败")
-                return None
-        else:
-            print(f"❌ 授权失败")
-            return None
+        # if approve_result:
+        #     print(f"✅ 授权成功！交易哈希: {approve_result}")
+        #     print(f"🔄 重新检查授权...")
+        #     # 重新检查授权
+        #     sufficient_allowance, current_allowance, required = check_erc20_allowance(
+        #         outputToken, account_address, contract_address, outputAmount, w3)
+        #     if sufficient_allowance:
+        #         print(f"✅ 授权验证成功：当前授权: {current_allowance}, 需要: {required}")
+        #     else:
+        #         print(f"❌ 授权验证失败")
+        #         return None
+        # else:
+        #     print(f"❌ 授权失败")
+        #     return None
     elif sufficient_allowance is True:
         print(f"✅ 授权充足：当前授权: {current_allowance}, 需要: {required}")
     else:
