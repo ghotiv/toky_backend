@@ -509,6 +509,11 @@ def call_fill_relay_by_alchemy(data):
     '''
     res = None
     
+    # 详细日志 - 记录调用时间和完整数据
+    current_time = time.time()
+    print(f"🔍 [DEBUG] call_fill_relay_by_alchemy 被调用 - 时间戳: {current_time}")
+    print(f"🔍 [DEBUG] 完整数据: {json.dumps(data, indent=2, default=str)}")
+    
     is_mainnet = True
     if DEBUG_MODE:
         is_mainnet = False
@@ -519,12 +524,19 @@ def call_fill_relay_by_alchemy(data):
     # 创建唯一的请求ID (使用交易hash + 网络)
     request_id = f"{transaction_dict['hash']}_{alchemy_network}"
     
+    print(f"🔍 [DEBUG] 请求ID: {request_id}")
+    print(f"🔍 [DEBUG] 交易hash: {transaction_dict['hash']}")
+    print(f"🔍 [DEBUG] 网络: {alchemy_network}")
+    
     # 检查是否已经处理过
     if is_request_processed(request_id):
         print(f"⏭️ 跳过重复请求: {request_id}")
+        print(f"🔍 [DEBUG] 原处理时间: {_processed_requests[request_id]['timestamp']}")
+        print(f"🔍 [DEBUG] 时间差: {current_time - _processed_requests[request_id]['timestamp']:.2f}秒")
         return _processed_requests[request_id].get('result')
     
     print(f"🆕 处理新请求: {request_id}")
+    print(f"🔍 [DEBUG] 当前缓存中的请求数量: {len(_processed_requests)}")
     
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
     block_chainid = calldata_dict['destinationChainId']
