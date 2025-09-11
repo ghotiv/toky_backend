@@ -17,7 +17,7 @@ def test_get_decode_calldata():
     calldata_dict = get_decode_calldata(calldata)
     print(calldata_dict)
 
-def test_call_deposit():
+def test_call_deposit(private_key=None):
     block_chainid = 11155111
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
@@ -49,6 +49,7 @@ def test_call_fill_relay():
                         block_chainid, private_key=vault_private_key, is_mainnet=False)
 
 if __name__ == '__main__':
-    test_call_deposit()
+    # test_call_deposit(private_key=client_private_key)
+    test_call_deposit(private_key=deployer_private_key)
     # test_get_decode_calldata()
     # test_call_fill_relay()
