@@ -34,6 +34,30 @@ def get_safe_nonce(w3, account_address):
     print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}")
     return safe_nonce
 
+def get_gas_params(w3, account_address, chain_id=None):
+    """根据不同链ID获取合适的gas参数"""
+    # 如果没有提供chain_id，尝试从w3获取
+    if chain_id is None:
+        try:
+            chain_id = w3.eth.chain_id
+        except:
+            chain_id = 0
+    
+    if chain_id == 300:  # ZKSync Sepolia
+        return {
+            'from': account_address,
+            'gas': 2000000,  # ZKSync需要更高的gas limit
+            'gasPrice': w3.to_wei('0.25', 'gwei'),  # 更低的gas price
+            'nonce': get_safe_nonce(w3, account_address),
+        }
+    else:  # 标准EVM链 (ETH Sepolia, Base Sepolia等)
+        return {
+            'from': account_address,
+            'gas': 300000,
+            'gasPrice': w3.to_wei('20', 'gwei'),
+            'nonce': get_safe_nonce(w3, account_address),
+        }
+
 #暂时只支持evm地址
 def get_recipient_vaild_address(recipient):
     res = None
@@ -211,12 +235,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
-    tx_params = {
-        'from': account_address,
-        'gas': 300000,
-        'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': get_safe_nonce(w3, account_address),
-    }
+    tx_params = get_gas_params(w3, account_address, block_chainid)
     
     if inputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = inputAmount
@@ -305,12 +324,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     contract = w3.eth.contract(address=contract_address, abi=fill_relay_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
-    tx_params = {
-        'from': account_address,
-        'gas': 300000,
-        'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': get_safe_nonce(w3, account_address),
-    }
+    tx_params = get_gas_params(w3, account_address, block_chainid)
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
     

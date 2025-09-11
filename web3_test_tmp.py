@@ -49,7 +49,7 @@ def test_call_fill_relay():
                         block_chainid, private_key=vault_private_key, is_mainnet=False)
 
 if __name__ == '__main__':
-    # test_call_deposit(private_key=client_private_key,recipient=client)
-    test_call_deposit(private_key=deployer_private_key,recipient=deployer)
+    test_call_deposit(private_key=client_private_key,recipient=client)
+    # test_call_deposit(private_key=deployer_private_key,recipient=deployer)
     # test_get_decode_calldata()
     # test_call_fill_relay()
