@@ -18,16 +18,16 @@ def test_get_decode_calldata():
     print(calldata_dict)
 
 def test_call_deposit(private_key=None,recipient=None):
-    block_chainid = 11155111
+    block_chainid = 84532
 
-    # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
-    # inputAmount = get_wei_amount(0.0001)
+    inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
+    inputAmount = get_wei_amount(0.0001)
     # inputAmount = get_wei_amount(1000)
 
-    inputToken = to_checksum_address('0xf904709e8a2e0825fce724002be52dd853202750')
-    inputAmount = get_wei_amount(0.001)
+    # inputToken = to_checksum_address('0xf904709e8a2e0825fce724002be52dd853202750')
+    # inputAmount = get_wei_amount(0.001)
 
-    destinationChainId = 84532
+    destinationChainId = 300
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(vault, recipient_bytes32, inputToken, inputAmount, 
@@ -49,7 +49,7 @@ def test_call_fill_relay():
                         block_chainid, private_key=vault_private_key, is_mainnet=False)
 
 if __name__ == '__main__':
-    # test_call_deposit(private_key=client_private_key,recipient=client)
-    test_call_deposit(private_key=deployer_private_key,recipient=deployer)
+    test_call_deposit(private_key=client_private_key,recipient=client)
+    # test_call_deposit(private_key=deployer_private_key,recipient=deployer)
     # test_get_decode_calldata()
     # test_call_fill_relay()

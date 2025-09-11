@@ -11,6 +11,6 @@ app = FastAPI()
 def webhook(data: Dict[str, Any]):
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
     print('time: ', time.time(), 'depositHash: ', transaction_dict['hash'])
-    # tx_hash = call_fill_relay_by_alchemy(data)
-    # print('time: ', time.time(), 'tx_hash: ', tx_hash)
+    tx_hash = call_fill_relay_by_alchemy(data)
+    print('time: ', time.time(), 'tx_hash: ', tx_hash)
     return "success"
