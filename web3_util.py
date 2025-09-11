@@ -117,6 +117,12 @@ def get_token(chain_id=None,token_name=None,token_address=None,is_mainnet=True):
             'is_mainnet': False,
         },
         {
+            'chain_id': 1,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': True,
+        },
+        {
             'chain_id': 84532,
             'token_name': 'MBT',
             'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
