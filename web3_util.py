@@ -363,6 +363,7 @@ def call_fill_relay_by_alchemy(data):
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
                                     is_mainnet=is_mainnet).get('token_address',None)
     if not outputToken:
+        print(f"❌ 代币不存在: {token_name_input}")
         return res
     outputAmount = int(calldata_dict['inputAmount']*fill_rate)
     message = b''
