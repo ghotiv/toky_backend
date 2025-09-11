@@ -32,7 +32,7 @@ def test_call_deposit(private_key=None):
     recipient_bytes32 = get_bytes32_address(client)
     call_deposit(vault, recipient_bytes32, inputToken, inputAmount, 
                     destinationChainId, message, block_chainid, is_mainnet=False,
-                    private_key=client_private_key)
+                    private_key=private_key)
 
 def test_call_fill_relay():
     block_chainid = 84532
