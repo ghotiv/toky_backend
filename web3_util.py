@@ -116,12 +116,12 @@ def get_token(chain_id=None,token_name=None,token_address=None,is_mainnet=True):
             'token_address': '0x0000000000000000000000000000000000000000',
             'is_mainnet': False,
         },
-        {
-            'chain_id': 1,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': True,
-        },
+        # {
+        #     'chain_id': 1,
+        #     'token_name': 'ETH',
+        #     'token_address': '0x0000000000000000000000000000000000000000',
+        #     'is_mainnet': True,
+        # },
         {
             'chain_id': 84532,
             'token_name': 'ETH',
@@ -360,6 +360,7 @@ def call_fill_relay_by_alchemy(data):
     originChainId = get_chain(alchemy_network=alchemy_network,is_mainnet=is_mainnet)['chain_id']
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
                                     is_mainnet=is_mainnet)['token_name']
+    print(block_chainid, token_name_input, is_mainnet)
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
                                     is_mainnet=is_mainnet).get('token_address',None)
     if not outputToken:
