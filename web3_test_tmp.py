@@ -25,7 +25,7 @@ def test_call_deposit():
     # inputAmount = get_wei_amount(1000)
 
     inputToken = to_checksum_address('0xf904709e8a2e0825fce724002be52dd853202750')
-    inputAmount = get_wei_amount(10)
+    inputAmount = get_wei_amount(0.001)
 
     destinationChainId = 84532
     message = b'hello'
