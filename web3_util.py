@@ -361,6 +361,8 @@ def call_fill_relay_by_alchemy(data):
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
                                     is_mainnet=is_mainnet)['token_name']
     print(block_chainid, token_name_input, is_mainnet)
+    print(get_token(chain_id=block_chainid,token_name=token_name_input,
+                                    is_mainnet=is_mainnet))
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
                                     is_mainnet=is_mainnet).get('token_address',None)
     if not outputToken:
