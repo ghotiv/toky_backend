@@ -361,7 +361,9 @@ def call_fill_relay_by_alchemy(data):
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
                                     is_mainnet=is_mainnet)['token_name']
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
-                                    is_mainnet=is_mainnet)['token_address']
+                                    is_mainnet=is_mainnet).get('token_address',None)
+    if not outputToken:
+        return res
     outputAmount = int(calldata_dict['inputAmount']*fill_rate)
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
