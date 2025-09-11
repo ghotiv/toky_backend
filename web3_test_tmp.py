@@ -20,12 +20,12 @@ def test_get_decode_calldata():
 def test_call_deposit(private_key=None,recipient=None):
     block_chainid = 84532
 
-    inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
-    inputAmount = get_wei_amount(0.0001)
+    # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
+    # inputAmount = get_wei_amount(0.0001)
     # inputAmount = get_wei_amount(1000)
 
-    # inputToken = to_checksum_address('0xf904709e8a2e0825fce724002be52dd853202750')
-    # inputAmount = get_wei_amount(0.001)
+    inputToken = to_checksum_address('0xc4C5896a32e75ed3b59C48620E3b0833D0f98820')
+    inputAmount = get_wei_amount(0.001)
 
     destinationChainId = 300
     message = b'hello'
