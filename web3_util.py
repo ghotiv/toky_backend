@@ -31,8 +31,12 @@ def get_safe_nonce(w3, account_address):
     # 获取待处理的nonce  
     pending_nonce = w3.eth.get_transaction_count(account_address, 'pending')
     safe_nonce = max(confirmed_nonce, pending_nonce)
-    print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}")
-    return safe_nonce
+    
+    # 检查是否有pending交易
+    has_pending = pending_nonce > confirmed_nonce
+    print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}, Pending交易={has_pending}")
+    
+    return safe_nonce, has_pending
 
 def get_optimal_gas_price(w3, chain_id, priority='standard'):
     """获取优化的gas价格"""
@@ -301,10 +305,19 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
     print(f"⛽ 优化gas参数: Chain {chain_id}, Priority {priority}, Type {tx_type}")
     
     # 基础参数
+    safe_nonce, has_pending = get_safe_nonce(w3, account_address)
     gas_params = {
         'from': account_address,
-        'nonce': get_safe_nonce(w3, account_address),
+        'nonce': safe_nonce,
     }
+    
+    # 如果有pending交易，提高优先级以确保能够替换
+    if has_pending:
+        print(f"⚠️ 检测到pending交易，提高gas价格以确保替换")
+        if priority == 'standard':
+            priority = 'fast'
+        elif priority == 'slow':
+            priority = 'standard'
     
     # 设置gas limit - 传递更多上下文信息以便更好地估算
     gas_limit = get_optimal_gas_limit(w3, chain_id, tx_type, estimated_gas, account_address)
@@ -528,10 +541,9 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
-    # 首先构建基础交易参数来估算gas
+    # 首先构建基础交易参数来估算gas（不包含nonce，避免冲突）
     base_tx_params = {
-        'from': account_address,
-        'nonce': get_safe_nonce(w3, account_address)
+        'from': account_address
     }
     
     if inputToken == '0x0000000000000000000000000000000000000000':
@@ -547,7 +559,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
     
-    # 使用实际估算的gas获取优化的gas参数
+    # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
                              priority='standard', tx_type='contract_call', 
                              estimated_gas=estimated_gas, is_eip1559=is_eip1559)
@@ -642,10 +654,9 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
-    # 首先构建基础交易参数来估算gas
+    # 首先构建基础交易参数来估算gas（不包含nonce，避免冲突）
     base_tx_params = {
-        'from': account_address,
-        'nonce': get_safe_nonce(w3, account_address)
+        'from': account_address
     }
     
     if outputToken == '0x0000000000000000000000000000000000000000':
@@ -661,7 +672,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
     
-    # 使用实际估算的gas获取优化的gas参数
+    # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
                              priority='standard', tx_type='contract_call', 
                              estimated_gas=estimated_gas, is_eip1559=is_eip1559)
