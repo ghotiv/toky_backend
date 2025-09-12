@@ -528,8 +528,29 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
+    # 首先构建基础交易参数来估算gas
+    base_tx_params = {
+        'from': account_address,
+        'nonce': get_safe_nonce(w3, account_address)
+    }
+    
+    if inputToken == '0x0000000000000000000000000000000000000000':
+        base_tx_params['value'] = inputAmount
+    
+    # 先估算实际需要的gas
+    try:
+        print(f"📊 估算deposit交易gas...")
+        estimated_gas = contract.functions.deposit(vault, recipient, inputToken, 
+                        inputAmount, destinationChainId, message).estimate_gas(base_tx_params)
+        print(f"📊 实际gas估算: {estimated_gas:,}")
+    except Exception as e:
+        print(f"⚠️ Gas估算失败: {e}")
+        estimated_gas = None
+    
+    # 使用实际估算的gas获取优化的gas参数
     tx_params = get_gas_params(w3, account_address, block_chainid, 
-                             priority='standard', tx_type='contract_call', is_eip1559=is_eip1559)
+                             priority='standard', tx_type='contract_call', 
+                             estimated_gas=estimated_gas, is_eip1559=is_eip1559)
     
     if inputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = inputAmount
@@ -620,8 +641,31 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     contract = w3.eth.contract(address=contract_address, abi=fill_relay_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
+    
+    # 首先构建基础交易参数来估算gas
+    base_tx_params = {
+        'from': account_address,
+        'nonce': get_safe_nonce(w3, account_address)
+    }
+    
+    if outputToken == '0x0000000000000000000000000000000000000000':
+        base_tx_params['value'] = outputAmount
+    
+    # 先估算实际需要的gas
+    try:
+        print(f"📊 估算fillRelay交易gas...")
+        estimated_gas = contract.functions.fillRelay(recipient, outputToken, outputAmount, 
+                        originChainId, depositHash, message).estimate_gas(base_tx_params)
+        print(f"📊 实际gas估算: {estimated_gas:,}")
+    except Exception as e:
+        print(f"⚠️ Gas估算失败: {e}")
+        estimated_gas = None
+    
+    # 使用实际估算的gas获取优化的gas参数
     tx_params = get_gas_params(w3, account_address, block_chainid, 
-                             priority='standard', tx_type='contract_call', is_eip1559=is_eip1559)
+                             priority='standard', tx_type='contract_call', 
+                             estimated_gas=estimated_gas, is_eip1559=is_eip1559)
+    
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
     
