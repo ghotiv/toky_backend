@@ -5,6 +5,7 @@ vault = '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D'
 client = '0xd45F62ae86E01Da43a162AA3Cd320Fca3C1B178d'
 
 fill_rate = 0.9
+l1_chain_ids = [11155111,1]
 
 alchemy_network_chain_testnet = {
     'ETH_SEPOLIA': 11155111,

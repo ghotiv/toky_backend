@@ -34,8 +34,263 @@ def get_safe_nonce(w3, account_address):
     print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}")
     return safe_nonce
 
-def get_gas_params(w3, account_address, chain_id=None):
-    """根据不同链ID获取合适的gas参数"""
+def get_optimal_gas_price(w3, chain_id, priority='standard'):
+    """获取优化的gas价格"""
+    if not chain_id:
+        return None
+    try:
+        # 获取当前网络gas价格
+        current_gas_price = w3.eth.gas_price
+        
+        # L2网络策略：完全基于实际价格动态调整
+        if chain_id not in l1_chain_ids:
+            # L2网络使用实际价格的倍数，如果价格为0则使用1 wei作为基础
+            base_price = max(current_gas_price, 1)  # 确保不为0
+            if priority == 'fast':
+                return int(base_price * 5)  # 5倍确保快速确认
+            elif priority == 'slow':
+                return int(base_price * 1.2)  # 1.2倍节省费用
+            else:  # standard
+                return int(base_price * 2.5)  # 2.5倍平衡速度和成本
+        
+        # ZKSync特殊处理：基于实际价格动态调整
+        if chain_id == 300:
+            base_price = max(current_gas_price, 1)  # 确保不为0
+            if priority == 'fast':
+                return int(base_price * 2)  # 2倍确保确认
+            elif priority == 'slow':
+                return int(base_price * 1.1)  # 1.1倍节省费用
+            else:  # standard
+                return int(base_price * 1.5)  # 1.5倍平衡
+        
+        # 主网和其他网络使用动态价格
+        if priority == 'fast':
+            return int(current_gas_price * 1.25)  # 提高25%确保快速确认
+        elif priority == 'slow':
+            return int(current_gas_price * 0.85)  # 降低15%节省费用
+        else:  # standard
+            return int(current_gas_price * 1.05)  # 略微提高5%确保确认
+            
+    except Exception as e:
+        print(f"⚠️ 获取动态gas价格失败，使用默认值: {e}")
+        # 回退到保守的默认价格（只在完全无法获取价格时使用）
+        if chain_id == 300:  # ZKSync
+            return w3.to_wei('0.25', 'gwei')
+        elif chain_id not in l1_chain_ids:  # L2网络
+            return w3.to_wei('0.001', 'gwei')  # 极低的默认价格
+        else:  # 主网等
+            return w3.to_wei('20', 'gwei')
+
+def check_eip1559_support(w3):
+    """检查网络是否支持EIP-1559"""
+    try:
+        latest_block = w3.eth.get_block('latest')
+        return hasattr(latest_block, 'baseFeePerGas') and latest_block.baseFeePerGas is not None
+    except:
+        return False
+
+def get_eip1559_params(w3, priority='standard', chain_id=None):
+    """获取EIP-1559参数"""
+    if not chain_id:
+        return None
+    try:
+        latest_block = w3.eth.get_block('latest')
+        base_fee = latest_block.baseFeePerGas
+        
+        # 尝试获取网络建议的优先费用
+        try:
+            suggested_priority_fee = w3.eth.max_priority_fee
+        except:
+            suggested_priority_fee = None
+        
+        # 根据网络类型和优先级设置优先费用
+        if chain_id in l1_chain_ids:
+            # L1网络使用动态优先费用
+            if suggested_priority_fee:
+                if priority == 'fast':
+                    priority_fee = int(suggested_priority_fee * 1.5)
+                elif priority == 'slow':
+                    priority_fee = int(suggested_priority_fee * 0.8)
+                else:  # standard
+                    priority_fee = suggested_priority_fee
+            else:
+                # 回退到基于base_fee的动态值
+                if priority == 'fast':
+                    priority_fee = max(base_fee // 10, 1)  # base_fee的10%，最少1 wei
+                elif priority == 'slow':
+                    priority_fee = max(base_fee // 50, 1)  # base_fee的2%，最少1 wei
+                else:  # standard
+                    priority_fee = max(base_fee // 20, 1)  # base_fee的5%，最少1 wei
+        else:
+            # L2网络优先费用基于base_fee的百分比
+            if priority == 'fast':
+                priority_fee = max(base_fee // 50, 1)  # base_fee的2%，最少1 wei
+            elif priority == 'slow':
+                priority_fee = max(base_fee // 500, 1)  # base_fee的0.2%，最少1 wei
+            else:  # standard
+                priority_fee = max(base_fee // 100, 1)  # base_fee的1%，最少1 wei
+        
+        # 计算最大费用
+        if chain_id in l1_chain_ids:
+            # L1网络：base_fee可能快速变化，使用较大的倍数
+            max_fee = int(base_fee * 2) + priority_fee
+        else:
+            # L2网络：base_fee变化不大，使用较小的倍数
+            max_fee = int(base_fee * 1.5) + priority_fee
+        
+        return {
+            'maxFeePerGas': max_fee,
+            'maxPriorityFeePerGas': priority_fee,
+            'type': '0x2'  # EIP-1559 transaction type
+        }
+    except Exception as e:
+        print(f"⚠️ 获取EIP-1559参数失败: {e}")
+        return None
+
+def get_network_congestion(w3):
+    """检测网络拥堵程度"""
+    try:
+        latest_block = w3.eth.get_block('latest')
+        if latest_block.gasLimit > 0:
+            utilization = latest_block.gasUsed / latest_block.gasLimit
+            
+            if utilization > 0.9:
+                return 'high'
+            elif utilization > 0.7:
+                return 'medium'
+            else:
+                return 'low'
+    except:
+        pass
+    return 'unknown'
+
+def estimate_gas_for_tx_type(w3, tx_type, account_address, to_address=None, value=0, data='0x'):
+    """基于交易类型估算gas使用量"""
+    try:
+        if tx_type == 'eth_transfer':
+            # ETH转账的基础估算
+            tx_params = {
+                'from': account_address,
+                'to': to_address or account_address,  # 如果没有to地址，用自己
+                'value': value or w3.to_wei('0.001', 'ether'),  # 小额测试
+            }
+            return w3.eth.estimate_gas(tx_params)
+            
+        elif tx_type in ['erc20_transfer', 'erc20_approve']:
+            # ERC20交易估算（使用标准的transfer/approve方法）
+            # 构造标准ERC20方法调用data
+            if tx_type == 'erc20_transfer':
+                # transfer(address,uint256) 方法签名
+                method_id = '0xa9059cbb'
+            else:  # erc20_approve
+                # approve(address,uint256) 方法签名  
+                method_id = '0x095ea7b3'
+            
+            # 构造完整的calldata (方法ID + 32字节地址 + 32字节金额)
+            calldata = method_id + '0' * 24 + (to_address or account_address)[2:] + '0' * 64
+            
+            tx_params = {
+                'from': account_address,
+                'to': to_address or account_address,
+                'data': calldata,
+            }
+            return w3.eth.estimate_gas(tx_params)
+            
+        else:
+            # 对于复杂合约调用，如果有data就用，否则估算空调用
+            tx_params = {
+                'from': account_address,
+                'to': to_address or account_address,
+                'data': data,
+            }
+            return w3.eth.estimate_gas(tx_params)
+            
+    except Exception as e:
+        print(f"⚠️ Gas估算失败: {e}")
+        return None
+
+def get_gas_buffer_multiplier(chain_id):
+    """根据网络特性获取gas缓冲倍数"""
+    if chain_id == 300:  # ZKSync
+        return 2.5  # ZKSync需要更大缓冲
+    elif chain_id in l1_chain_ids:  # 主网
+        return 1.3  # 主网适中缓冲
+    else:  # L2网络
+        return 1.5  # L2网络中等缓冲
+
+def get_fallback_gas_limit(chain_id, tx_type):
+    """当无法估算时的回退gas limit"""
+    if chain_id == 300:  # ZKSync
+        gas_map = {
+            'eth_transfer': 300000,
+            'erc20_transfer': 500000,
+            'erc20_approve': 500000,
+            'contract_call': 1000000,
+            'complex_contract': 1500000
+        }
+    elif chain_id in l1_chain_ids:  # 主网
+        gas_map = {
+            'eth_transfer': 25000,
+            'erc20_transfer': 80000,
+            'erc20_approve': 80000,
+            'contract_call': 200000,
+            'complex_contract': 350000
+        }
+    else:  # L2网络
+        gas_map = {
+            'eth_transfer': 25000,
+            'erc20_transfer': 70000,
+            'erc20_approve': 70000,
+            'contract_call': 150000,
+            'complex_contract': 250000
+        }
+    
+    return gas_map.get(tx_type, gas_map['contract_call'])
+
+def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=None, 
+                         account_address=None, to_address=None, value=0, data='0x'):
+    """获取优化的gas limit - 基于实际估算而非固定值"""
+    
+    # 步骤1: 确定基础gas使用量
+    base_gas = None
+    
+    if estimated_gas:
+        # 如果外部已提供估算值，直接使用
+        base_gas = estimated_gas
+        print(f"📊 使用提供的gas估算: {base_gas:,}")
+    elif w3 and account_address:
+        # 尝试实际估算
+        estimated = estimate_gas_for_tx_type(w3, tx_type, account_address, to_address, value, data)
+        if estimated:
+            base_gas = estimated
+            print(f"📊 Gas估算成功: {base_gas:,}")
+    
+    if not base_gas:
+        # 无法估算，使用回退值
+        base_gas = get_fallback_gas_limit(chain_id, tx_type)
+        print(f"⚠️ 无法估算gas，使用回退值: {base_gas:,}")
+    
+    # 步骤2: 应用网络特性缓冲
+    buffer_multiplier = get_gas_buffer_multiplier(chain_id)
+    final_gas_limit = int(base_gas * buffer_multiplier)
+    
+    print(f"📊 最终gas limit: {final_gas_limit:,} (基础: {base_gas:,} × 缓冲: {buffer_multiplier})")
+    
+    return final_gas_limit
+
+def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_type='contract_call', 
+                        estimated_gas=None, is_eip1559=True):
+    """
+    获取优化的gas参数
+    
+    Args:
+        w3: Web3实例
+        account_address: 账户地址
+        chain_id: 链ID
+        priority: 优先级 ('slow', 'standard', 'fast')
+        tx_type: 交易类型 ('eth_transfer', 'erc20_transfer', 'erc20_approve', 'contract_call')
+        estimated_gas: 预估的gas使用量
+    """
     # 如果没有提供chain_id，尝试从w3获取
     if chain_id is None:
         try:
@@ -43,20 +298,48 @@ def get_gas_params(w3, account_address, chain_id=None):
         except:
             chain_id = 0
     
-    if chain_id == 300:  # ZKSync Sepolia
-        return {
-            'from': account_address,
-            'gas': 2000000,  # ZKSync需要更高的gas limit
-            'gasPrice': w3.to_wei('0.25', 'gwei'),  # 更低的gas price
-            'nonce': get_safe_nonce(w3, account_address),
-        }
-    else:  # 标准EVM链 (ETH Sepolia, Base Sepolia等)
-        return {
-            'from': account_address,
-            'gas': 300000,
-            'gasPrice': w3.to_wei('20', 'gwei'),
-            'nonce': get_safe_nonce(w3, account_address),
-        }
+    print(f"⛽ 优化gas参数: Chain {chain_id}, Priority {priority}, Type {tx_type}")
+    
+    # 基础参数
+    gas_params = {
+        'from': account_address,
+        'nonce': get_safe_nonce(w3, account_address),
+    }
+    
+    # 设置gas limit - 传递更多上下文信息以便更好地估算
+    gas_limit = get_optimal_gas_limit(w3, chain_id, tx_type, estimated_gas, account_address)
+    gas_params['gas'] = gas_limit
+    
+    # 检测网络拥堵并调整优先级
+    congestion = get_network_congestion(w3)
+    if congestion == 'high' and priority == 'standard':
+        priority = 'fast'
+        print(f"⚠️ 检测到网络拥堵，自动调整为快速模式")
+    
+    # 检查是否支持EIP-1559
+    if is_eip1559:
+        print(f"🚀 使用EIP-1559模式")
+        eip1559_params = get_eip1559_params(w3, priority, chain_id)
+        if eip1559_params:
+            gas_params.update(eip1559_params)
+            
+            # 显示EIP-1559参数信息
+            max_fee_gwei = w3.from_wei(eip1559_params['maxFeePerGas'], 'gwei')
+            priority_fee_gwei = w3.from_wei(eip1559_params['maxPriorityFeePerGas'], 'gwei')
+            print(f"📊 MaxFee: {max_fee_gwei:.2f} gwei, PriorityFee: {priority_fee_gwei:.2f} gwei")
+            
+            return gas_params
+    
+    # 传统gasPrice模式
+    print(f"⚡ 使用传统gasPrice模式")
+    gas_price = get_optimal_gas_price(w3, chain_id, priority)
+    gas_params['gasPrice'] = gas_price
+    
+    # 显示gas价格信息
+    gas_price_gwei = w3.from_wei(gas_price, 'gwei')
+    print(f"📊 GasPrice: {gas_price_gwei:.2f} gwei, GasLimit: {gas_limit:,}")
+    
+    return gas_params
 
 #暂时只支持evm地址
 def get_recipient_vaild_address(recipient):
@@ -80,6 +363,7 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'contract_fillRelay': '0x460a94c037CD5DFAFb043F0b9F24c1867957AA5c',
             'alchemy_network': 'ETH_SEPOLIA',
             'is_mainnet': False,
+            'is_eip1559': True,
         },
         #base sepolia
         {
@@ -89,6 +373,7 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
             'alchemy_network': 'BASE_SEPOLIA',
             'is_mainnet': False,
+            'is_eip1559': True,
         },
         #zksync sepolia
         {
@@ -98,6 +383,17 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'contract_fillRelay': '0xEE89DAD29eb36835336d8A5C212FD040336B0dCb',
             'alchemy_network': 'ZKSYNC_SEPOLIA',
             'is_mainnet': False,
+            'is_eip1559': True,
+        },
+        #metis sepolia
+        {
+            'rpc_url': 'https://sepolia.metisdevops.link',
+            'chain_id': 59902,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '',
+            'alchemy_network': 'METIS_SEPOLIA',
+            'is_mainnet': False,
+            'is_eip1559': True,
         },
     ]
     if is_mainnet:
@@ -207,8 +503,9 @@ def get_decode_calldata(calldata):
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
                     block_chainid, private_key=None, is_mainnet=True):
     res = None
-
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
+    chain_dict = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)
+    is_eip1559 = chain_dict['is_eip1559']
     print(f"w3: {w3}")
     deposit_abi = [
         {
@@ -231,7 +528,8 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
-    tx_params = get_gas_params(w3, account_address, block_chainid)
+    tx_params = get_gas_params(w3, account_address, block_chainid, 
+                             priority='standard', tx_type='contract_call', is_eip1559=is_eip1559)
     
     if inputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = inputAmount
@@ -290,7 +588,9 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
                         is_mainnet=True):
     res = None
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
-    contract_address = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)['contract_fillRelay']
+    chain_dict = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)
+    is_eip1559 = chain_dict['is_eip1559']
+    contract_address = chain_dict['contract_fillRelay']
 
     print(f"call_fill_relay 入参 时间: {time.time()}: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash.hex()}, {message}")
 
@@ -320,7 +620,8 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     contract = w3.eth.contract(address=contract_address, abi=fill_relay_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
-    tx_params = get_gas_params(w3, account_address, block_chainid)
+    tx_params = get_gas_params(w3, account_address, block_chainid, 
+                             priority='standard', tx_type='contract_call', is_eip1559=is_eip1559)
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
     
