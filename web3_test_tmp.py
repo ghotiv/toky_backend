@@ -34,7 +34,7 @@ def test_call_deposit(private_key=None,recipient=None):
     inputToken = get_token(chain_id=block_chainid,token_name='MBT',is_mainnet=is_mainnet)['token_address']
     inputAmount = get_wei_amount(0.001)
 
-    destinationChainId = 11155111
+    destinationChainId = 300
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(vault, recipient_bytes32, inputToken, inputAmount, 
