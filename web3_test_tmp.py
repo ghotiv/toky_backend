@@ -18,20 +18,25 @@ def test_get_decode_calldata():
     print(calldata_dict)
 
 def test_call_deposit(private_key=None,recipient=None):
+    if DEBUG_MODE:
+        is_mainnet = False
+    else:
+        is_mainnet = True
+
     block_chainid = 84532
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     # inputAmount = get_wei_amount(0.0001)
     # inputAmount = get_wei_amount(1000)
 
-    inputToken = get_token(chain_id=block_chainid,token_name='ETH',is_mainnet=False)['token_address']
+    inputToken = get_token(chain_id=block_chainid,token_name='ETH',is_mainnet=is_mainnet)['token_address']
     inputAmount = get_wei_amount(0.001)
 
     destinationChainId = 300
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(vault, recipient_bytes32, inputToken, inputAmount, 
-                    destinationChainId, message, block_chainid, is_mainnet=False,
+                    destinationChainId, message, block_chainid, is_mainnet=is_mainnet,
                     private_key=private_key)
 
 def test_call_fill_relay():

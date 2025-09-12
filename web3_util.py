@@ -208,10 +208,6 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
                     block_chainid, private_key=None, is_mainnet=True):
     res = None
 
-    is_mainnet = True
-    if DEBUG_MODE:
-        is_mainnet = False
-
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     print(f"w3: {w3}")
     deposit_abi = [
