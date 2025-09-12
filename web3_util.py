@@ -538,14 +538,14 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         base_tx_params['value'] = inputAmount
     
     estimated_gas = None
-    # # 先估算实际需要的gas
-    # try:
-    #     print(f"📊 估算deposit交易gas...")
-    #     estimated_gas = contract.functions.deposit(vault, recipient, inputToken, 
-    #                     inputAmount, destinationChainId, message).estimate_gas(base_tx_params)
-    #     print(f"📊 实际gas估算: {estimated_gas:,}")
-    # except Exception as e:
-    #     print(f"⚠️ Gas估算失败: {e}")
+    # 先估算实际需要的gas
+    try:
+        print(f"📊 估算deposit交易gas...")
+        estimated_gas = contract.functions.deposit(vault, recipient, inputToken, 
+                        inputAmount, destinationChainId, message).estimate_gas(base_tx_params)
+        print(f"📊 实际gas估算: {estimated_gas:,}")
+    except Exception as e:
+        print(f"⚠️ Gas估算失败: {e}")
     
     # 使用实际估算的gas获取优化的gas参数
     tx_params = get_gas_params(w3, account_address, block_chainid, 
