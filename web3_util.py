@@ -173,15 +173,16 @@ def diagnose_insufficient_balance(w3, account_address, output_token, output_amou
         return False
 
 def get_safe_nonce(w3, account_address):
-    """获取安全的nonce，避免nonce冲突"""
+    """获取安全的nonce，使用pending避免冲突"""
     # 获取链上确认的nonce
     confirmed_nonce = w3.eth.get_transaction_count(account_address, 'latest')
     # 获取待处理的nonce  
     pending_nonce = w3.eth.get_transaction_count(account_address, 'pending')
-    safe_nonce = max(confirmed_nonce, pending_nonce)
     
-    # 检查是否有pending交易
+    # 直接使用pending_nonce，让RPC节点自己处理nonce排队
+    safe_nonce = pending_nonce
     has_pending = pending_nonce > confirmed_nonce
+    
     print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}, Pending交易={has_pending}")
     
     return safe_nonce, has_pending
