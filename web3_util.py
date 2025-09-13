@@ -214,7 +214,7 @@ def wait_for_pending_transaction(w3, account_address, expected_nonce):
         if elapsed_time % 10 == 0:
             try:
                 current_gas_price = w3.eth.gas_price
-                print(f"🔍 网络状态检查: 当前gas价格={w3.from_wei(current_gas_price, 'gwei'):.2f} gwei")
+                print(f"🔍 网络状态检查: 当前gas价格={w3.from_wei(current_gas_price, 'gwei'):.12f} gwei")
             except:
                 pass
         
@@ -307,7 +307,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
     try:
         latest_block = w3.eth.get_block('latest')
         base_fee = latest_block.baseFeePerGas
-        print(f"🔍 EIP-1559参数计算: Chain={chain_id}, Priority={priority}, is_L2={is_l2}, BaseFee={w3.from_wei(base_fee, 'gwei'):.6f} gwei")
+        print(f"🔍 EIP-1559参数计算: Chain={chain_id}, Priority={priority}, is_L2={is_l2}, BaseFee={w3.from_wei(base_fee, 'gwei'):.12f} gwei")
         
         # 尝试获取网络建议的优先费用
         try:
@@ -320,7 +320,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
             # L1网络使用动态优先费用
             print(f"📊 L1网络优先费用计算...")
             if suggested_priority_fee:
-                print(f"📊 使用建议优先费用: {w3.from_wei(suggested_priority_fee, 'gwei'):.6f} gwei")
+                print(f"📊 使用建议优先费用: {w3.from_wei(suggested_priority_fee, 'gwei'):.12f} gwei")
                 if priority == 'fast':
                     priority_fee = int(suggested_priority_fee * 1.5)
                 elif priority == 'slow':
@@ -346,7 +346,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
             else:  # standard
                 priority_fee = max(base_fee // 100, 1)  # base_fee的1%，最少1 wei
         
-        print(f"📊 计算结果: PriorityFee={w3.from_wei(priority_fee, 'gwei'):.6f} gwei")
+        print(f"📊 计算结果: PriorityFee={w3.from_wei(priority_fee, 'gwei'):.12f} gwei")
 
         # 计算最大费用
         if not is_l2:
@@ -565,7 +565,7 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
             max_fee_gwei = w3.from_wei(eip1559_params['maxFeePerGas'], 'gwei')
             priority_fee_gwei = w3.from_wei(eip1559_params['maxPriorityFeePerGas'], 'gwei')
             print(f"📊 原始值: MaxFee={eip1559_params['maxFeePerGas']} wei, PriorityFee={eip1559_params['maxPriorityFeePerGas']} wei")
-            print(f"📊 MaxFee: {max_fee_gwei:.6f} gwei, PriorityFee: {priority_fee_gwei:.6f} gwei")
+            print(f"📊 MaxFee: {max_fee_gwei:.12f} gwei, PriorityFee: {priority_fee_gwei:.12f} gwei")
             
             return gas_params
     
