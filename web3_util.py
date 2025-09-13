@@ -965,6 +965,14 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
             # 其他类型的错误
             return None
 
+    # 发送交易前再次检查relay状态（防止pending交易已经填充了这个relay）
+    if check_before_send:
+        print(f"🔍 发送交易前再次检查relay状态...")
+        relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
+        if relay_filled is True:
+            print(f"❌ RelayAlreadyFilled: 在准备发送交易时发现relay已被填充,{depositHash.hex()}")
+            return None
+    
     try:
         # print(f"交易参数: {tx_params}")
         tx = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId,
