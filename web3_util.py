@@ -367,13 +367,17 @@ def estimate_gas_for_tx_type(w3, tx_type, account_address, to_address=None, valu
         print(f"⚠️ Gas估算失败: {e}")
         return None
 
-def get_gas_buffer_multiplier(chain_id):
-    """根据网络特性获取gas缓冲倍数"""
+def get_gas_buffer_multiplier(chain_id, tx_type='contract_call'):
+    """根据网络特性和交易类型获取gas缓冲倍数"""
     if chain_id == 300:  # ZKSync
         return 2.5  # ZKSync需要更大缓冲
     elif chain_id in l1_chain_ids:  # 主网
+        if tx_type == 'erc20_approve':
+            return 1.8  # approve操作需要更大缓冲
         return 1.3  # 主网适中缓冲
     else:  # L2网络
+        if tx_type == 'erc20_approve':
+            return 2.0  # L2上approve也需要更大缓冲
         return 1.5  # L2网络中等缓冲
 
 def get_fallback_gas_limit(chain_id, tx_type):
@@ -390,7 +394,7 @@ def get_fallback_gas_limit(chain_id, tx_type):
         gas_map = {
             'eth_transfer': 25000,
             'erc20_transfer': 80000,
-            'erc20_approve': 80000,
+            'erc20_approve': 100000,  # 增加approve的回退值
             'contract_call': 200000,
             'complex_contract': 350000
         }
@@ -398,7 +402,7 @@ def get_fallback_gas_limit(chain_id, tx_type):
         gas_map = {
             'eth_transfer': 25000,
             'erc20_transfer': 70000,
-            'erc20_approve': 70000,
+            'erc20_approve': 90000,  # 增加approve的回退值
             'contract_call': 150000,
             'complex_contract': 250000
         }
@@ -429,7 +433,7 @@ def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=N
         print(f"⚠️ 无法估算gas，使用回退值: {base_gas:,}")
     
     # 步骤2: 应用网络特性缓冲
-    buffer_multiplier = get_gas_buffer_multiplier(chain_id)
+    buffer_multiplier = get_gas_buffer_multiplier(chain_id, tx_type)
     final_gas_limit = int(base_gas * buffer_multiplier)
     
     print(f"📊 最终gas limit: {final_gas_limit:,} (基础: {base_gas:,} × 缓冲: {buffer_multiplier})")
@@ -732,9 +736,29 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         print(f"🔍 模拟执行deposit成功: {call_result}, 可以发送交易")
     except Exception as call_error:
         decoded_error = decode_contract_error(call_error.args if hasattr(call_error, 'args') else call_error)
+        error_msg = str(call_error)
         print(f"❌ 模拟执行deposit失败: {call_error}")
         print(f"🔍 错误解析: {decoded_error}")
-        return None
+        
+        # 如果是out of gas或InsufficientBalance错误，尝试增加gas limit
+        if 'out of gas' in error_msg or 'InsufficientBalance' in decoded_error:
+            print("🔧 检测到可能的gas不足，尝试增加gas limit...")
+            original_gas = tx_params['gas']
+            tx_params['gas'] = int(original_gas * 2)  # 增加到2倍
+            print(f"📊 调整gas limit: {original_gas:,} -> {tx_params['gas']:,}")
+            
+            try:
+                print("🔍 重新模拟执行deposit...")
+                call_result = contract.functions.deposit(vault, recipient, inputToken, 
+                                inputAmount, destinationChainId, message).call(tx_params)
+                print(f"✅ 增加gas后模拟执行成功: {call_result}, 可以发送交易")
+            except Exception as e2:
+                decoded_error2 = decode_contract_error(e2.args if hasattr(e2, 'args') else e2)
+                print(f"❌ 增加gas后仍然失败: {e2}")
+                print(f"🔍 最终错误解析: {decoded_error2}")
+                return None
+        else:
+            return None
     
     try:
         tx = contract.functions.deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message).build_transaction(tx_params)
@@ -862,15 +886,38 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         print(f"🔍 模拟执行fillRelay成功: {call_result}, 可以发送交易")
     except Exception as call_error:
         decoded_error = decode_contract_error(call_error.args if hasattr(call_error, 'args') else call_error)
+        error_msg = str(call_error)
         print(f"❌ 模拟执行fillRelay失败: {call_error}")
         print(f"🔍 错误解析: {decoded_error}")
         
-        # 如果是余额不足错误，进行详细诊断
-        if 'InsufficientBalance' in decoded_error:
-            chain_dict = get_chain(chain_id=block_chainid, is_mainnet=is_mainnet)
-            diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
-        
-        return None
+        # 如果是out of gas或InsufficientBalance错误，尝试增加gas limit
+        if 'out of gas' in error_msg or 'InsufficientBalance' in decoded_error:
+            print("🔧 检测到可能的gas不足，尝试增加gas limit...")
+            original_gas = tx_params['gas']
+            tx_params['gas'] = int(original_gas * 2)  # 增加到2倍
+            print(f"📊 调整gas limit: {original_gas:,} -> {tx_params['gas']:,}")
+            
+            try:
+                print("🔍 重新模拟执行fillRelay...")
+                call_result = contract.functions.fillRelay(recipient, outputToken, 
+                            outputAmount, originChainId, depositHash, message).call(tx_params)
+                print(f"✅ 增加gas后模拟执行成功: {call_result}, 可以发送交易")
+            except Exception as e2:
+                decoded_error2 = decode_contract_error(e2.args if hasattr(e2, 'args') else e2)
+                print(f"❌ 增加gas后仍然失败: {e2}")
+                print(f"🔍 最终错误解析: {decoded_error2}")
+                
+                # 如果增加gas后仍然是InsufficientBalance，那就是真的余额问题
+                if 'InsufficientBalance' in decoded_error2:
+                    print("🔍 确认是真正的余额不足问题，进行详细诊断...")
+                    diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
+                
+                return None
+        else:
+            # 其他类型的错误
+            if 'InsufficientBalance' in decoded_error:
+                diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
+            return None
 
     try:
         # print(f"交易参数: {tx_params}")
