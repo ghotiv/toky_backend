@@ -38,6 +38,27 @@ def get_safe_nonce(w3, account_address):
     
     return safe_nonce, has_pending
 
+def handle_already_known_transaction(w3, account_address, nonce):
+    """处理already known交易，尝试等待确认"""
+    print(f"🔍 检查nonce {nonce}的交易状态...")
+    
+    # 等待一段时间，检查交易是否被确认
+    import time
+    max_wait_time = 30  # 最多等待30秒
+    check_interval = 2  # 每2秒检查一次
+    
+    for i in range(max_wait_time // check_interval):
+        current_confirmed = w3.eth.get_transaction_count(account_address, 'latest')
+        if current_confirmed > nonce:
+            print(f"✅ Nonce {nonce}的交易已确认")
+            return True
+        
+        print(f"⏳ 等待交易确认... ({i*check_interval}s/{max_wait_time}s)")
+        time.sleep(check_interval)
+    
+    print(f"⏰ 等待超时，交易可能仍在pending状态")
+    return False
+
 def get_optimal_gas_price(w3, chain_id, priority='standard'):
     """获取优化的gas价格"""
     if not chain_id:
@@ -616,8 +637,23 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         print(f"交易确认，状态: {receipt.status}")
         res = tx_hash.hex()
     except Exception as e:
+        error_message = str(e)
         print(f"交易失败: {e}")
-        raise
+        
+        # 处理特定的错误情况
+        if 'already known' in error_message:
+            print(f"⚠️ deposit交易已存在于mempool中，尝试等待确认...")
+            # 尝试等待现有交易确认
+            if handle_already_known_transaction(w3, account_address, tx_params['nonce']):
+                # 如果交易确认了，返回成功（但没有tx_hash）
+                return "deposit_confirmed_by_existing"
+            else:
+                return None
+        elif 'replacement transaction underpriced' in error_message:
+            print(f"⚠️ replacement transaction underpriced - 需要更高的gas价格")
+            return None
+        else:
+            raise
     return res
 
 
@@ -730,8 +766,23 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         print(f"交易确认，状态: {receipt.status}")
         res = tx_hash.hex()
     except Exception as e:
+        error_message = str(e)
         print(f"交易失败: {e}")
-        raise
+        
+        # 处理特定的错误情况
+        if 'already known' in error_message:
+            print(f"⚠️ fillRelay交易已存在于mempool中，尝试等待确认...")
+            # 尝试等待现有交易确认
+            if handle_already_known_transaction(w3, account_address, tx_params['nonce']):
+                # 如果交易确认了，返回成功（但没有tx_hash）
+                return "fillRelay_confirmed_by_existing"
+            else:
+                return None
+        elif 'replacement transaction underpriced' in error_message:
+            print(f"⚠️ replacement transaction underpriced - 需要更高的gas价格")
+            return None
+        else:
+            raise
     return res
 
 
