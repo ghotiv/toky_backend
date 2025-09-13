@@ -296,6 +296,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
     try:
         latest_block = w3.eth.get_block('latest')
         base_fee = latest_block.baseFeePerGas
+        print(f"🔍 EIP-1559参数计算: Chain={chain_id}, Priority={priority}, is_L2={is_l2}, BaseFee={w3.from_wei(base_fee, 'gwei'):.6f} gwei")
         
         # 尝试获取网络建议的优先费用
         try:
@@ -306,7 +307,9 @@ def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
         # 根据网络类型和优先级设置优先费用
         if not is_l2:
             # L1网络使用动态优先费用
+            print(f"📊 L1网络优先费用计算...")
             if suggested_priority_fee:
+                print(f"📊 使用建议优先费用: {w3.from_wei(suggested_priority_fee, 'gwei'):.6f} gwei")
                 if priority == 'fast':
                     priority_fee = int(suggested_priority_fee * 1.5)
                 elif priority == 'slow':
@@ -314,6 +317,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
                 else:  # standard
                     priority_fee = suggested_priority_fee
             else:
+                print(f"📊 使用base_fee计算优先费用...")
                 # 回退到基于base_fee的动态值
                 if priority == 'fast':
                     priority_fee = max(base_fee // 10, 1)  # base_fee的10%，最少1 wei
@@ -323,12 +327,15 @@ def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
                     priority_fee = max(base_fee // 20, 1)  # base_fee的5%，最少1 wei
         else:
             # L2网络优先费用基于base_fee的百分比
+            print(f"📊 L2网络优先费用计算...")
             if priority == 'fast':
                 priority_fee = max(base_fee // 50, 1)  # base_fee的2%，最少1 wei
             elif priority == 'slow':
                 priority_fee = max(base_fee // 500, 1)  # base_fee的0.2%，最少1 wei
             else:  # standard
                 priority_fee = max(base_fee // 100, 1)  # base_fee的1%，最少1 wei
+        
+        print(f"📊 计算结果: PriorityFee={w3.from_wei(priority_fee, 'gwei'):.6f} gwei")
 
         # 计算最大费用
         if not is_l2:
