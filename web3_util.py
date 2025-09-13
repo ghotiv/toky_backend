@@ -209,9 +209,20 @@ def wait_for_pending_transaction(w3, account_address, expected_nonce):
         
         elapsed_time = (i + 1) * check_interval
         print(f"⏳ 等待pending交易完成... ({elapsed_time}s/{max_wait_time}s) - 确认:{confirmed_nonce}, 待处理:{pending_nonce}")
+        
+        # 每隔10秒检查一次网络状态
+        if elapsed_time % 10 == 0:
+            try:
+                current_gas_price = w3.eth.gas_price
+                print(f"🔍 网络状态检查: 当前gas价格={w3.from_wei(current_gas_price, 'gwei'):.2f} gwei")
+            except:
+                pass
+        
         time.sleep(check_interval)
     
     print(f"⏰ 等待超时，pending交易可能卡住了")
+    print(f"💡 建议: 如果是测试环境，可以考虑使用更高的gas价格")
+    print(f"📊 最终状态: 确认nonce={confirmed_nonce}, 待处理nonce={pending_nonce}")
     return False
 
 def handle_already_known_transaction(w3, account_address, nonce):
@@ -459,7 +470,7 @@ def get_fallback_gas_limit(chain_id, tx_type, is_l2=True):
     return gas_map.get(tx_type, gas_map['contract_call'])
 
 def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=None, 
-                         account_address=None, to_address=None, value=0, data='0x',is_l2=True):
+                         account_address=None, to_address=None, value=0, data='0x', is_l2=True):
     """获取优化的gas limit - 基于实际估算而非固定值"""
     
     # 步骤1: 确定基础gas使用量
@@ -478,7 +489,7 @@ def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=N
     
     if not base_gas:
         # 无法估算，使用回退值
-        base_gas = get_fallback_gas_limit(chain_id, tx_type,is_l2=is_l2)
+        base_gas = get_fallback_gas_limit(chain_id, tx_type, is_l2=is_l2)
         print(f"⚠️ 无法估算gas，使用回退值: {base_gas:,}")
     
     # 步骤2: 应用网络特性缓冲
@@ -534,7 +545,7 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
             return None
     
     # 设置gas limit - 传递更多上下文信息以便更好地估算
-    gas_limit = get_optimal_gas_limit(w3, chain_id, tx_type, estimated_gas, account_address, is_l2=is_l2)
+    gas_limit = get_optimal_gas_limit(w3, chain_id, tx_type, estimated_gas, account_address, None, 0, '0x', is_l2=is_l2)
     gas_params['gas'] = gas_limit
     
     # 检测网络拥堵并调整优先级
@@ -620,8 +631,8 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'is_mainnet': False,
         },
     ]
-    [i.update({'is_eip1559': chain_id not in NOT_EIP1599_IDS}) for i in res_dicts]
-    [i.update({'is_l2': chain_id not in L1_CHAIN_IDS}) for i in res_dicts]
+    [i.update({'is_eip1559': i['chain_id'] not in NOT_EIP1599_IDS}) for i in res_dicts]
+    [i.update({'is_l2': i['chain_id'] not in L1_CHAIN_IDS}) for i in res_dicts]
     if is_mainnet:
         res_dicts = [item for item in res_dicts if item['is_mainnet'] == True]
     else:
