@@ -124,6 +124,48 @@ def diagnose_insufficient_balance(w3, account_address, output_token, output_amou
         print(f"   - 代币授权问题")
         print(f"   - 合约暂停或其他状态问题")
         
+        # 进一步检查代币授权状态
+        if output_token != '0x0000000000000000000000000000000000000000':
+            try:
+                print(f"\n🔐 检查代币授权状态...")
+                # 需要获取fillRelay合约地址来检查授权
+                chain_dict = get_chain(chain_id=chain_id, is_mainnet=is_mainnet)
+                if 'contract_fillRelay' in chain_dict:
+                    fillrelay_address = chain_dict['contract_fillRelay']
+                    
+                    # 重新创建代币合约实例来检查授权
+                    token_contract = w3.eth.contract(address=output_token, abi=erc20_abi)
+                    allowance = token_contract.functions.allowance(account_address, fillrelay_address).call()
+                    allowance_readable = allowance / (10**decimals)
+                    output_amount_readable = output_amount / (10**decimals)
+                    
+                    print(f"📊 授权状态:")
+                    print(f"   - 所有者: {account_address}")
+                    print(f"   - 被授权者: {fillrelay_address}")
+                    print(f"   - 当前授权额度: {allowance_readable:.6f} {symbol}")
+                    print(f"   - 需要转账金额: {output_amount_readable:.6f} {symbol}")
+                    
+                    if allowance < output_amount:
+                        print(f"❌ 代币授权不足！这可能是InsufficientBalance的真正原因")
+                        print(f"   需要授权: {output_amount_readable:.6f} {symbol}")
+                        print(f"   当前授权: {allowance_readable:.6f} {symbol}")
+                        print(f"   缺少授权: {(output_amount - allowance) / (10**decimals):.6f} {symbol}")
+                        return False
+                    else:
+                        print(f"✅ 代币授权充足: {allowance_readable:.6f} ≥ {output_amount_readable:.6f}")
+                        
+            except Exception as e:
+                print(f"⚠️ 无法检查代币授权: {e}")
+        
+        # 检查其他可能的问题
+        print(f"\n🔍 其他可能的InsufficientBalance原因:")
+        print(f"   1. 合约可能有最小/最大转账限制")
+        print(f"   2. 合约可能被暂停或处于维护模式")
+        print(f"   3. 可能有时间锁或冷却期限制")
+        print(f"   4. 可能有白名单/黑名单检查")
+        print(f"   5. 跨链桥可能流动性不足")
+        print(f"   6. 合约可能要求特定的调用顺序")
+        
         return True
         
     except Exception as e:
@@ -740,9 +782,9 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         print(f"❌ 模拟执行deposit失败: {call_error}")
         print(f"🔍 错误解析: {decoded_error}")
         
-        # 如果是out of gas或InsufficientBalance错误，尝试增加gas limit
-        if 'out of gas' in error_msg or 'InsufficientBalance' in decoded_error:
-            print("🔧 检测到可能的gas不足，尝试增加gas limit...")
+        # 如果是out of gas错误，尝试增加gas limit
+        if 'out of gas' in error_msg:
+            print("🔧 检测到gas不足，尝试增加gas limit...")
             original_gas = tx_params['gas']
             tx_params['gas'] = int(original_gas * 2)  # 增加到2倍
             print(f"📊 调整gas limit: {original_gas:,} -> {tx_params['gas']:,}")
@@ -758,6 +800,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
                 print(f"🔍 最终错误解析: {decoded_error2}")
                 return None
         else:
+            # 其他类型的错误（包括InsufficientBalance）
             return None
     
     try:
@@ -890,9 +933,9 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         print(f"❌ 模拟执行fillRelay失败: {call_error}")
         print(f"🔍 错误解析: {decoded_error}")
         
-        # 如果是out of gas或InsufficientBalance错误，尝试增加gas limit
-        if 'out of gas' in error_msg or 'InsufficientBalance' in decoded_error:
-            print("🔧 检测到可能的gas不足，尝试增加gas limit...")
+        # 如果是out of gas错误，尝试增加gas limit
+        if 'out of gas' in error_msg:
+            print("🔧 检测到gas不足，尝试增加gas limit...")
             original_gas = tx_params['gas']
             tx_params['gas'] = int(original_gas * 2)  # 增加到2倍
             print(f"📊 调整gas limit: {original_gas:,} -> {tx_params['gas']:,}")
@@ -913,10 +956,13 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
                     diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
                 
                 return None
+        elif 'InsufficientBalance' in decoded_error:
+            # 直接是InsufficientBalance错误，进行余额诊断
+            print("🔍 检测到InsufficientBalance错误，进行详细诊断...")
+            diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
+            return None
         else:
             # 其他类型的错误
-            if 'InsufficientBalance' in decoded_error:
-                diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
             return None
 
     try:
