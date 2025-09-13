@@ -546,14 +546,15 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
     # 检查是否支持EIP-1559
     if is_eip1559:
         print(f"🚀 使用EIP-1559模式")
-        eip1559_params = get_eip1559_params(w3, priority, chain_id)
+        eip1559_params = get_eip1559_params(w3, priority, chain_id, is_l2)
         if eip1559_params:
             gas_params.update(eip1559_params)
             
             # 显示EIP-1559参数信息
             max_fee_gwei = w3.from_wei(eip1559_params['maxFeePerGas'], 'gwei')
             priority_fee_gwei = w3.from_wei(eip1559_params['maxPriorityFeePerGas'], 'gwei')
-            print(f"📊 MaxFee: {max_fee_gwei:.2f} gwei, PriorityFee: {priority_fee_gwei:.2f} gwei")
+            print(f"📊 原始值: MaxFee={eip1559_params['maxFeePerGas']} wei, PriorityFee={eip1559_params['maxPriorityFeePerGas']} wei")
+            print(f"📊 MaxFee: {max_fee_gwei:.6f} gwei, PriorityFee: {priority_fee_gwei:.6f} gwei")
             
             return gas_params
     
