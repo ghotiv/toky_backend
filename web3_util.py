@@ -519,6 +519,9 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
             # 重新获取nonce，因为pending交易已完成
             safe_nonce, has_pending = get_safe_nonce(w3, account_address)
             gas_params['nonce'] = safe_nonce
+            
+            # 等待pending交易完成后，返回特殊标记，让调用方重新检查relay状态
+            return "pending_completed_recheck_needed"
         else:
             print(f"⏰ Pending交易等待超时，可能需要手动处理")
             return None
@@ -918,6 +921,24 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     tx_params = get_gas_params(w3, account_address, block_chainid, 
                              priority='standard', tx_type='contract_call', 
                              estimated_gas=estimated_gas, is_eip1559=is_eip1559)
+    
+    # 如果等待pending交易完成后需要重新检查relay状态
+    if tx_params == "pending_completed_recheck_needed":
+        print(f"🔍 Pending交易完成后重新检查relay状态...")
+        if check_before_send:
+            relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
+            if relay_filled is True:
+                print(f"❌ RelayAlreadyFilled: Pending交易完成后发现relay已被填充,{depositHash.hex()}")
+                return None
+        
+        # 重新获取gas参数
+        tx_params = get_gas_params(w3, account_address, block_chainid, 
+                                 priority='standard', tx_type='contract_call', 
+                                 estimated_gas=estimated_gas, is_eip1559=is_eip1559)
+    
+    if not tx_params or tx_params == "pending_completed_recheck_needed":
+        print(f"❌ 无法获取有效的gas参数")
+        return None
     
     if outputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = outputAmount
