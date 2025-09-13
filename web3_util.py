@@ -234,7 +234,7 @@ def handle_already_known_transaction(w3, account_address, nonce):
     print(f"⏰ 等待超时，交易可能仍在pending状态")
     return False
 
-def get_optimal_gas_price(w3, chain_id, priority='standard'):
+def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
     """获取优化的gas价格"""
     if not chain_id:
         return None
@@ -243,7 +243,7 @@ def get_optimal_gas_price(w3, chain_id, priority='standard'):
         current_gas_price = w3.eth.gas_price
         
         # L2网络策略：完全基于实际价格动态调整
-        if chain_id not in L1_CHAIN_IDS:
+        if is_l2:
             # L2网络使用实际价格的倍数，如果价格为0则使用1 wei作为基础
             base_price = max(current_gas_price, 1)  # 确保不为0
             if priority == 'fast':
@@ -276,7 +276,7 @@ def get_optimal_gas_price(w3, chain_id, priority='standard'):
         # 回退到保守的默认价格（只在完全无法获取价格时使用）
         if chain_id == 300:  # ZKSync
             return w3.to_wei('0.25', 'gwei')
-        elif chain_id not in L1_CHAIN_IDS:  # L2网络
+        elif is_l2:  # L2网络
             return w3.to_wei('0.001', 'gwei')  # 极低的默认价格
         else:  # 主网等
             return w3.to_wei('20', 'gwei')
@@ -289,7 +289,7 @@ def check_eip1559_support(w3):
     except:
         return False
 
-def get_eip1559_params(w3, priority='standard', chain_id=None):
+def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
     """获取EIP-1559参数"""
     if not chain_id:
         return None
@@ -304,7 +304,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None):
             suggested_priority_fee = None
         
         # 根据网络类型和优先级设置优先费用
-        if chain_id in L1_CHAIN_IDS:
+        if not is_l2:
             # L1网络使用动态优先费用
             if suggested_priority_fee:
                 if priority == 'fast':
@@ -329,9 +329,9 @@ def get_eip1559_params(w3, priority='standard', chain_id=None):
                 priority_fee = max(base_fee // 500, 1)  # base_fee的0.2%，最少1 wei
             else:  # standard
                 priority_fee = max(base_fee // 100, 1)  # base_fee的1%，最少1 wei
-        
+
         # 计算最大费用
-        if chain_id in L1_CHAIN_IDS:
+        if not is_l2:
             # L1网络：base_fee可能快速变化，使用较大的倍数
             max_fee = int(base_fee * 2) + priority_fee
         else:
@@ -409,11 +409,11 @@ def estimate_gas_for_tx_type(w3, tx_type, account_address, to_address=None, valu
         print(f"⚠️ Gas估算失败: {e}")
         return None
 
-def get_gas_buffer_multiplier(chain_id, tx_type='contract_call'):
+def get_gas_buffer_multiplier(chain_id, tx_type='contract_call', is_l2=True):
     """根据网络特性和交易类型获取gas缓冲倍数"""
     if chain_id == 300:  # ZKSync
         return 2.5  # ZKSync需要更大缓冲
-    elif chain_id in L1_CHAIN_IDS:  # 主网
+    elif not is_l2:  # 主网
         if tx_type == 'erc20_approve':
             return 1.8  # approve操作需要更大缓冲
         return 1.3  # 主网适中缓冲
@@ -422,7 +422,7 @@ def get_gas_buffer_multiplier(chain_id, tx_type='contract_call'):
             return 2.0  # L2上approve也需要更大缓冲
         return 1.5  # L2网络中等缓冲
 
-def get_fallback_gas_limit(chain_id, tx_type):
+def get_fallback_gas_limit(chain_id, tx_type, is_l2=True):
     """当无法估算时的回退gas limit"""
     if chain_id == 300:  # ZKSync
         gas_map = {
@@ -432,7 +432,7 @@ def get_fallback_gas_limit(chain_id, tx_type):
             'contract_call': 1000000,
             'complex_contract': 1500000
         }
-    elif chain_id in L1_CHAIN_IDS:  # 主网
+    elif not is_l2:  # 主网
         gas_map = {
             'eth_transfer': 25000,
             'erc20_transfer': 80000,
@@ -452,7 +452,7 @@ def get_fallback_gas_limit(chain_id, tx_type):
     return gas_map.get(tx_type, gas_map['contract_call'])
 
 def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=None, 
-                         account_address=None, to_address=None, value=0, data='0x'):
+                         account_address=None, to_address=None, value=0, data='0x',is_l2=True):
     """获取优化的gas limit - 基于实际估算而非固定值"""
     
     # 步骤1: 确定基础gas使用量
@@ -471,11 +471,11 @@ def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=N
     
     if not base_gas:
         # 无法估算，使用回退值
-        base_gas = get_fallback_gas_limit(chain_id, tx_type)
+        base_gas = get_fallback_gas_limit(chain_id, tx_type,is_l2=is_l2)
         print(f"⚠️ 无法估算gas，使用回退值: {base_gas:,}")
     
     # 步骤2: 应用网络特性缓冲
-    buffer_multiplier = get_gas_buffer_multiplier(chain_id, tx_type)
+    buffer_multiplier = get_gas_buffer_multiplier(chain_id, tx_type, is_l2=is_l2)
     final_gas_limit = int(base_gas * buffer_multiplier)
     
     print(f"📊 最终gas limit: {final_gas_limit:,} (基础: {base_gas:,} × 缓冲: {buffer_multiplier})")
@@ -483,7 +483,7 @@ def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=N
     return final_gas_limit
 
 def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_type='contract_call', 
-                        estimated_gas=None, is_eip1559=True):
+                        estimated_gas=None, is_eip1559=True, is_l2=True):
     """
     获取优化的gas参数
     
@@ -527,7 +527,7 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
             return None
     
     # 设置gas limit - 传递更多上下文信息以便更好地估算
-    gas_limit = get_optimal_gas_limit(w3, chain_id, tx_type, estimated_gas, account_address)
+    gas_limit = get_optimal_gas_limit(w3, chain_id, tx_type, estimated_gas, account_address, is_l2=is_l2)
     gas_params['gas'] = gas_limit
     
     # 检测网络拥堵并调整优先级
@@ -552,7 +552,7 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
     
     # 传统gasPrice模式
     print(f"⚡ 使用传统gasPrice模式")
-    gas_price = get_optimal_gas_price(w3, chain_id, priority)
+    gas_price = get_optimal_gas_price(w3, chain_id, priority, is_l2=is_l2)
     gas_params['gasPrice'] = gas_price
     
     # 显示gas价格信息
@@ -613,6 +613,7 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
         },
     ]
     [i.update({'is_eip1559': chain_id not in NOT_EIP1599_IDS}) for i in res_dicts]
+    [i.update({'is_l2': chain_id not in L1_CHAIN_IDS}) for i in res_dicts]
     if is_mainnet:
         res_dicts = [item for item in res_dicts if item['is_mainnet'] == True]
     else:
@@ -723,6 +724,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     chain_dict = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)
     is_eip1559 = chain_dict['is_eip1559']
+    is_l2 = chain_dict['is_l2']
     print(f"w3: {w3}")
     deposit_abi = [
         {
@@ -766,7 +768,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
                              priority='standard', tx_type='contract_call', 
-                             estimated_gas=estimated_gas, is_eip1559=is_eip1559)
+                             estimated_gas=estimated_gas, is_eip1559=is_eip1559, is_l2=is_l2)
     
     if inputToken == '0x0000000000000000000000000000000000000000':
         tx_params['value'] = inputAmount
@@ -865,6 +867,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     chain_dict = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)
     is_eip1559 = chain_dict['is_eip1559']
+    is_l2 = chain_dict['is_l2']
     contract_address = chain_dict['contract_fillRelay']
 
     print(f"call_fill_relay 入参 时间: {time.time()}: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash.hex()}, {message}")
@@ -917,7 +920,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
                              priority='standard', tx_type='contract_call', 
-                             estimated_gas=estimated_gas, is_eip1559=is_eip1559)
+                             estimated_gas=estimated_gas, is_eip1559=is_eip1559, is_l2=is_l2)
     
     # 如果等待pending交易完成后需要重新检查relay状态
     if tx_params == "pending_completed_recheck_needed":
@@ -931,7 +934,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         # 重新获取gas参数
         tx_params = get_gas_params(w3, account_address, block_chainid, 
                                  priority='standard', tx_type='contract_call', 
-                                 estimated_gas=estimated_gas, is_eip1559=is_eip1559)
+                                 estimated_gas=estimated_gas, is_eip1559=is_eip1559, is_l2=is_l2)
     
     if not tx_params or tx_params == "pending_completed_recheck_needed":
         print(f"❌ 无法获取有效的gas参数")
