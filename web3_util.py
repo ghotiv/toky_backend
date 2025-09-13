@@ -191,7 +191,7 @@ def wait_for_pending_transaction(w3, account_address, expected_nonce):
     print(f"🔍 等待nonce {expected_nonce}的pending交易完成...")
     
     max_wait_time = 60  # 最多等待60秒
-    check_interval = 2  # 每2秒检查一次
+    check_interval = 1  # 每1秒检查一次
     
     for i in range(max_wait_time // check_interval):
         confirmed_nonce = w3.eth.get_transaction_count(account_address, 'latest')
