@@ -23,8 +23,8 @@ def test_call_deposit(private_key=None,recipient=None):
     else:
         is_mainnet = True
 
-    block_chainid = 84532
-    # block_chainid = 11155111
+    # block_chainid = 84532
+    block_chainid = 11155111
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     # inputAmount = get_wei_amount(0.0001)
@@ -35,7 +35,8 @@ def test_call_deposit(private_key=None,recipient=None):
     inputToken = get_token(chain_id=block_chainid,token_name='MBT',is_mainnet=is_mainnet)['token_address']
     inputAmount = get_wei_amount(0.1)
 
-    destinationChainId = 11155111
+    # destinationChainId = 11155111
+    destinationChainId = 84532
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(VAULT, recipient_bytes32, inputToken, inputAmount, 
