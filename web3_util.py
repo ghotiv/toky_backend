@@ -311,13 +311,13 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
         'nonce': safe_nonce,
     }
     
-    # 如果有pending交易，提高优先级以确保能够替换
+    # 如果有pending交易，使用更激进的替换策略
+    replacement_multiplier = 1.0
     if has_pending:
-        print(f"⚠️ 检测到pending交易，提高gas价格以确保替换")
-        if priority == 'standard':
-            priority = 'fast'
-        elif priority == 'slow':
-            priority = 'standard'
+        print(f"⚠️ 检测到pending交易，使用aggressive replacement模式")
+        priority = 'fast'  # 强制使用最高优先级
+        replacement_multiplier = 2.0  # 增加100%确保替换成功
+        print(f"🔥 替换策略: 使用{int((replacement_multiplier-1)*100)}%倍数确保交易被优先处理")
     
     # 设置gas limit - 传递更多上下文信息以便更好地估算
     gas_limit = get_optimal_gas_limit(w3, chain_id, tx_type, estimated_gas, account_address)
@@ -334,6 +334,23 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
         print(f"🚀 使用EIP-1559模式")
         eip1559_params = get_eip1559_params(w3, priority, chain_id)
         if eip1559_params:
+            # 如果是replacement交易，提高EIP-1559参数
+            if replacement_multiplier > 1.0:
+                original_max_fee = eip1559_params['maxFeePerGas']
+                original_priority_fee = eip1559_params['maxPriorityFeePerGas']
+                
+                eip1559_params['maxFeePerGas'] = int(eip1559_params['maxFeePerGas'] * replacement_multiplier)
+                eip1559_params['maxPriorityFeePerGas'] = int(eip1559_params['maxPriorityFeePerGas'] * replacement_multiplier)
+                
+                # 确保minimum增长 - 至少增加1 gwei
+                min_increase = w3.to_wei('1', 'gwei')
+                if eip1559_params['maxFeePerGas'] - original_max_fee < min_increase:
+                    eip1559_params['maxFeePerGas'] = original_max_fee + min_increase
+                if eip1559_params['maxPriorityFeePerGas'] - original_priority_fee < min_increase // 10:
+                    eip1559_params['maxPriorityFeePerGas'] = original_priority_fee + min_increase // 10
+                    
+                print(f"🔥 Replacement模式: EIP-1559参数已增加{int((replacement_multiplier-1)*100)}%")
+            
             gas_params.update(eip1559_params)
             
             # 显示EIP-1559参数信息
@@ -346,6 +363,19 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
     # 传统gasPrice模式
     print(f"⚡ 使用传统gasPrice模式")
     gas_price = get_optimal_gas_price(w3, chain_id, priority)
+    
+    # 如果是replacement交易，提高gasPrice
+    if replacement_multiplier > 1.0:
+        original_gas_price = gas_price
+        gas_price = int(gas_price * replacement_multiplier)
+        
+        # 确保最低增长 - 至少增加0.1 gwei
+        min_increase = w3.to_wei('0.1', 'gwei')
+        if gas_price - original_gas_price < min_increase:
+            gas_price = original_gas_price + min_increase
+            
+        print(f"🔥 Replacement模式: gasPrice已增加{int((replacement_multiplier-1)*100)}%")
+    
     gas_params['gasPrice'] = gas_price
     
     # 显示gas价格信息
