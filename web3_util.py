@@ -1022,6 +1022,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     return res
 
 
+#todo FILL_RATE 来自across
 def call_fill_relay_by_alchemy(data):
     '''
         calldata_dict = {'vault': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D', 
@@ -1040,6 +1041,11 @@ def call_fill_relay_by_alchemy(data):
     alchemy_network = data['event']['network']
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
     block_chainid = calldata_dict['destinationChainId']
+    vault = to_checksum_address(calldata_dict['vault'])
+    print(f"vault: {vault}")
+    if vault not in VAULTS:
+        print(f"❌  vault not in VAULTS: {vault}")
+        return None
     originChainId = get_chain(alchemy_network=alchemy_network,is_mainnet=is_mainnet)['chain_id']
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
                                     is_mainnet=is_mainnet)['token_name']
