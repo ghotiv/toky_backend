@@ -583,7 +583,6 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'contract_fillRelay': '0x460a94c037CD5DFAFb043F0b9F24c1867957AA5c',
             'alchemy_network': 'ETH_SEPOLIA',
             'is_mainnet': False,
-            'is_eip1559': True,
         },
         #base sepolia
         {
@@ -593,7 +592,6 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
             'alchemy_network': 'BASE_SEPOLIA',
             'is_mainnet': False,
-            'is_eip1559': True,
         },
         #zksync sepolia
         {
@@ -603,7 +601,6 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'contract_fillRelay': '0xEE89DAD29eb36835336d8A5C212FD040336B0dCb',
             'alchemy_network': 'ZKSYNC_SEPOLIA',
             'is_mainnet': False,
-            'is_eip1559': True,
         },
         #metis sepolia
         {
@@ -613,9 +610,9 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'contract_fillRelay': '',
             'alchemy_network': 'METIS_SEPOLIA',
             'is_mainnet': False,
-            'is_eip1559': True,
         },
     ]
+    [i.update({'is_eip1559': chain_id not in NOT_EIP1599_IDS}) for i in res_dicts]
     if is_mainnet:
         res_dicts = [item for item in res_dicts if item['is_mainnet'] == True]
     else:
@@ -743,7 +740,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
             "type": "function"
         }
     ]
-    contract_address = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)['contract_deposit']
+    contract_address = chain_dict['contract_deposit']
     contract = w3.eth.contract(address=contract_address, abi=deposit_abi)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address

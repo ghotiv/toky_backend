@@ -6,6 +6,7 @@ CLIENT = '0xd45F62ae86E01Da43a162AA3Cd320Fca3C1B178d'
 
 FILL_RATE = 0.9
 L1_CHAIN_IDS = [11155111,1]
+NOT_EIP1599_IDS = [59902]
 
 #not use
 alchemy_network_chain_testnet = {
