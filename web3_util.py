@@ -220,7 +220,7 @@ def handle_already_known_transaction(w3, account_address, nonce):
     
     # 等待一段时间，检查交易是否被确认
     max_wait_time = 30  # 最多等待30秒
-    check_interval = 2  # 每2秒检查一次
+    check_interval = 1  # 每1秒检查一次
     
     for i in range(max_wait_time // check_interval):
         current_confirmed = w3.eth.get_transaction_count(account_address, 'latest')
@@ -243,7 +243,7 @@ def get_optimal_gas_price(w3, chain_id, priority='standard'):
         current_gas_price = w3.eth.gas_price
         
         # L2网络策略：完全基于实际价格动态调整
-        if chain_id not in l1_chain_ids:
+        if chain_id not in L1_CHAIN_IDS:
             # L2网络使用实际价格的倍数，如果价格为0则使用1 wei作为基础
             base_price = max(current_gas_price, 1)  # 确保不为0
             if priority == 'fast':
@@ -276,7 +276,7 @@ def get_optimal_gas_price(w3, chain_id, priority='standard'):
         # 回退到保守的默认价格（只在完全无法获取价格时使用）
         if chain_id == 300:  # ZKSync
             return w3.to_wei('0.25', 'gwei')
-        elif chain_id not in l1_chain_ids:  # L2网络
+        elif chain_id not in L1_CHAIN_IDS:  # L2网络
             return w3.to_wei('0.001', 'gwei')  # 极低的默认价格
         else:  # 主网等
             return w3.to_wei('20', 'gwei')
@@ -304,7 +304,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None):
             suggested_priority_fee = None
         
         # 根据网络类型和优先级设置优先费用
-        if chain_id in l1_chain_ids:
+        if chain_id in L1_CHAIN_IDS:
             # L1网络使用动态优先费用
             if suggested_priority_fee:
                 if priority == 'fast':
@@ -331,7 +331,7 @@ def get_eip1559_params(w3, priority='standard', chain_id=None):
                 priority_fee = max(base_fee // 100, 1)  # base_fee的1%，最少1 wei
         
         # 计算最大费用
-        if chain_id in l1_chain_ids:
+        if chain_id in L1_CHAIN_IDS:
             # L1网络：base_fee可能快速变化，使用较大的倍数
             max_fee = int(base_fee * 2) + priority_fee
         else:
@@ -413,7 +413,7 @@ def get_gas_buffer_multiplier(chain_id, tx_type='contract_call'):
     """根据网络特性和交易类型获取gas缓冲倍数"""
     if chain_id == 300:  # ZKSync
         return 2.5  # ZKSync需要更大缓冲
-    elif chain_id in l1_chain_ids:  # 主网
+    elif chain_id in L1_CHAIN_IDS:  # 主网
         if tx_type == 'erc20_approve':
             return 1.8  # approve操作需要更大缓冲
         return 1.3  # 主网适中缓冲
@@ -432,7 +432,7 @@ def get_fallback_gas_limit(chain_id, tx_type):
             'contract_call': 1000000,
             'complex_contract': 1500000
         }
-    elif chain_id in l1_chain_ids:  # 主网
+    elif chain_id in L1_CHAIN_IDS:  # 主网
         gas_map = {
             'eth_transfer': 25000,
             'erc20_transfer': 80000,
@@ -1051,13 +1051,13 @@ def call_fill_relay_by_alchemy(data):
     if not outputToken:
         print(f"❌ 代币不存在: {token_name_input}")
         return res
-    outputAmount = int(calldata_dict['inputAmount']*fill_rate)
+    outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
     depositHash = get_bytes32_address(transaction_dict['hash'])
     try:
         res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                                block_chainid, private_key=vault_private_key, is_mainnet=is_mainnet)
+                                block_chainid, private_key=VAULT_PRIVATE_KEY, is_mainnet=is_mainnet)
     except Exception as e:
         print(f"❌ call_fill_relay_by_alchemy失败: {e}")
     return res
