@@ -24,6 +24,36 @@ def get_bytes32_address(address):
 def get_method_id(func_sign):
     return '0x'+keccak(text=func_sign).hex()[:8]
 
+def decode_contract_error(error_data):
+    """解码合约自定义错误"""
+    # 常见的错误选择器映射
+    error_selectors = {
+        '0x4ff64a9f': 'RelayAlreadyFilled()',
+        '0x7a2c8890': 'InsufficientBalance()', 
+        '0x8c379a00': 'Error(string)',  # 标准revert错误
+        '0x4e487b71': 'Panic(uint256)',  # Panic错误
+        '0x08c379a0': 'Error(string)',  # 另一种格式
+        '0x1e4fbdf7': 'OwnableUnauthorizedAccount(address)',
+        '0x49df728c': 'OwnableInvalidOwner(address)',
+        '0x118cdaa7': 'AddressEmptyCode(address)',
+        '0x5274afe7': 'AddressInsufficientBalance(address)',
+        '0x7939f424': 'SafeERC20FailedOperation(address)',
+        '0xa9059cbb': 'transfer(address,uint256)',  # ERC20 transfer
+        '0x095ea7b3': 'approve(address,uint256)',   # ERC20 approve
+    }
+    
+    if isinstance(error_data, tuple) and len(error_data) >= 1:
+        error_selector = error_data[0]
+        if error_selector in error_selectors:
+            error_name = error_selectors[error_selector]
+            print(f"🔍 解码错误: {error_selector} -> {error_name}")
+            return error_name
+        else:
+            print(f"❓ 未知错误选择器: {error_selector}")
+            return f"UnknownError({error_selector})"
+    
+    return str(error_data)
+
 def get_safe_nonce(w3, account_address):
     """获取安全的nonce，避免nonce冲突"""
     # 获取链上确认的nonce
@@ -625,7 +655,9 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
                         inputAmount, destinationChainId, message).call(tx_params)
         print(f"🔍 模拟执行deposit成功: {call_result}, 可以发送交易")
     except Exception as call_error:
+        decoded_error = decode_contract_error(call_error.args if hasattr(call_error, 'args') else call_error)
         print(f"❌ 模拟执行deposit失败: {call_error}")
+        print(f"🔍 错误解析: {decoded_error}")
         return None
     
     try:
@@ -753,7 +785,9 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
                     outputAmount, originChainId, depositHash, message).call(tx_params)
         print(f"🔍 模拟执行fillRelay成功: {call_result}, 可以发送交易")
     except Exception as call_error:
+        decoded_error = decode_contract_error(call_error.args if hasattr(call_error, 'args') else call_error)
         print(f"❌ 模拟执行fillRelay失败: {call_error}")
+        print(f"🔍 错误解析: {decoded_error}")
         return None
 
     try:
