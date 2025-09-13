@@ -54,6 +54,82 @@ def decode_contract_error(error_data):
     
     return str(error_data)
 
+def diagnose_insufficient_balance(w3, account_address, output_token, output_amount, chain_id, is_mainnet=True):
+    """诊断InsufficientBalance错误的具体原因"""
+    print(f"🔍 诊断余额不足问题...")
+    
+    try:
+        # 1. 检查ETH余额（用于gas费）
+        eth_balance = w3.eth.get_balance(account_address)
+        eth_balance_readable = eth_balance / 10**18
+        print(f"💰 ETH余额: {eth_balance_readable:.6f} ETH")
+        
+        # 2. 检查代币余额
+        if output_token == '0x0000000000000000000000000000000000000000':
+            # 如果是ETH转账，检查ETH余额是否足够
+            output_amount_readable = output_amount / 10**18
+            print(f"💸 需要转账: {output_amount_readable:.6f} ETH")
+            if eth_balance < output_amount:
+                print(f"❌ ETH余额不足！需要 {output_amount_readable:.6f} ETH，但只有 {eth_balance_readable:.6f} ETH")
+                return False
+            else:
+                print(f"✅ ETH余额充足")
+        else:
+            # ERC20代币检查
+            erc20_abi = [
+                {"constant": True, "inputs": [{"name": "_owner", "type": "address"}], "name": "balanceOf", "outputs": [{"name": "balance", "type": "uint256"}], "type": "function"},
+                {"constant": True, "inputs": [], "name": "decimals", "outputs": [{"name": "", "type": "uint8"}], "type": "function"},
+                {"constant": True, "inputs": [], "name": "symbol", "outputs": [{"name": "", "type": "string"}], "type": "function"}
+            ]
+            
+            try:
+                token_contract = w3.eth.contract(address=output_token, abi=erc20_abi)
+                token_balance = token_contract.functions.balanceOf(account_address).call()
+                
+                # 获取代币信息
+                try:
+                    decimals = token_contract.functions.decimals().call()
+                    symbol = token_contract.functions.symbol().call()
+                except:
+                    decimals = 18
+                    symbol = "TOKEN"
+                
+                token_balance_readable = token_balance / (10**decimals)
+                output_amount_readable = output_amount / (10**decimals)
+                
+                print(f"🪙 {symbol}余额: {token_balance_readable:.6f}")
+                print(f"💸 需要转账: {output_amount_readable:.6f} {symbol}")
+                
+                if token_balance < output_amount:
+                    print(f"❌ {symbol}余额不足！需要 {output_amount_readable:.6f}，但只有 {token_balance_readable:.6f}")
+                    return False
+                else:
+                    print(f"✅ {symbol}余额充足")
+                    
+            except Exception as e:
+                print(f"⚠️ 无法检查代币余额: {e}")
+        
+        # 3. 检查gas费是否足够
+        estimated_gas_cost = 200000 * w3.eth.gas_price  # 粗略估算
+        gas_cost_readable = estimated_gas_cost / 10**18
+        
+        if eth_balance < estimated_gas_cost:
+            print(f"❌ ETH余额不足支付gas费！预估需要 {gas_cost_readable:.6f} ETH")
+            return False
+        else:
+            print(f"✅ ETH余额足够支付gas费（预估: {gas_cost_readable:.6f} ETH）")
+            
+        print(f"🤔 余额检查都通过了，InsufficientBalance可能由其他原因引起：")
+        print(f"   - 合约内部逻辑限制")
+        print(f"   - 代币授权问题")
+        print(f"   - 合约暂停或其他状态问题")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ 余额诊断失败: {e}")
+        return False
+
 def get_safe_nonce(w3, account_address):
     """获取安全的nonce，避免nonce冲突"""
     # 获取链上确认的nonce
@@ -788,6 +864,12 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         decoded_error = decode_contract_error(call_error.args if hasattr(call_error, 'args') else call_error)
         print(f"❌ 模拟执行fillRelay失败: {call_error}")
         print(f"🔍 错误解析: {decoded_error}")
+        
+        # 如果是余额不足错误，进行详细诊断
+        if 'InsufficientBalance' in decoded_error:
+            chain_dict = get_chain(chain_id=block_chainid, is_mainnet=is_mainnet)
+            diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
+        
         return None
 
     try:
