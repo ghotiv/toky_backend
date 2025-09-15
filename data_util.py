@@ -28,7 +28,7 @@ def get_chain(chain_id=None,alchemy_network=None):
             'rpc_url': 'https://rpc.ankr.com/zksync_era_sepolia',
             'chain_id': 300,
             'contract_deposit': '0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea',
-            'contract_fillRelay': '0x2e9FDD5a5F7cFd4C2F7c7Bb3780264DF2D19A3b6',
+            'contract_fillRelay': '0x706a1b5D991ea32c7D60C7063d6f005da05c0cB5',
             'alchemy_network': 'ZKSYNC_SEPOLIA',
             'is_mainnet': False,
         },
