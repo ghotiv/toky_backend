@@ -54,124 +54,6 @@ def decode_contract_error(error_data):
     
     return str(error_data)
 
-def diagnose_insufficient_balance(w3, account_address, output_token, output_amount, chain_id, is_mainnet=True):
-    """诊断InsufficientBalance错误的具体原因"""
-    print(f"🔍 诊断余额不足问题...")
-    
-    try:
-        # 1. 检查ETH余额（用于gas费）
-        eth_balance = w3.eth.get_balance(account_address)
-        eth_balance_readable = eth_balance / 10**18
-        print(f"💰 ETH余额: {eth_balance_readable:.6f} ETH")
-        
-        # 2. 检查代币余额
-        if output_token == '0x0000000000000000000000000000000000000000':
-            # 如果是ETH转账，检查ETH余额是否足够
-            output_amount_readable = output_amount / 10**18
-            print(f"💸 需要转账: {output_amount_readable:.6f} ETH")
-            if eth_balance < output_amount:
-                print(f"❌ ETH余额不足！需要 {output_amount_readable:.6f} ETH，但只有 {eth_balance_readable:.6f} ETH")
-                return False
-            else:
-                print(f"✅ ETH余额充足")
-        else:
-            # ERC20代币检查
-            erc20_abi = [
-                {"constant": True, "inputs": [{"name": "_owner", "type": "address"}], "name": "balanceOf", "outputs": [{"name": "balance", "type": "uint256"}], "type": "function"},
-                {"constant": True, "inputs": [], "name": "decimals", "outputs": [{"name": "", "type": "uint8"}], "type": "function"},
-                {"constant": True, "inputs": [], "name": "symbol", "outputs": [{"name": "", "type": "string"}], "type": "function"}
-            ]
-            
-            try:
-                token_contract = w3.eth.contract(address=output_token, abi=erc20_abi)
-                token_balance = token_contract.functions.balanceOf(account_address).call()
-                
-                # 获取代币信息
-                try:
-                    decimals = token_contract.functions.decimals().call()
-                    symbol = token_contract.functions.symbol().call()
-                except:
-                    decimals = 18
-                    symbol = "TOKEN"
-                
-                token_balance_readable = token_balance / (10**decimals)
-                output_amount_readable = output_amount / (10**decimals)
-                
-                print(f"🪙 {symbol}余额: {token_balance_readable:.6f}")
-                print(f"💸 需要转账: {output_amount_readable:.6f} {symbol}")
-                
-                if token_balance < output_amount:
-                    print(f"❌ {symbol}余额不足！需要 {output_amount_readable:.6f}，但只有 {token_balance_readable:.6f}")
-                    return False
-                else:
-                    print(f"✅ {symbol}余额充足")
-                    
-            except Exception as e:
-                print(f"⚠️ 无法检查代币余额: {e}")
-        
-        # 3. 检查gas费是否足够
-        estimated_gas_cost = 200000 * w3.eth.gas_price  # 粗略估算
-        gas_cost_readable = estimated_gas_cost / 10**18
-        
-        if eth_balance < estimated_gas_cost:
-            print(f"❌ ETH余额不足支付gas费！预估需要 {gas_cost_readable:.6f} ETH")
-            return False
-        else:
-            print(f"✅ ETH余额足够支付gas费（预估: {gas_cost_readable:.6f} ETH）")
-            
-        print(f"🤔 余额检查都通过了，InsufficientBalance可能由其他原因引起：")
-        print(f"   - 合约内部逻辑限制")
-        print(f"   - 代币授权问题")
-        print(f"   - 合约暂停或其他状态问题")
-        
-        # 进一步检查代币授权状态
-        if output_token != '0x0000000000000000000000000000000000000000':
-            try:
-                print(f"\n🔐 检查代币授权状态...")
-                # 需要获取fillRelay合约地址来检查授权
-                chain_dict = get_chain(chain_id=chain_id, is_mainnet=is_mainnet)
-                if 'contract_fillRelay' in chain_dict:
-                    fillrelay_address = chain_dict['contract_fillRelay']
-                    
-                    # 重新创建代币合约实例来检查授权
-                    token_contract = w3.eth.contract(address=output_token, abi=erc20_abi)
-                    allowance = token_contract.functions.allowance(account_address, fillrelay_address).call()
-                    allowance_readable = allowance / (10**decimals)
-                    output_amount_readable = output_amount / (10**decimals)
-                    
-                    print(f"📊 授权状态:")
-                    print(f"   - 所有者: {account_address}")
-                    print(f"   - 被授权者: {fillrelay_address}")
-                    print(f"   - 当前授权额度: {allowance_readable:.6f} {symbol}")
-                    print(f"   - 需要转账金额: {output_amount_readable:.6f} {symbol}")
-                    
-                    if allowance < output_amount:
-                        print(f"❌ 代币授权不足！这可能是InsufficientBalance的真正原因")
-                        print(f"   需要授权: {output_amount_readable:.6f} {symbol}")
-                        print(f"   当前授权: {allowance_readable:.6f} {symbol}")
-                        print(f"   缺少授权: {(output_amount - allowance) / (10**decimals):.6f} {symbol}")
-                        return False
-                    else:
-                        print(f"✅ 代币授权充足: {allowance_readable:.6f} ≥ {output_amount_readable:.6f}")
-                        
-            except Exception as e:
-                print(f"⚠️ 无法检查代币授权: {e}")
-        
-        # 检查其他可能的问题
-        print(f"\n🔍 其他可能的InsufficientBalance原因:")
-        print(f"   1. 合约可能有最小/最大转账限制")
-        print(f"   2. 合约可能被暂停或处于维护模式")
-        print(f"   3. 可能有时间锁或冷却期限制")
-        print(f"   4. 可能有白名单/黑名单检查")
-        print(f"   5. 跨链桥可能流动性不足")
-        print(f"   6. 合约可能要求特定的调用顺序")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ 余额诊断失败: {e}")
-        return False
-
 def get_safe_nonce(w3, account_address):
     """获取安全的nonce，使用pending避免冲突"""
     # 获取链上确认的nonce
@@ -600,7 +482,7 @@ def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
             'rpc_url': 'https://ethereum-sepolia-rpc.publicnode.com',
             'chain_id': 11155111,
             'contract_deposit': '0x5bD6e85cD235d4c01E04344897Fc97DBd9011155',
-            'contract_fillRelay': '0x460a94c037CD5DFAFb043F0b9F24c1867957AA5c',
+            'contract_fillRelay': '0xd9ACf96764781c6a0891734226E7Cb824e2017E2',
             'alchemy_network': 'ETH_SEPOLIA',
             'is_mainnet': False,
         },
@@ -746,24 +628,8 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     is_eip1559 = chain_dict['is_eip1559']
     is_l2 = chain_dict['is_l2']
     print(f"w3: {w3}")
-    deposit_abi = [
-        {
-            "inputs": [
-                {"name": "vault", "type": "address"},
-                {"name": "recipient", "type": "bytes32"},
-                {"name": "inputToken", "type": "address"},
-                {"name": "inputAmount", "type": "uint256"},
-                {"name": "destinationChainId", "type": "uint256"},
-                {"name": "message", "type": "bytes"}
-            ],
-            "name": "deposit",
-            "outputs": [],
-            "stateMutability": "payable",
-            "type": "function"
-        }
-    ]
     contract_address = chain_dict['contract_deposit']
-    contract = w3.eth.contract(address=contract_address, abi=deposit_abi)
+    contract = w3.eth.contract(address=contract_address, abi=DEPOSIT_ABI)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
@@ -857,22 +723,8 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
 
 def check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3):
     """检查relay是否已经被填充"""
-    check_abi = [
-        {
-            "inputs": [
-                {"name": "originChainId", "type": "uint256"},
-                {"name": "depositHash", "type": "bytes32"},
-                {"name": "recipient", "type": "address"},
-                {"name": "outputToken", "type": "address"}
-            ],
-            "name": "isRelayFilled",
-            "outputs": [{"name": "", "type": "bool"}],
-            "stateMutability": "view",
-            "type": "function"
-        }
-    ]
     try:
-        contract = w3.eth.contract(address=contract_address, abi=check_abi)
+        contract = w3.eth.contract(address=contract_address, abi=CHECK_RELAY_FILLED_ABI)
         is_filled = contract.functions.isRelayFilled(originChainId, depositHash, recipient, outputToken).call()
         return is_filled
     except Exception as e:
@@ -881,8 +733,7 @@ def check_relay_filled(originChainId, depositHash, recipient, outputToken, contr
 
 
 def call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        block_chainid, private_key, check_before_send=True,
-                        is_mainnet=True):
+                        block_chainid, private_key, is_mainnet=True):
     res = None
     w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
     chain_dict = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)
@@ -892,30 +743,12 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
 
     print(f"call_fill_relay 入参 时间: {time.time()}: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash.hex()}, {message}")
 
-    if check_before_send:
-        relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
-        if relay_filled is True:
-            print(f"❌ RelayAlreadyFilled: 这个relay已经被填充过了,{depositHash.hex()}")
-            return None
+    relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
+    if relay_filled is True:
+        print(f"❌ RelayAlreadyFilled: 这个relay已经被填充过了,{depositHash.hex()}")
+        return None
             
-    fill_relay_abi = [
-        {
-            "inputs": [
-                {"name": "recipient", "type": "address"},
-                {"name": "outputToken", "type": "address"},
-                {"name": "outputAmount", "type": "uint256"},
-                {"name": "originChainId", "type": "uint256"},
-                {"name": "depositHash", "type": "bytes32"},
-                {"name": "message", "type": "bytes"}
-            ],
-            "name": "fillRelay",
-            "outputs": [],
-            "stateMutability": "payable",
-            "type": "function"
-        }
-    ]
-
-    contract = w3.eth.contract(address=contract_address, abi=fill_relay_abi)
+    contract = w3.eth.contract(address=contract_address, abi=FILL_RELAY_ABI)
     account = w3.eth.account.from_key(private_key)
     account_address = account.address
     
@@ -932,7 +765,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     try:
         print(f"📊 估算fillRelay交易gas...")
         estimated_gas = contract.functions.fillRelay(recipient, outputToken, outputAmount, 
-                        originChainId, depositHash, message).estimate_gas(base_tx_params)
+                            originChainId, depositHash, message).estimate_gas(base_tx_params)
         print(f"📊 实际gas估算: {estimated_gas:,}")
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
@@ -945,11 +778,10 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     # 如果等待pending交易完成后需要重新检查relay状态
     if tx_params == "pending_completed_recheck_needed":
         print(f"🔍 Pending交易完成后重新检查relay状态...")
-        if check_before_send:
-            relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
-            if relay_filled is True:
-                print(f"❌ RelayAlreadyFilled: Pending交易完成后发现relay已被填充,{depositHash.hex()}")
-                return None
+        relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
+        if relay_filled is True:
+            print(f"❌ RelayAlreadyFilled: Pending交易完成后发现relay已被填充,{depositHash.hex()}")
+            return None
         
         # 重新获取gas参数
         tx_params = get_gas_params(w3, account_address, block_chainid, 
@@ -993,14 +825,12 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
                 
                 # 如果增加gas后仍然是InsufficientBalance，那就是真的余额问题
                 if 'InsufficientBalance' in decoded_error2:
-                    print("🔍 确认是真正的余额不足问题，进行详细诊断...")
-                    diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
+                    print("🔍 确认是真正的余额不足问题...")
                 
                 return None
         elif 'InsufficientBalance' in decoded_error:
             # 直接是InsufficientBalance错误，进行余额诊断
-            print("🔍 检测到InsufficientBalance错误，进行详细诊断...")
-            diagnose_insufficient_balance(w3, account_address, outputToken, outputAmount, block_chainid, is_mainnet)
+            print("🔍 检测到InsufficientBalance错误...")
             return None
         else:
             # 其他类型的错误
@@ -1056,9 +886,7 @@ def call_fill_relay_by_alchemy(data):
     '''
     res = None
 
-    is_mainnet = True
-    if DEBUG_MODE:
-        is_mainnet = False
+    is_mainnet = not DEBUG_MODE
 
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
     alchemy_network = data['event']['network']
