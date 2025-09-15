@@ -75,6 +75,9 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         print(f"📊 实际gas估算: {estimated_gas:,}")
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
+        # 如果gas估算失败，使用一个较大的默认值
+        estimated_gas = 150000  # 为deposit设置一个保守的默认值
+        print(f"📊 使用默认gas估算: {estimated_gas:,}")
     
     # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
@@ -194,6 +197,9 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         print(f"📊 实际gas估算: {estimated_gas:,}")
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
+        # 如果gas估算失败，使用一个较大的默认值
+        estimated_gas = 200000  # 为fillRelay设置一个保守的默认值
+        print(f"📊 使用默认gas估算: {estimated_gas:,}")
     
     # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
