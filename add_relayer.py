@@ -6,7 +6,9 @@
 
 import time
 import sys
-from web3_util import get_w3, get_chain, get_gas_params
+from data_util import *
+from web3_util import *
+from web3_call import *
 from my_private_conf import DEPLOYER_PRIVATE_KEY
 from my_conf import DEBUG_MODE
 
@@ -23,7 +25,7 @@ ADD_RELAYER_ABI = [
     }
 ]
 
-def add_authorized_relayer(chain_id, relayer_address, is_mainnet=False):
+def add_authorized_relayer(chain_id, relayer_address):
     """添加授权的relayer"""
     print(f"🚀 开始添加授权Relayer...")
     print(f"📊 网络: Chain {chain_id}")
@@ -31,8 +33,8 @@ def add_authorized_relayer(chain_id, relayer_address, is_mainnet=False):
     
     try:
         # 获取Web3实例和链配置
-        w3 = get_w3(chain_id=chain_id, is_mainnet=is_mainnet)
-        chain_dict = get_chain(chain_id=chain_id, is_mainnet=is_mainnet)
+        w3 = get_w3(chain_id=chain_id)
+        chain_dict = get_chain(chain_id=chain_id)
         
         # 获取fillRelay合约地址（通常这个合约也有addAuthorizedRelayer功能）
         contract_address = chain_dict['contract_fillRelay']
@@ -46,10 +48,9 @@ def add_authorized_relayer(chain_id, relayer_address, is_mainnet=False):
         account_address = account.address
         print(f"👤 Deployer地址: {account_address}")
         
-        # 构建基础交易参数
+        # 构建基础交易参数（用于模拟调用）
         base_tx_params = {
-            'from': account_address,
-            'to': contract_address
+            'from': account_address
         }
         
         # 估算gas
@@ -114,10 +115,7 @@ def main():
     print("🔧 添加授权Relayer脚本")
     print("=" * 50)
     
-    # 使用DEBUG_MODE决定是否为测试网
-    is_mainnet = not DEBUG_MODE
-    network_type = "主网" if is_mainnet else "测试网"
-    print(f"🌐 当前模式: {network_type}")
+    print(f"🌐 当前模式: {DEBUG_MODE}")
     
     # 支持的网络
     networks = {
@@ -143,7 +141,7 @@ def main():
             print(f"   Chain ID: {chain_id}")
             print(f"   Relayer地址: {relayer_address}")
             
-            tx_hash = add_authorized_relayer(chain_id, relayer_address, is_mainnet)
+            tx_hash = add_authorized_relayer(chain_id, relayer_address)
             if tx_hash:
                 print(f"\n🎉 成功添加授权Relayer！")
                 print(f"🔗 交易哈希: {tx_hash}")
@@ -184,7 +182,7 @@ def main():
                 return
             
             print("\n" + "=" * 50)
-            tx_hash = add_authorized_relayer(chain_id, relayer_address, is_mainnet)
+            tx_hash = add_authorized_relayer(chain_id, relayer_address)
             
             if tx_hash:
                 print(f"\n🎉 成功添加授权Relayer！")
