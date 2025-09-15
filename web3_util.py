@@ -1,14 +1,6 @@
 import time
 
-from web3 import Web3
-
-try:
-    from web3.middleware import ExtraDataToPOAMiddleware as geth_poa_middleware
-except Exception as e:
-    from web3.middleware import geth_poa_middleware
-
-from eth_abi import decode
-from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_bytes
+from eth_utils import to_checksum_address, keccak, is_address, to_bytes
 
 from my_conf import *
 
@@ -28,6 +20,7 @@ def decode_contract_error(error_data):
     """解码合约自定义错误"""
     # 常见的错误选择器映射
     error_selectors = {
+        '0xea8e4eb5': 'NotAuthorized()',
         '0x4ff64a9f': 'RelayAlreadyFilled()',
         '0x7a2c8890': 'InsufficientBalance()', 
         '0x8c379a00': 'Error(string)',  # 标准revert错误
@@ -60,13 +53,10 @@ def get_safe_nonce(w3, account_address):
     confirmed_nonce = w3.eth.get_transaction_count(account_address, 'latest')
     # 获取待处理的nonce  
     pending_nonce = w3.eth.get_transaction_count(account_address, 'pending')
-    
     # 直接使用pending_nonce，让RPC节点自己处理nonce排队
     safe_nonce = pending_nonce
     has_pending = pending_nonce > confirmed_nonce
-    
     print(f"📊 Nonce信息: 已确认={confirmed_nonce}, 待处理={pending_nonce}, 使用={safe_nonce}, Pending交易={has_pending}")
-    
     return safe_nonce, has_pending
 
 def wait_for_pending_transaction(w3, account_address, expected_nonce):
@@ -175,6 +165,7 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
         else:  # 主网等
             return w3.to_wei('20', 'gwei')
 
+#数据库里面提前设置
 def check_eip1559_support(w3):
     """检查网络是否支持EIP-1559"""
     try:
@@ -183,8 +174,9 @@ def check_eip1559_support(w3):
     except:
         return False
 
-def get_eip1559_params(w3, priority='standard', chain_id=None, is_l2=True):
+def get_eip1559_params(w3, priority='standard', is_l2=True):
     """获取EIP-1559参数"""
+    chain_id = w3.eth.chain_id
     if not chain_id:
         return None
     try:
@@ -323,6 +315,7 @@ def get_gas_buffer_multiplier(chain_id, tx_type='contract_call', is_l2=True):
             return 2.0  # L2上approve也需要更大缓冲
         return 1.5  # L2网络中等缓冲
 
+# 没估算gas时使用，还没完全测试
 def get_fallback_gas_limit(chain_id, tx_type, is_l2=True):
     """当无法估算时的回退gas limit"""
     if chain_id == 300:  # ZKSync
@@ -440,7 +433,7 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
     # 检查是否支持EIP-1559
     if is_eip1559:
         print(f"🚀 使用EIP-1559模式")
-        eip1559_params = get_eip1559_params(w3, priority, chain_id, is_l2)
+        eip1559_params = get_eip1559_params(w3, priority, is_l2)
         if eip1559_params:
             gas_params.update(eip1559_params)
             
@@ -472,446 +465,4 @@ def get_recipient_vaild_address(recipient):
         if is_address(recipient_replace):
             #自动加0x前缀
             res = to_checksum_address(recipient_replace)
-    return res
-
-#todo:数据来自数据库
-def get_chain(chain_id=None,alchemy_network=None,is_mainnet=True):
-    res_dicts = [
-        #sepolia
-        {
-            'rpc_url': 'https://ethereum-sepolia-rpc.publicnode.com',
-            'chain_id': 11155111,
-            'contract_deposit': '0x5bD6e85cD235d4c01E04344897Fc97DBd9011155',
-            'contract_fillRelay': '0xd9ACf96764781c6a0891734226E7Cb824e2017E2',
-            'alchemy_network': 'ETH_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #base sepolia
-        {
-            'rpc_url': 'https://sepolia.base.org',
-            'chain_id': 84532,
-            'contract_deposit': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'BASE_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #zksync sepolia
-        {
-            'rpc_url': 'https://rpc.ankr.com/zksync_era_sepolia',
-            'chain_id': 300,
-            'contract_deposit': '0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea',
-            'contract_fillRelay': '0xEE89DAD29eb36835336d8A5C212FD040336B0dCb',
-            'alchemy_network': 'ZKSYNC_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #metis sepolia
-        {
-            'rpc_url': 'https://sepolia.metisdevops.link',
-            'chain_id': 59902,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '',
-            'alchemy_network': 'METIS_SEPOLIA',
-            'is_mainnet': False,
-        },
-    ]
-    [i.update({'is_eip1559': i['chain_id'] not in NOT_EIP1599_IDS}) for i in res_dicts]
-    [i.update({'is_l2': i['chain_id'] not in L1_CHAIN_IDS}) for i in res_dicts]
-    if is_mainnet:
-        res_dicts = [item for item in res_dicts if item['is_mainnet'] == True]
-    else:
-        res_dicts = [item for item in res_dicts if item['is_mainnet'] == False]
-    if chain_id:
-        res = next((item for item in res_dicts if item['chain_id'] == chain_id), {})
-    if alchemy_network:
-        res = next((item for item in res_dicts if item['alchemy_network'] == alchemy_network), {})
-    return res
-
-
-def get_w3(rpc_url='',chain_id='',is_mainnet=True):
-    if chain_id:
-        rpc_url = get_chain(chain_id=chain_id,is_mainnet=is_mainnet).get('rpc_url','')
-    if not rpc_url:
-        return
-    w3 = Web3(Web3.HTTPProvider(rpc_url))
-    # print(w3.isConnected())
-    return w3
-
-
-def get_token(chain_id=None,token_name=None,token_address=None,is_mainnet=True):
-    res = {}
-    if token_name:
-        token_name = token_name.upper()
-    if token_address:
-        token_address = to_checksum_address(token_address)
-    res_dicts = [
-        {
-            'chain_id': 11155111,
-            'token_name': 'MBT',
-            'token_address': '0xF904709e8a2E0825FcE724002bE52Dd853202750',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 11155111,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 84532,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 84532,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 300,
-            'token_name': 'MBT',
-            'token_address': '0x0c0CB7D85a0fADD43Be91656cAF933Fd18e98168',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 300,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-    ]
-    if is_mainnet:
-        res_dicts = [item for item in res_dicts if item['is_mainnet'] == True]
-    else:
-        res_dicts = [item for item in res_dicts if item['is_mainnet'] == False]
-    if chain_id and token_name:
-        res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_name'] == token_name), {})
-    if chain_id and token_address:
-        res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_address'] == token_address), {})
-    return res
-
-
-def get_decode_calldata(calldata):
-    res = {}
-    method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
-    method_id = calldata[:10]
-    encoded_data = calldata[10:]
-    if method_id == method_id_transfer_deposit:
-        function_abi = [
-            {"type": "address", "name": "vault"},
-            {"type": "bytes32", "name": "recipient"},
-            {"type": "address", "name": "inputToken"},
-            {"type": "uint256", "name": "inputAmount"},
-            {"type": "uint256", "name": "destinationChainId"},
-            {"type": "bytes", "name": "message"},
-        ]
-        abi_types = [item["type"] for item in function_abi]
-        decoded_data = decode(abi_types, decode_hex(encoded_data))
-        vault,recipient,inputToken,inputAmount,destinationChainId,message = decoded_data
-        res = {
-            'vault':to_checksum_address(vault),
-            'recipient':get_recipient_vaild_address(recipient),
-            'inputToken':to_checksum_address(inputToken),
-            'inputAmount':inputAmount,
-            'destinationChainId':destinationChainId,
-            'message':message
-        }
-    return res
-
-
-def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
-                    block_chainid, private_key=None, is_mainnet=True):
-    res = None
-    w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
-    chain_dict = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)
-    is_eip1559 = chain_dict['is_eip1559']
-    is_l2 = chain_dict['is_l2']
-    print(f"w3: {w3}")
-    contract_address = chain_dict['contract_deposit']
-    contract = w3.eth.contract(address=contract_address, abi=DEPOSIT_ABI)
-    account = w3.eth.account.from_key(private_key)
-    account_address = account.address
-    
-    # 首先构建基础交易参数来估算gas（不包含nonce，避免冲突）
-    base_tx_params = {
-        'from': account_address
-    }
-    
-    if inputToken == '0x0000000000000000000000000000000000000000':
-        base_tx_params['value'] = inputAmount
-    
-    estimated_gas = None
-    # 先估算实际需要的gas
-    try:
-        print(f"📊 估算deposit交易gas...")
-        estimated_gas = contract.functions.deposit(vault, recipient, inputToken, 
-                        inputAmount, destinationChainId, message).estimate_gas(base_tx_params)
-        print(f"📊 实际gas估算: {estimated_gas:,}")
-    except Exception as e:
-        print(f"⚠️ Gas估算失败: {e}")
-    
-    # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
-    tx_params = get_gas_params(w3, account_address, block_chainid, 
-                             priority='standard', tx_type='contract_call', 
-                             estimated_gas=estimated_gas, is_eip1559=is_eip1559, is_l2=is_l2)
-    
-    if inputToken == '0x0000000000000000000000000000000000000000':
-        tx_params['value'] = inputAmount
-    
-    try:
-        print(f"🔍 模拟执行deposit...")
-        call_result = contract.functions.deposit(vault, recipient, inputToken, 
-                        inputAmount, destinationChainId, message).call(tx_params)
-        print(f"🔍 模拟执行deposit成功: {call_result}, 可以发送交易")
-    except Exception as call_error:
-        decoded_error = decode_contract_error(call_error.args if hasattr(call_error, 'args') else call_error)
-        error_msg = str(call_error)
-        print(f"❌ 模拟执行deposit失败: {call_error}")
-        print(f"🔍 错误解析: {decoded_error}")
-        
-        # 如果是out of gas错误，尝试增加gas limit
-        if 'out of gas' in error_msg:
-            print("🔧 检测到gas不足，尝试增加gas limit...")
-            original_gas = tx_params['gas']
-            tx_params['gas'] = int(original_gas * 2)  # 增加到2倍
-            print(f"📊 调整gas limit: {original_gas:,} -> {tx_params['gas']:,}")
-            
-            try:
-                print("🔍 重新模拟执行deposit...")
-                call_result = contract.functions.deposit(vault, recipient, inputToken, 
-                                inputAmount, destinationChainId, message).call(tx_params)
-                print(f"✅ 增加gas后模拟执行成功: {call_result}, 可以发送交易")
-            except Exception as e2:
-                decoded_error2 = decode_contract_error(e2.args if hasattr(e2, 'args') else e2)
-                print(f"❌ 增加gas后仍然失败: {e2}")
-                print(f"🔍 最终错误解析: {decoded_error2}")
-                return None
-        else:
-            # 其他类型的错误（包括InsufficientBalance）
-            return None
-    
-    try:
-        tx = contract.functions.deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message).build_transaction(tx_params)
-        # print(f"交易参数: {tx}")
-        signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        print(f"交易已发送，哈希: {tx_hash.hex()}")
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-        print(f"交易确认，状态: {receipt.status}")
-        res = tx_hash.hex()
-    except Exception as e:
-        error_message = str(e)
-        print(f"交易失败: {e}")
-        
-        # 处理特定的错误情况
-        if 'already known' in error_message:
-            print(f"⚠️ deposit交易已存在于mempool中，尝试等待确认...")
-            # 尝试等待现有交易确认
-            if handle_already_known_transaction(w3, account_address, tx_params['nonce']):
-                # 如果交易确认了，返回成功（但没有tx_hash）
-                return "deposit_confirmed_by_existing"
-            else:
-                return None
-        elif 'replacement transaction underpriced' in error_message:
-            print(f"⚠️ replacement transaction underpriced - 需要更高的gas价格")
-            return None
-        else:
-            raise
-    return res
-
-
-def check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3):
-    """检查relay是否已经被填充"""
-    try:
-        contract = w3.eth.contract(address=contract_address, abi=CHECK_RELAY_FILLED_ABI)
-        is_filled = contract.functions.isRelayFilled(originChainId, depositHash, recipient, outputToken).call()
-        return is_filled
-    except Exception as e:
-        print(f"检查relay状态失败: {e}")
-        return None
-
-
-def call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        block_chainid, private_key, is_mainnet=True):
-    res = None
-    w3 = get_w3(chain_id=block_chainid,is_mainnet=is_mainnet)
-    chain_dict = get_chain(chain_id=block_chainid,is_mainnet=is_mainnet)
-    is_eip1559 = chain_dict['is_eip1559']
-    is_l2 = chain_dict['is_l2']
-    contract_address = chain_dict['contract_fillRelay']
-
-    print(f"call_fill_relay 入参 时间: {time.time()}: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash.hex()}, {message}")
-
-    relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
-    if relay_filled is True:
-        print(f"❌ RelayAlreadyFilled: 这个relay已经被填充过了,{depositHash.hex()}")
-        return None
-            
-    contract = w3.eth.contract(address=contract_address, abi=FILL_RELAY_ABI)
-    account = w3.eth.account.from_key(private_key)
-    account_address = account.address
-    
-    # 首先构建基础交易参数来估算gas（不包含nonce，避免冲突）
-    base_tx_params = {
-        'from': account_address
-    }
-    
-    if outputToken == '0x0000000000000000000000000000000000000000':
-        base_tx_params['value'] = outputAmount
-    
-    # 先估算实际需要的gas
-    estimated_gas = None
-    try:
-        print(f"📊 估算fillRelay交易gas...")
-        estimated_gas = contract.functions.fillRelay(recipient, outputToken, outputAmount, 
-                            originChainId, depositHash, message).estimate_gas(base_tx_params)
-        print(f"📊 实际gas估算: {estimated_gas:,}")
-    except Exception as e:
-        print(f"⚠️ Gas估算失败: {e}")
-    
-    # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
-    tx_params = get_gas_params(w3, account_address, block_chainid, 
-                             priority='standard', tx_type='contract_call', 
-                             estimated_gas=estimated_gas, is_eip1559=is_eip1559, is_l2=is_l2)
-    
-    # 如果等待pending交易完成后需要重新检查relay状态
-    if tx_params == "pending_completed_recheck_needed":
-        print(f"🔍 Pending交易完成后重新检查relay状态...")
-        relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
-        if relay_filled is True:
-            print(f"❌ RelayAlreadyFilled: Pending交易完成后发现relay已被填充,{depositHash.hex()}")
-            return None
-        
-        # 重新获取gas参数
-        tx_params = get_gas_params(w3, account_address, block_chainid, 
-                                 priority='standard', tx_type='contract_call', 
-                                 estimated_gas=estimated_gas, is_eip1559=is_eip1559, is_l2=is_l2)
-    
-    if not tx_params or tx_params == "pending_completed_recheck_needed":
-        print(f"❌ 无法获取有效的gas参数")
-        return None
-    
-    if outputToken == '0x0000000000000000000000000000000000000000':
-        tx_params['value'] = outputAmount
-    
-    try:
-        print(f"🔍 模拟执行fillRelay...")
-        call_result = contract.functions.fillRelay(recipient, outputToken, 
-                    outputAmount, originChainId, depositHash, message).call(tx_params)
-        print(f"🔍 模拟执行fillRelay成功: {call_result}, 可以发送交易")
-    except Exception as call_error:
-        decoded_error = decode_contract_error(call_error.args if hasattr(call_error, 'args') else call_error)
-        error_msg = str(call_error)
-        print(f"❌ 模拟执行fillRelay失败: {call_error}")
-        print(f"🔍 错误解析: {decoded_error}")
-        
-        # 如果是out of gas错误，尝试增加gas limit
-        if 'out of gas' in error_msg:
-            print("🔧 检测到gas不足，尝试增加gas limit...")
-            original_gas = tx_params['gas']
-            tx_params['gas'] = int(original_gas * 2)  # 增加到2倍
-            print(f"📊 调整gas limit: {original_gas:,} -> {tx_params['gas']:,}")
-            
-            try:
-                print("🔍 重新模拟执行fillRelay...")
-                call_result = contract.functions.fillRelay(recipient, outputToken, 
-                            outputAmount, originChainId, depositHash, message).call(tx_params)
-                print(f"✅ 增加gas后模拟执行成功: {call_result}, 可以发送交易")
-            except Exception as e2:
-                decoded_error2 = decode_contract_error(e2.args if hasattr(e2, 'args') else e2)
-                print(f"❌ 增加gas后仍然失败: {e2}")
-                print(f"🔍 最终错误解析: {decoded_error2}")
-                
-                # 如果增加gas后仍然是InsufficientBalance，那就是真的余额问题
-                if 'InsufficientBalance' in decoded_error2:
-                    print("🔍 确认是真正的余额不足问题...")
-                
-                return None
-        elif 'InsufficientBalance' in decoded_error:
-            # 直接是InsufficientBalance错误，进行余额诊断
-            print("🔍 检测到InsufficientBalance错误...")
-            return None
-        else:
-            # 其他类型的错误
-            return None
-
-    # 发送交易前再次检查relay状态（防止pending交易已经填充了这个relay）
-    if check_before_send:
-        print(f"🔍 发送交易前再次检查relay状态...")
-        relay_filled = check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3)
-        if relay_filled is True:
-            print(f"❌ RelayAlreadyFilled: 在准备发送交易时发现relay已被填充,{depositHash.hex()}")
-            return None
-    
-    try:
-        # print(f"交易参数: {tx_params}")
-        tx = contract.functions.fillRelay(recipient, outputToken, outputAmount, originChainId,
-                     depositHash, message).build_transaction(tx_params)
-        signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-        print(f"交易已发送，哈希: {tx_hash.hex()}")
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-        print(f"交易确认，状态: {receipt.status}")
-        res = tx_hash.hex()
-    except Exception as e:
-        error_message = str(e)
-        print(f"交易失败: {e}")
-        
-        # 处理特定的错误情况
-        if 'already known' in error_message:
-            print(f"⚠️ fillRelay交易已存在于mempool中，尝试等待确认...")
-            # 尝试等待现有交易确认
-            if handle_already_known_transaction(w3, account_address, tx_params['nonce']):
-                # 如果交易确认了，返回成功（但没有tx_hash）
-                return "fillRelay_confirmed_by_existing"
-            else:
-                return None
-        elif 'replacement transaction underpriced' in error_message:
-            print(f"⚠️ replacement transaction underpriced - 需要更高的gas价格")
-            return None
-        else:
-            raise
-    return res
-
-
-#todo FILL_RATE 来自across
-def call_fill_relay_by_alchemy(data):
-    '''
-        calldata_dict = {'vault': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D', 
-            'recipient': '0xd45F62ae86E01Da43a162AA3Cd320Fca3C1B178d', 
-            'inputToken': '0x0000000000000000000000000000000000000000', 
-            'inputAmount': 100000000000000, 
-            'destinationChainId': 84532, 'message': b'hello'}
-    '''
-    res = None
-
-    is_mainnet = not DEBUG_MODE
-
-    transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
-    alchemy_network = data['event']['network']
-    calldata_dict = get_decode_calldata(transaction_dict['inputData'])
-    block_chainid = calldata_dict['destinationChainId']
-    vault = to_checksum_address(calldata_dict['vault'])
-    print(f"vault: {vault}")
-    if vault not in VAULTS:
-        print(f"❌  vault not in VAULTS: {vault}")
-        return None
-    originChainId = get_chain(alchemy_network=alchemy_network,is_mainnet=is_mainnet)['chain_id']
-    token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'],
-                                    is_mainnet=is_mainnet)['token_name']
-    outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,
-                                    is_mainnet=is_mainnet).get('token_address',None)
-    if not outputToken:
-        print(f"❌ 代币不存在: {token_name_input}")
-        return res
-    outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
-    message = b''
-    recipient = to_checksum_address(calldata_dict['recipient'])
-    depositHash = get_bytes32_address(transaction_dict['hash'])
-    try:
-        res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                                block_chainid, private_key=VAULT_PRIVATE_KEY, is_mainnet=is_mainnet)
-    except Exception as e:
-        print(f"❌ call_fill_relay_by_alchemy失败: {e}")
     return res
