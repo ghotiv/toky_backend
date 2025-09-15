@@ -75,9 +75,19 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         print(f"📊 实际gas估算: {estimated_gas:,}")
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
-        # 如果gas估算失败，使用一个较大的默认值
-        estimated_gas = 150000  # 为deposit设置一个保守的默认值
-        print(f"📊 使用默认gas估算: {estimated_gas:,}")
+        error_msg = str(e)
+        
+        # 检查是否是ERC20授权相关错误
+        if 'SafeERC20' in error_msg or 'low-level call failed' in error_msg:
+            print(f"❌ 检测到ERC20授权错误，无法继续执行deposit")
+            return None
+        elif 'insufficient funds' in error_msg or 'insufficient balance' in error_msg:
+            print(f"❌ 检测到余额不足错误，无法继续执行deposit")
+            return None
+        else:
+            # 其他错误，使用默认gas值尝试
+            estimated_gas = 150000  # 为deposit设置一个保守的默认值
+            print(f"📊 使用默认gas估算: {estimated_gas:,}")
     
     # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
@@ -197,9 +207,19 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
         print(f"📊 实际gas估算: {estimated_gas:,}")
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
-        # 如果gas估算失败，使用一个较大的默认值
-        estimated_gas = 200000  # 为fillRelay设置一个保守的默认值
-        print(f"📊 使用默认gas估算: {estimated_gas:,}")
+        error_msg = str(e)
+        
+        # 检查是否是ERC20授权相关错误
+        if 'SafeERC20' in error_msg or 'low-level call failed' in error_msg:
+            print(f"❌ 检测到ERC20授权错误，无法继续执行fillRelay")
+            return None
+        elif 'insufficient funds' in error_msg or 'insufficient balance' in error_msg:
+            print(f"❌ 检测到余额不足错误，无法继续执行fillRelay")
+            return None
+        else:
+            # 其他错误，使用默认gas值尝试
+            estimated_gas = 200000  # 为fillRelay设置一个保守的默认值
+            print(f"📊 使用默认gas估算: {estimated_gas:,}")
     
     # 使用实际估算的gas获取优化的gas参数（在这里统一设置nonce）
     tx_params = get_gas_params(w3, account_address, block_chainid, 
