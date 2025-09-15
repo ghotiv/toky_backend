@@ -162,11 +162,35 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
 def check_relay_filled(originChainId, depositHash, recipient, outputToken, contract_address, w3):
     """检查relay是否已经被填充"""
     try:
+        print(f"🔍 检查relay状态...")
+        print(f"  - 合约地址: {contract_address}")
+        print(f"  - originChainId: {originChainId}")
+        print(f"  - depositHash: {depositHash.hex() if hasattr(depositHash, 'hex') else depositHash}")
+        print(f"  - recipient: {recipient}")
+        print(f"  - outputToken: {outputToken}")
+        
+        # 检查合约地址是否有效
+        if not w3.is_address(contract_address):
+            print(f"❌ 无效的合约地址: {contract_address}")
+            return None
+            
+        # 检查地址是否有代码（是否为合约）
+        code = w3.eth.get_code(contract_address)
+        if code == b'':
+            print(f"❌ 地址 {contract_address} 没有合约代码，可能未部署")
+            return None
+        
+        print(f"✅ 合约地址有效，代码长度: {len(code)} bytes")
+        
         contract = w3.eth.contract(address=contract_address, abi=CHECK_RELAY_FILLED_ABI)
         is_filled = contract.functions.isRelayFilled(originChainId, depositHash, recipient, outputToken).call()
+        print(f"✅ relay状态检查成功: {is_filled}")
         return is_filled
     except Exception as e:
-        print(f"检查relay状态失败: {e}")
+        print(f"❌ 检查relay状态失败: {e}")
+        print(f"❌ 错误类型: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
