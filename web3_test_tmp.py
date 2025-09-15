@@ -1,16 +1,10 @@
-from web3 import Web3
-
-try:
-    from web3.middleware import ExtraDataToPOAMiddleware as geth_poa_middleware
-except Exception as e:
-    from web3.middleware import geth_poa_middleware
-
-from eth_abi import decode
-from eth_utils import to_checksum_address, decode_hex, keccak, is_address, to_bytes
+from eth_utils import to_checksum_address
 
 from my_conf import *
 
-from web3_util import *
+from data_util import get_token
+from web3_util import get_wei_amount, get_bytes32_address
+from web3_call import get_decode_calldata, call_deposit, call_fill_relay
 
 def test_get_decode_calldata():
     calldata = '0xeef40c38000000000000000000000000ba37d7ed1cff3ddab5f23ee99525291dca00999d000000000000000000000000d45f62ae86e01da43a162aa3cd320fca3c1b178d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005af3107a40000000000000000000000000000000000000000000000000000000000000014a3400000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000'
