@@ -12,11 +12,6 @@ def test_get_decode_calldata():
     print(calldata_dict)
 
 def test_call_deposit(private_key=None,recipient=None):
-    if DEBUG_MODE:
-        is_mainnet = False
-    else:
-        is_mainnet = True
-
     block_chainid = 84532
     # block_chainid = 11155111
 
@@ -26,7 +21,7 @@ def test_call_deposit(private_key=None,recipient=None):
 
     # inputToken = get_token(chain_id=block_chainid,token_name='ETH',is_mainnet=is_mainnet)['token_address']
     # inputAmount = get_wei_amount(0.001
-    inputToken = get_token(chain_id=block_chainid,token_name='MBT',is_mainnet=is_mainnet)['token_address']
+    inputToken = get_token(chain_id=block_chainid,token_name='MBT')['token_address']
     inputAmount = get_wei_amount(0.1)
 
     destinationChainId = 11155111
@@ -34,7 +29,7 @@ def test_call_deposit(private_key=None,recipient=None):
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(VAULT, recipient_bytes32, inputToken, inputAmount, 
-                    destinationChainId, message, block_chainid, is_mainnet=is_mainnet,
+                    destinationChainId, message, block_chainid,
                     private_key=private_key)
 
 def test_call_fill_relay():
@@ -49,7 +44,7 @@ def test_call_fill_relay():
     # depositHash = get_bytes32_address('0x505972ce768406f4b58c25f49439c91664e4e8e5cb51ccfb13f192f5308accc3')
     depositHash = b'\xe4QowE\xbd\xb4\x8b$+\x15\xec\x12*oh\xab\xde<G\xfb\xb3\xeb\xad\x13\x13\x9a(\xad\xc1\x94\xd3'
     call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                        block_chainid, private_key=VAULT_PRIVATE_KEY, is_mainnet=False)
+                        block_chainid, private_key=VAULT_PRIVATE_KEY)
 
 if __name__ == '__main__':
     test_call_deposit(private_key=CLIENT_PRIVATE_KEY,recipient=CLIENT)
