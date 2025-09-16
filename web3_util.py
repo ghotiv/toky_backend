@@ -281,7 +281,7 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
                 multiplier = 1.2  # 慢速：当前价格的1.2倍  
                 gas_price = int(current_gas_price * multiplier)
             else:  # standard
-                multiplier = 2.0  # 标准：当前价格的2倍
+                multiplier = 1.5  # 标准：当前价格的1.5倍
                 gas_price = int(current_gas_price * multiplier)
             
             # 设置最低限制，避免过低
