@@ -118,7 +118,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'rpc_url': 'https://sepolia.mode.network',
             'chain_id': 919,
             'contract_deposit': '0x62d105b659184cf82fe0e2f021397821ac5dca77',
-            'contract_fillRelay': '0x50F2A4c7eeD2836D1F175f6A317bC5f737AEbcde',
+            'contract_fillRelay': '0xC4489dD6Fb5032BAD5bbF66583B2D6532Bc97293',
             'alchemy_network': 'MODE_SEPOLIA',
             'is_mainnet': False,
         },
