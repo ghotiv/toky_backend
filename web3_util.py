@@ -402,7 +402,7 @@ def get_eip1559_params(w3, priority='standard', is_l2=None):
                         multiplier = 1.2  # 慢速：当前价格的1.2倍  
                         priority_fee = int(current_gas_price * multiplier)
                     else:  # standard
-                        multiplier = 2.0  # 标准：当前价格的2倍
+                        multiplier = 1.5  # 标准：当前价格的1.5倍
                         priority_fee = int(current_gas_price * multiplier)
                     
                     # 设置最低限制，避免过低
