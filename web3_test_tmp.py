@@ -13,7 +13,8 @@ def test_get_decode_calldata():
 
 def test_call_deposit(private_key=None,recipient=None):
     # block_chainid = 84532
-    block_chainid = 11155111
+    # block_chainid = 11155111
+    block_chainid = 300
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     # inputAmount = get_wei_amount(0.0001)
