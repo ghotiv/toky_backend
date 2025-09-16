@@ -24,6 +24,7 @@ def test_call_deposit(private_key=None,recipient=None):
     # inputAmount = get_wei_amount(0.001)
     inputToken = get_token(chain_id=block_chainid,token_name='MBT')['token_address']
     inputAmount = get_wei_amount(0.001)
+    inputAmount = get_wei_amount(1)
 
     # destinationChainId = 11155111
     # destinationChainId = 300
