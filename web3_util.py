@@ -241,6 +241,15 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
                 return base_price
             else:  # standard
                 return int(base_price * 1.1)
+        elif chain_id in [421614, 42161]:  # Arbitrum Sepolia/Mainnet
+            # Arbitrum 使用动态pricing，基于网络实际价格
+            print(f"📊 Arbitrum 动态gas price: {w3.from_wei(current_gas_price, 'gwei')} gwei")
+            if priority == 'fast':
+                return int(current_gas_price * 1.5)
+            elif priority == 'slow':
+                return int(current_gas_price * 1.1)
+            else:  # standard
+                return int(current_gas_price * 1.25)
         
         # L2网络策略：完全基于实际价格动态调整
         if is_l2:
@@ -278,6 +287,8 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
             return w3.to_wei('25', 'gwei')
         elif chain_id in [137, 80001]:  # Polygon networks
             return w3.to_wei('30', 'gwei')
+        elif chain_id in [421614, 42161]:  # Arbitrum networks
+            return w3.to_wei('0.1', 'gwei')
         elif chain_id == 300:  # ZKSync
             return w3.to_wei('0.25', 'gwei')
         elif is_l2:  # L2网络
@@ -347,6 +358,9 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
                 print(f"📊 Polygon Amoy 最低优先费用: {w3.from_wei(min_priority_fee, 'gwei')} gwei")
             elif chain_id in [137, 80001]:  # Polygon Mainnet/Mumbai
                 min_priority_fee = w3.to_wei('30', 'gwei')  # Polygon 主网通常需要更高
+            elif chain_id in [421614, 42161]:  # Arbitrum Sepolia/Mainnet
+                min_priority_fee = w3.to_wei('0.01', 'gwei')  # Arbitrum 使用较低的费用
+                print(f"📊 Arbitrum 最低优先费用: {w3.from_wei(min_priority_fee, 'gwei')} gwei")
             else:
                 min_priority_fee = w3.to_wei('0.001', 'gwei')  # 其他L2的默认最低值
             
@@ -439,12 +453,30 @@ def estimate_gas_for_tx_type(w3, tx_type, account_address, to_address=None, valu
             
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
+        # 对于 Arbitrum 网络，尝试使用更大的基础估算
+        if w3.eth.chain_id in [421614, 42161]:
+            print(f"🔧 Arbitrum网络，尝试使用保守估算...")
+            if tx_type == 'erc20_approve':
+                return 100000  # Arbitrum approve 保守估算
+            elif tx_type == 'erc20_transfer':
+                return 80000
+            elif tx_type == 'contract_call':
+                return 150000
+            else:
+                return 100000
         return None
 
 def get_gas_buffer_multiplier(chain_id, tx_type='contract_call', is_l2=True):
     """根据网络特性和交易类型获取gas缓冲倍数"""
     if chain_id == 300:  # ZKSync
         return 2.5  # ZKSync需要更大缓冲
+    elif chain_id in [421614, 42161]:  # Arbitrum networks
+        if tx_type == 'erc20_approve':
+            return 4.0  # Arbitrum approve操作gas估算特别不准
+        elif tx_type == 'contract_call':
+            return 3.0  # 复杂合约调用需要更大缓冲
+        else:
+            return 2.5  # 其他操作也需要较大缓冲
     elif not is_l2:  # 主网
         if tx_type == 'erc20_approve':
             return 1.8  # approve操作需要更大缓冲
@@ -464,6 +496,14 @@ def get_fallback_gas_limit(chain_id, tx_type, is_l2=True):
             'erc20_approve': 500000,
             'contract_call': 1000000,
             'complex_contract': 1500000
+        }
+    elif chain_id in [421614, 42161]:  # Arbitrum networks
+        gas_map = {
+            'eth_transfer': 50000,
+            'erc20_transfer': 120000,
+            'erc20_approve': 150000,  # Arbitrum approve需要更多gas
+            'contract_call': 250000,
+            'complex_contract': 400000
         }
     elif not is_l2:  # 主网
         gas_map = {

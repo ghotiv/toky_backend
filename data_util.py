@@ -41,6 +41,24 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'POLYGON_AMOY',
             'is_mainnet': False,
         },
+        #arbitrum sepolia
+        {
+            'rpc_url': 'https://sepolia-rollup.arbitrum.io/rpc',
+            'chain_id': 421614,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
+            'alchemy_network': 'ARBITRUM_SEPOLIA',
+            'is_mainnet': False,
+        },
+        #optimism sepolia
+        {
+            'rpc_url': 'https://sepolia.optimism.io',
+            'chain_id': 11155420,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
+            'alchemy_network': 'OPT_SEPOLIA',
+            'is_mainnet': False,
+        },
         #metis sepolia
         {
             'rpc_url': 'https://sepolia.metisdevops.link',
@@ -117,7 +135,30 @@ def get_token(chain_id=None,token_name=None,token_address=None):
             'token_address': '0x0000000000000000000000000000000000000000',
             'is_mainnet': False,
         },
-        
+        {
+            'chain_id': 421614,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 421614,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 11155420,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 11155420,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
     ]
     if chain_id and token_name:
         res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_name'] == token_name), {})
