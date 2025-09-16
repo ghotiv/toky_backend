@@ -219,6 +219,29 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
         # 获取当前网络gas价格
         current_gas_price = w3.eth.gas_price
         
+        # Polygon网络特殊处理：需要满足最低gas price要求
+        if chain_id == 80002:  # Polygon Amoy
+            min_gas_price = w3.to_wei('25', 'gwei')
+            base_price = max(current_gas_price, min_gas_price)
+            print(f"📊 Polygon Amoy 最低gas price: {w3.from_wei(min_gas_price, 'gwei')} gwei")
+            print(f"📊 调整后base price: {w3.from_wei(base_price, 'gwei')} gwei")
+            if priority == 'fast':
+                return int(base_price * 1.2)  # 提高20%
+            elif priority == 'slow':
+                return base_price  # 使用最低价格
+            else:  # standard
+                return int(base_price * 1.1)  # 提高10%
+        elif chain_id in [137, 80001]:  # Polygon Mainnet/Mumbai
+            min_gas_price = w3.to_wei('30', 'gwei')
+            base_price = max(current_gas_price, min_gas_price)
+            print(f"📊 Polygon 最低gas price: {w3.from_wei(min_gas_price, 'gwei')} gwei")
+            if priority == 'fast':
+                return int(base_price * 1.2)
+            elif priority == 'slow':
+                return base_price
+            else:  # standard
+                return int(base_price * 1.1)
+        
         # L2网络策略：完全基于实际价格动态调整
         if is_l2:
             # L2网络使用实际价格的倍数，如果价格为0则使用1 wei作为基础
@@ -251,7 +274,11 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
     except Exception as e:
         print(f"⚠️ 获取动态gas价格失败，使用默认值: {e}")
         # 回退到保守的默认价格（只在完全无法获取价格时使用）
-        if chain_id == 300:  # ZKSync
+        if chain_id == 80002:  # Polygon Amoy
+            return w3.to_wei('25', 'gwei')
+        elif chain_id in [137, 80001]:  # Polygon networks
+            return w3.to_wei('30', 'gwei')
+        elif chain_id == 300:  # ZKSync
             return w3.to_wei('0.25', 'gwei')
         elif is_l2:  # L2网络
             return w3.to_wei('0.001', 'gwei')  # 极低的默认价格
@@ -313,12 +340,22 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
         else:
             # L2网络优先费用基于base_fee的百分比
             print(f"📊 L2网络优先费用计算...")
+            
+            # 为不同L2网络设置特定的最低优先费用
+            if chain_id == 80002:  # Polygon Amoy
+                min_priority_fee = w3.to_wei('25', 'gwei')  # Polygon 要求最少25 gwei
+                print(f"📊 Polygon Amoy 最低优先费用: {w3.from_wei(min_priority_fee, 'gwei')} gwei")
+            elif chain_id in [137, 80001]:  # Polygon Mainnet/Mumbai
+                min_priority_fee = w3.to_wei('30', 'gwei')  # Polygon 主网通常需要更高
+            else:
+                min_priority_fee = w3.to_wei('0.001', 'gwei')  # 其他L2的默认最低值
+            
             if priority == 'fast':
-                priority_fee = max(base_fee // 50, 1)  # base_fee的2%，最少1 wei
+                priority_fee = max(base_fee // 50, min_priority_fee)
             elif priority == 'slow':
-                priority_fee = max(base_fee // 500, 1)  # base_fee的0.2%，最少1 wei
+                priority_fee = max(base_fee // 500, min_priority_fee)
             else:  # standard
-                priority_fee = max(base_fee // 100, 1)  # base_fee的1%，最少1 wei
+                priority_fee = max(base_fee // 100, min_priority_fee)
         
         print(f"📊 计算结果: PriorityFee={w3.from_wei(priority_fee, 'gwei'):.12f} gwei")
 
