@@ -70,7 +70,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
         },
         #blast sepolia
         {
-            'rpc_url': 'https://sepolia.blast.io',
+            'rpc_url': 'https://rpc.ankr.com/blast_testnet_sepolia',
             'chain_id': 168587773,
             'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
             'contract_fillRelay': '0x72254a6Bc561aBF70167eD155451b58C82c0b5Ad',
