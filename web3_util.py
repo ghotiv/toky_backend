@@ -13,6 +13,17 @@ def get_bytes32_address(address):
     res = to_bytes(hexstr=address).rjust(32, b'\0')
     return res
 
+#暂时只支持evm地址
+def get_recipient_vaild_address(recipient):
+    res = None
+    recipient_str = recipient.hex()
+    if 24*'0' in recipient_str:
+        recipient_replace = recipient_str.replace(24*'0','')
+        if is_address(recipient_replace):
+            #自动加0x前缀
+            res = to_checksum_address(recipient_replace)
+    return res
+
 def get_method_id(func_sign):
     return '0x'+keccak(text=func_sign).hex()[:8]
 
@@ -455,14 +466,3 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
     print(f"📊 GasPrice: {gas_price_gwei:.2f} gwei, GasLimit: {gas_limit:,}")
     
     return gas_params
-
-#暂时只支持evm地址
-def get_recipient_vaild_address(recipient):
-    res = None
-    recipient_str = recipient.hex()
-    if 24*'0' in recipient_str:
-        recipient_replace = recipient_str.replace(24*'0','')
-        if is_address(recipient_replace):
-            #自动加0x前缀
-            res = to_checksum_address(recipient_replace)
-    return res

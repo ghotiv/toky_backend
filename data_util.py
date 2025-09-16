@@ -2,36 +2,9 @@ from my_conf import *
 from eth_utils import to_checksum_address
 
 #todo:数据来自数据库
-def get_chain(chain_id=None,alchemy_network=None):
+def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
     res = {}
     res_dicts = [
-        #ethereum mainnet
-        {
-            'rpc_url': 'https://ethereum-rpc.publicnode.com',
-            'chain_id': 1,
-            'contract_deposit': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
-            'contract_fillRelay': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
-            'alchemy_network': 'ETH_MAINNET',
-            'is_mainnet': True,
-        },
-        #base mainnet
-        {
-            'rpc_url': 'https://mainnet.base.org',
-            'chain_id': 8453,
-            'contract_deposit': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
-            'contract_fillRelay': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
-            'alchemy_network': 'BASE_MAINNET',
-            'is_mainnet': True,
-        },
-        #zksync era mainnet
-        {
-            'rpc_url': 'https://mainnet.era.zksync.io',
-            'chain_id': 324,
-            'contract_deposit': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
-            'contract_fillRelay': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
-            'alchemy_network': 'ZKSYNC_MAINNET',
-            'is_mainnet': True,
-        },
         #sepolia
         {
             'rpc_url': 'https://ethereum-sepolia-rpc.publicnode.com',
@@ -59,6 +32,15 @@ def get_chain(chain_id=None,alchemy_network=None):
             'alchemy_network': 'ZKSYNC_SEPOLIA',
             'is_mainnet': False,
         },
+        #Polygon Amoy
+        {
+            'rpc_url': 'https://rpc-amoy.polygon.technology',
+            'chain_id': 80002,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
+            'alchemy_network': 'POLYGON_AMOY',
+            'is_mainnet': False,
+        },
         #metis sepolia
         {
             'rpc_url': 'https://sepolia.metisdevops.link',
@@ -69,6 +51,8 @@ def get_chain(chain_id=None,alchemy_network=None):
             'is_mainnet': False,
         },
     ]
+    if all_chain:
+        return res_dicts
     [i.update({'is_eip1559': i['chain_id'] not in NOT_EIP1599_IDS}) for i in res_dicts]
     [i.update({'is_l2': i['chain_id'] not in L1_CHAIN_IDS}) for i in res_dicts]
     if chain_id:
@@ -121,6 +105,19 @@ def get_token(chain_id=None,token_name=None,token_address=None):
             'token_address': '0x0000000000000000000000000000000000000000',
             'is_mainnet': False,
         },
+        {
+            'chain_id': 80002,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 80002,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        
     ]
     if chain_id and token_name:
         res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_name'] == token_name), {})

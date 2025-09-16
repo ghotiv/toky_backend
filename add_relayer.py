@@ -2,6 +2,17 @@
 """
 添加授权Relayer的脚本
 使用deployer账户调用addAuthorizedRelayer函数
+
+用法:
+  python add_relayer.py <chain_id> [relayer_address]
+  
+参数:
+  chain_id         - 目标链ID
+  relayer_address  - 要授权的Relayer地址 (可选，默认使用VAULT地址)
+  
+示例:
+  python add_relayer.py 84532                              # 在Base测试网授权默认VAULT地址
+  python add_relayer.py 84532 0x1234...                    # 在Base测试网授权指定地址
 """
 
 import time
@@ -9,7 +20,7 @@ import sys
 from data_util import *
 from web3_util import *
 from web3_call import *
-from my_private_conf import DEPLOYER_PRIVATE_KEY
+from my_private_conf import DEPLOYER_PRIVATE_KEY, VAULT
 from my_conf import DEBUG_MODE
 
 # addAuthorizedRelayer ABI
@@ -126,21 +137,32 @@ def main():
     
     print(f"🌐 当前模式: {DEBUG_MODE}")
     
-    # 支持的网络
-    networks = {
-        "1": {"name": "以太坊主网", "chain_id": 1},
-        "2": {"name": "以太坊Sepolia测试网", "chain_id": 11155111},
-        "3": {"name": "Base主网", "chain_id": 8453},
-        "4": {"name": "Base测试网", "chain_id": 84532},
-        "5": {"name": "ZKSync Era主网", "chain_id": 324},
-        "6": {"name": "ZKSync Era测试网", "chain_id": 300},
+    # 从配置文件获取支持的网络
+    all_chains = get_chain(all_chain=True)
+    networks = {}
+    network_names = {
+        11155111: "以太坊Sepolia测试网",
+        84532: "Base测试网", 
+        300: "ZKSync Era测试网",
+        59902: "Metis测试网",
+        80002: "Polygon Amoy测试网"
     }
     
+    for i, chain_config in enumerate(all_chains, 1):
+        chain_id = chain_config['chain_id']
+        network_name = network_names.get(chain_id, f"链ID {chain_id}")
+        networks[str(i)] = {
+            "name": network_name,
+            "chain_id": chain_id,
+            "config": chain_config
+        }
+    
     # 命令行参数处理
-    if len(sys.argv) >= 3:
+    if len(sys.argv) >= 2:
         try:
             chain_id = int(sys.argv[1])
-            relayer_address = sys.argv[2]
+            # 如果提供了第二个参数，使用它作为relayer地址，否则使用默认的VAULT地址
+            relayer_address = sys.argv[2] if len(sys.argv) >= 3 else VAULT
             
             if not relayer_address.startswith('0x') or len(relayer_address) != 42:
                 print(f"❌ 无效的地址格式: {relayer_address}")
@@ -149,6 +171,8 @@ def main():
             print(f"📋 使用命令行参数:")
             print(f"   Chain ID: {chain_id}")
             print(f"   Relayer地址: {relayer_address}")
+            if len(sys.argv) < 3:
+                print(f"   📝 使用默认VAULT地址")
             
             tx_hash = add_authorized_relayer(chain_id, relayer_address)
             if tx_hash:
@@ -164,10 +188,14 @@ def main():
         # 交互式模式
         print("\n可用网络:")
         for key, network in networks.items():
-            print(f"  {key}. {network['name']} (Chain ID: {network['chain_id']})")
+            # 检查是否有有效的合约地址
+            contract_address = network['config'].get('contract_fillRelay', '')
+            status = "✅" if contract_address and contract_address != '' else "❌"
+            print(f"  {key}. {network['name']} (Chain ID: {network['chain_id']}) {status}")
         
         try:
-            choice = input("\n请选择网络 (1-6): ").strip()
+            max_choice = len(networks)
+            choice = input(f"\n请选择网络 (1-{max_choice}): ").strip()
             if choice not in networks:
                 print("❌ 无效的选择")
                 return
@@ -175,7 +203,11 @@ def main():
             chain_id = networks[choice]["chain_id"]
             network_name = networks[choice]["name"]
             
-            relayer_address = input("请输入要授权的Relayer地址: ").strip()
+            relayer_address = input(f"请输入要授权的Relayer地址 (默认: {VAULT}): ").strip()
+            if not relayer_address:
+                relayer_address = VAULT
+                print(f"📝 使用默认VAULT地址: {relayer_address}")
+            
             if not relayer_address.startswith('0x') or len(relayer_address) != 42:
                 print(f"❌ 无效的地址格式")
                 return
