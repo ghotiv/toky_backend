@@ -5,6 +5,33 @@ from eth_utils import to_checksum_address
 def get_chain(chain_id=None,alchemy_network=None):
     res = {}
     res_dicts = [
+        #ethereum mainnet
+        {
+            'rpc_url': 'https://ethereum-rpc.publicnode.com',
+            'chain_id': 1,
+            'contract_deposit': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
+            'contract_fillRelay': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
+            'alchemy_network': 'ETH_MAINNET',
+            'is_mainnet': True,
+        },
+        #base mainnet
+        {
+            'rpc_url': 'https://mainnet.base.org',
+            'chain_id': 8453,
+            'contract_deposit': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
+            'contract_fillRelay': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
+            'alchemy_network': 'BASE_MAINNET',
+            'is_mainnet': True,
+        },
+        #zksync era mainnet
+        {
+            'rpc_url': 'https://mainnet.era.zksync.io',
+            'chain_id': 324,
+            'contract_deposit': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
+            'contract_fillRelay': '0x1234567890123456789012345678901234567890',  # TODO: 添加实际的主网合约地址
+            'alchemy_network': 'ZKSYNC_MAINNET',
+            'is_mainnet': True,
+        },
         #sepolia
         {
             'rpc_url': 'https://ethereum-sepolia-rpc.publicnode.com',

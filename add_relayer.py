@@ -36,8 +36,17 @@ def add_authorized_relayer(chain_id, relayer_address):
         w3 = get_w3(chain_id=chain_id)
         chain_dict = get_chain(chain_id=chain_id)
         
+        # 检查链配置是否存在
+        if not chain_dict:
+            print(f"❌ 不支持的链ID: {chain_id}")
+            return None
+        
         # 获取fillRelay合约地址（通常这个合约也有addAuthorizedRelayer功能）
-        contract_address = chain_dict['contract_fillRelay']
+        contract_address = chain_dict.get('contract_fillRelay')
+        if not contract_address or contract_address == '' or contract_address == '0x1234567890123456789012345678901234567890':
+            print(f"❌ 链ID {chain_id} 的 fillRelay 合约地址未配置或无效")
+            print(f"💡 请在 data_util.py 中配置正确的合约地址")
+            return None
         print(f"📍 合约地址: {contract_address}")
         
         # 创建合约实例
