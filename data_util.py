@@ -59,13 +59,13 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'OPT_SEPOLIA',
             'is_mainnet': False,
         },
-        #metis sepolia
+        #bsc testnet
         {
-            'rpc_url': 'https://sepolia.metisdevops.link',
-            'chain_id': 59902,
+            'rpc_url': 'https://data-seed-prebsc-1-s1.binance.org:8545',
+            'chain_id': 97,
             'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '',
-            'alchemy_network': 'METIS_SEPOLIA',
+            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
+            'alchemy_network': 'BNB_TESTNET',
             'is_mainnet': False,
         },
     ]
@@ -149,14 +149,26 @@ def get_token(chain_id=None,token_name=None,token_address=None):
         },
         {
             'chain_id': 11155420,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 11155420,
             'token_name': 'ETH',
             'token_address': '0x0000000000000000000000000000000000000000',
             'is_mainnet': False,
         },
         {
-            'chain_id': 11155420,
+            'chain_id': 97,
             'token_name': 'MBT',
             'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 97,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
             'is_mainnet': False,
         },
     ]
