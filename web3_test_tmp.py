@@ -27,7 +27,7 @@ def test_call_deposit(private_key=None,recipient=None):
 
     # destinationChainId = 11155111
     # destinationChainId = 300
-    destinationChainId = 3441006
+    destinationChainId = 167009
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(VAULT, recipient_bytes32, inputToken, inputAmount, 
