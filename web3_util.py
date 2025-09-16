@@ -291,6 +291,31 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
             final_gwei = w3.from_wei(gas_price, 'gwei')
             print(f"📊 BSC 传统模式 {priority} gas价格: {final_gwei:.2f} gwei (当前价格 × {multiplier})")
             return gas_price
+        elif chain_id in [59141, 59144]:  # Linea Sepolia/Mainnet
+            # Linea 网络需要更高的gas价格确保快速确认
+            current_gwei = w3.from_wei(current_gas_price, 'gwei')
+            print(f"📊 Linea 当前网络gas价格: {current_gwei:.2f} gwei")
+            
+            # Linea 网络优化倍数（基于多次实际交易：1.056 gwei 和 0.054 gwei）
+            # Linea 价格波动极大，使用较低倍数 + 灵活最低限制
+            if priority == 'fast':
+                multiplier = 1.2  # 快速：当前价格的1.2倍
+                gas_price = int(current_gas_price * multiplier)
+                min_fee = w3.to_wei('0.2', 'gwei')  # 快速最低0.2 gwei
+            elif priority == 'slow':
+                multiplier = 0.5  # 慢速：当前价格的0.5倍  
+                gas_price = int(current_gas_price * multiplier)
+                min_fee = w3.to_wei('0.06', 'gwei')  # 慢速最低0.06 gwei
+            else:  # standard
+                multiplier = 0.8  # 标准：当前价格的0.8倍
+                gas_price = int(current_gas_price * multiplier)
+                min_fee = w3.to_wei('0.1', 'gwei')  # 标准最低0.1 gwei
+            
+            gas_price = max(gas_price, min_fee)
+            
+            final_gwei = w3.from_wei(gas_price, 'gwei')
+            print(f"📊 Linea {priority} gas价格: {final_gwei:.2f} gwei (当前价格 × {multiplier})")
+            return gas_price
         
         # L2网络策略：完全基于实际价格动态调整
         if is_l2:
@@ -422,6 +447,43 @@ def get_eip1559_params(w3, priority='standard', is_l2=None):
                     else:  # standard
                         priority_fee = w3.to_wei('0.5', 'gwei')
                     print(f"📊 BSC {priority} 优先费用(回退): {w3.from_wei(priority_fee, 'gwei')} gwei")
+            elif chain_id in [59141, 59144]:  # Linea Sepolia/Mainnet - L1模式动态计算
+                print(f"📊 Linea网络动态优先费用计算...")
+                try:
+                    current_gas_price = w3.eth.gas_price
+                    current_gwei = w3.from_wei(current_gas_price, 'gwei')
+                    print(f"📊 当前网络gas价格: {current_gwei:.2f} gwei")
+                    
+                    # Linea 优化倍数（基于多次实际交易：1.056 gwei 和 0.054 gwei）
+                    # Linea 价格波动极大，使用较低倍数 + 灵活最低限制
+                    if priority == 'fast':
+                        multiplier = 1.2  # 快速：当前价格的1.2倍
+                        priority_fee = int(current_gas_price * multiplier)
+                        min_fee = w3.to_wei('0.2', 'gwei')  # 快速最低0.2 gwei
+                    elif priority == 'slow':
+                        multiplier = 0.5  # 慢速：当前价格的0.5倍  
+                        priority_fee = int(current_gas_price * multiplier)
+                        min_fee = w3.to_wei('0.06', 'gwei')  # 慢速最低0.06 gwei
+                    else:  # standard
+                        multiplier = 0.8  # 标准：当前价格的0.8倍
+                        priority_fee = int(current_gas_price * multiplier)
+                        min_fee = w3.to_wei('0.1', 'gwei')  # 标准最低0.1 gwei
+                    
+                    priority_fee = max(priority_fee, min_fee)
+                    
+                    final_gwei = w3.from_wei(priority_fee, 'gwei')
+                    print(f"📊 Linea {priority} 优先费用: {final_gwei:.2f} gwei (当前价格 × {multiplier})")
+                    
+                except Exception as e:
+                    print(f"⚠️ 获取当前gas价格失败，使用默认值: {e}")
+                    # Linea 回退到基于实际交易的固定值
+                    if priority == 'fast':
+                        priority_fee = w3.to_wei('0.2', 'gwei')
+                    elif priority == 'slow':
+                        priority_fee = w3.to_wei('0.06', 'gwei')
+                    else:  # standard
+                        priority_fee = w3.to_wei('0.1', 'gwei')
+                    print(f"📊 Linea {priority} 优先费用(回退): {w3.from_wei(priority_fee, 'gwei')} gwei")
             elif suggested_priority_fee:
                 print(f"📊 使用建议优先费用: {w3.from_wei(suggested_priority_fee, 'gwei'):.12f} gwei")
                 if priority == 'fast':

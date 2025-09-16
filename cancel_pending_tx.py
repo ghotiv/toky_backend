@@ -36,6 +36,9 @@ def cancel_pending_transaction(chain_id, account_private_key, account_address, s
         from my_conf import NOT_EIP1599_IDS
         supports_eip1559 = chain_id not in NOT_EIP1599_IDS
         
+        # 初始化变量
+        cancel_gas_gwei = 0
+        
         if supports_eip1559:
             print(f"📊 使用EIP-1559模式")
             from web3_util import get_eip1559_params
@@ -43,6 +46,7 @@ def cancel_pending_transaction(chain_id, account_private_key, account_address, s
             if gas_params:
                 max_fee_gwei = w3.from_wei(gas_params['maxFeePerGas'], 'gwei')
                 priority_fee_gwei = w3.from_wei(gas_params['maxPriorityFeePerGas'], 'gwei')
+                cancel_gas_gwei = max_fee_gwei  # 使用MaxFee作为显示的gas价格
                 print(f"📊 MaxFee: {max_fee_gwei:.2f} gwei, Priority: {priority_fee_gwei:.2f} gwei")
                 
                 # 构建EIP-1559取消交易
@@ -99,11 +103,31 @@ def cancel_pending_transaction(chain_id, account_private_key, account_address, s
         print(f"📤 取消交易已发送！")
         print(f"🔗 交易哈希: {tx_hash.hex()}")
         
-        # BSC Testnet 区块链浏览器链接
+        # 区块链浏览器链接
         if chain_id == 97:
             print(f"🔗 BSCScan: https://testnet.bscscan.com/tx/{tx_hash.hex()}")
         elif chain_id == 56:
             print(f"🔗 BSCScan: https://bscscan.com/tx/{tx_hash.hex()}")
+        elif chain_id == 59141:
+            print(f"🔗 LineaScan: https://sepolia.lineascan.build/tx/{tx_hash.hex()}")
+        elif chain_id == 59144:
+            print(f"🔗 LineaScan: https://lineascan.build/tx/{tx_hash.hex()}")
+        elif chain_id == 11155111:
+            print(f"🔗 Etherscan: https://sepolia.etherscan.io/tx/{tx_hash.hex()}")
+        elif chain_id == 1:
+            print(f"🔗 Etherscan: https://etherscan.io/tx/{tx_hash.hex()}")
+        elif chain_id == 84532:
+            print(f"🔗 BaseScan: https://sepolia.basescan.org/tx/{tx_hash.hex()}")
+        elif chain_id == 8453:
+            print(f"🔗 BaseScan: https://basescan.org/tx/{tx_hash.hex()}")
+        elif chain_id == 421614:
+            print(f"🔗 Arbiscan: https://sepolia.arbiscan.io/tx/{tx_hash.hex()}")
+        elif chain_id == 42161:
+            print(f"🔗 Arbiscan: https://arbiscan.io/tx/{tx_hash.hex()}")
+        elif chain_id == 919:
+            print(f"🔗 Mode Explorer: https://sepolia.explorer.mode.network/tx/{tx_hash.hex()}")
+        else:
+            print(f"🔗 交易哈希: {tx_hash.hex()}")
         
         return tx_hash.hex()
         
