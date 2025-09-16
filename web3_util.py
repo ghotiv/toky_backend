@@ -269,18 +269,28 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
             else:  # standard
                 return int(current_gas_price * 1.25)
         elif chain_id in [97, 56]:  # BSC Testnet/Mainnet
-            # BSC 网络需要较高的最低gas价格
-            min_gas_price = w3.to_wei('3', 'gwei')  # BSC最低3 gwei
-            base_price = max(current_gas_price, min_gas_price)
-            print(f"📊 BSC 最低gas price: {w3.from_wei(min_gas_price, 'gwei')} gwei")
-            print(f"📊 调整后base price: {w3.from_wei(base_price, 'gwei')} gwei")
+            # BSC 网络使用动态计算，基于当前网络价格
+            current_gwei = w3.from_wei(current_gas_price, 'gwei')
+            print(f"📊 BSC 传统模式当前网络gas价格: {current_gwei:.2f} gwei")
             
+            # 基于当前价格的动态倍数，与EIP-1559模式保持一致
             if priority == 'fast':
-                return int(base_price * 2.0)  # 快速: 6 gwei
+                multiplier = 3.0  # 快速：当前价格的3倍
+                gas_price = int(current_gas_price * multiplier)
             elif priority == 'slow':
-                return int(base_price * 1.2)  # 慢速: 3.6 gwei
+                multiplier = 1.2  # 慢速：当前价格的1.2倍  
+                gas_price = int(current_gas_price * multiplier)
             else:  # standard
-                return int(base_price * 1.5)  # 标准: 4.5 gwei
+                multiplier = 2.0  # 标准：当前价格的2倍
+                gas_price = int(current_gas_price * multiplier)
+            
+            # 设置最低限制，避免过低
+            min_fee = w3.to_wei('0.1', 'gwei')  # 最低0.1 gwei
+            gas_price = max(gas_price, min_fee)
+            
+            final_gwei = w3.from_wei(gas_price, 'gwei')
+            print(f"📊 BSC 传统模式 {priority} gas价格: {final_gwei:.2f} gwei (当前价格 × {multiplier})")
+            return gas_price
         
         # L2网络策略：完全基于实际价格动态调整
         if is_l2:
