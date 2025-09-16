@@ -342,7 +342,7 @@ def get_token(chain_id=None,token_name=None,token_address=None):
         {
             'chain_id': 999999999,
             'token_name': 'MBT',
-            'token_address': '0xc4c5896a32e75ed3b59c48620e3b0833d0f98820',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
             'is_mainnet': False,
         },
         {
