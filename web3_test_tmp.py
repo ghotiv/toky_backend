@@ -25,7 +25,8 @@ def test_call_deposit(private_key=None,recipient=None):
     inputAmount = get_wei_amount(0.01)
 
     # destinationChainId = 11155111
-    destinationChainId = 300
+    # destinationChainId = 300
+    destinationChainId = 84532
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(VAULT, recipient_bytes32, inputToken, inputAmount, 
