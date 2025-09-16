@@ -7,6 +7,13 @@ from my_conf import *
 def is_poa_chain(w3):
     """检测是否为POA链"""
     try:
+        chain_id = w3.eth.chain_id
+        if chain_id in POA_CHAIN_IDS:
+            return True, -2  # -2表示通过已知链ID识别
+    except:
+        pass
+    
+    try:
         # 尝试获取最新区块
         latest_block = w3.eth.get_block('latest')
         # 检查extraData字段长度，POA链通常大于32字节
@@ -64,6 +71,12 @@ def auto_inject_poa_middleware_if_needed(w3):
                 return "already_exists"
             elif middleware_name:
                 print(f"✅ 已注入POA中间件: {middleware_name}")
+                # 注入后立即验证
+                try:
+                    w3.eth.get_block('latest')
+                    print(f"✅ POA中间件验证成功")
+                except Exception as verify_e:
+                    print(f"⚠️ POA中间件验证失败: {verify_e}")
                 return middleware_name
             else:
                 print(f"⚠️ 无法导入POA中间件")
@@ -80,7 +93,12 @@ def auto_inject_poa_middleware_if_needed(w3):
             middleware_name = inject_poa_middleware(w3)
             if middleware_name and middleware_name != "already_exists":
                 print(f"✅ 已注入POA中间件: {middleware_name}")
-                return middleware_name
+                # 注入后立即验证
+                try:
+                    w3.eth.get_block('latest')
+                    print(f"✅ 强制注入的POA中间件验证成功")
+                except Exception as verify_e:
+                    print(f"⚠️ 强制注入的POA中间件验证失败: {verify_e}")
             return middleware_name
         else:
             print(f"⚠️ POA检测失败: {e}")
@@ -250,6 +268,19 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
                 return int(current_gas_price * 1.1)
             else:  # standard
                 return int(current_gas_price * 1.25)
+        elif chain_id in [97, 56]:  # BSC Testnet/Mainnet
+            # BSC 网络需要较高的最低gas价格
+            min_gas_price = w3.to_wei('3', 'gwei')  # BSC最低3 gwei
+            base_price = max(current_gas_price, min_gas_price)
+            print(f"📊 BSC 最低gas price: {w3.from_wei(min_gas_price, 'gwei')} gwei")
+            print(f"📊 调整后base price: {w3.from_wei(base_price, 'gwei')} gwei")
+            
+            if priority == 'fast':
+                return int(base_price * 2.0)  # 快速: 6 gwei
+            elif priority == 'slow':
+                return int(base_price * 1.2)  # 慢速: 3.6 gwei
+            else:  # standard
+                return int(base_price * 1.5)  # 标准: 4.5 gwei
         
         # L2网络策略：完全基于实际价格动态调整
         if is_l2:
@@ -289,6 +320,8 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
             return w3.to_wei('30', 'gwei')
         elif chain_id in [421614, 42161]:  # Arbitrum networks
             return w3.to_wei('0.1', 'gwei')
+        elif chain_id in [97, 56]:  # BSC networks
+            return w3.to_wei('5', 'gwei')  # BSC 保守默认值
         elif chain_id == 300:  # ZKSync
             return w3.to_wei('0.25', 'gwei')
         elif is_l2:  # L2网络
@@ -331,7 +364,18 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
         if not is_l2:
             # L1网络使用动态优先费用
             print(f"📊 L1网络优先费用计算...")
-            if suggested_priority_fee:
+            
+            # BSC网络特殊处理
+            if chain_id in [97, 56]:  # BSC Testnet/Mainnet
+                print(f"📊 BSC网络优先费用计算...")
+                if priority == 'fast':
+                    priority_fee = w3.to_wei('5', 'gwei')
+                elif priority == 'slow':
+                    priority_fee = w3.to_wei('3', 'gwei')
+                else:  # standard
+                    priority_fee = w3.to_wei('4', 'gwei')
+                print(f"📊 BSC {priority} 优先费用: {w3.from_wei(priority_fee, 'gwei')} gwei")
+            elif suggested_priority_fee:
                 print(f"📊 使用建议优先费用: {w3.from_wei(suggested_priority_fee, 'gwei'):.12f} gwei")
                 if priority == 'fast':
                     priority_fee = int(suggested_priority_fee * 1.5)
@@ -361,6 +405,9 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
             elif chain_id in [421614, 42161]:  # Arbitrum Sepolia/Mainnet
                 min_priority_fee = w3.to_wei('0.01', 'gwei')  # Arbitrum 使用较低的费用
                 print(f"📊 Arbitrum 最低优先费用: {w3.from_wei(min_priority_fee, 'gwei')} gwei")
+            elif chain_id in [97, 56]:  # BSC Testnet/Mainnet
+                min_priority_fee = w3.to_wei('3', 'gwei')  # BSC 需要较高的优先费用
+                print(f"📊 BSC 最低优先费用: {w3.from_wei(min_priority_fee, 'gwei')} gwei")
             else:
                 min_priority_fee = w3.to_wei('0.001', 'gwei')  # 其他L2的默认最低值
             
@@ -453,7 +500,7 @@ def estimate_gas_for_tx_type(w3, tx_type, account_address, to_address=None, valu
             
     except Exception as e:
         print(f"⚠️ Gas估算失败: {e}")
-        # 对于 Arbitrum 网络，尝试使用更大的基础估算
+        # 对于特殊网络，尝试使用更大的基础估算
         if w3.eth.chain_id in [421614, 42161]:
             print(f"🔧 Arbitrum网络，尝试使用保守估算...")
             if tx_type == 'erc20_approve':
@@ -464,6 +511,16 @@ def estimate_gas_for_tx_type(w3, tx_type, account_address, to_address=None, valu
                 return 150000
             else:
                 return 100000
+        elif w3.eth.chain_id in [97, 56]:
+            print(f"🔧 BSC网络，尝试使用保守估算...")
+            if tx_type == 'erc20_approve':
+                return 80000  # BSC approve 保守估算
+            elif tx_type == 'erc20_transfer':
+                return 60000
+            elif tx_type == 'contract_call':
+                return 120000
+            else:
+                return 80000
         return None
 
 def get_gas_buffer_multiplier(chain_id, tx_type='contract_call', is_l2=True):
@@ -477,6 +534,13 @@ def get_gas_buffer_multiplier(chain_id, tx_type='contract_call', is_l2=True):
             return 3.0  # 复杂合约调用需要更大缓冲
         else:
             return 2.5  # 其他操作也需要较大缓冲
+    elif chain_id in [97, 56]:  # BSC networks
+        if tx_type == 'erc20_approve':
+            return 3.0  # BSC approve操作需要更大缓冲
+        elif tx_type == 'contract_call':
+            return 2.5  # BSC合约调用缓冲
+        else:
+            return 2.0  # BSC其他操作缓冲
     elif not is_l2:  # 主网
         if tx_type == 'erc20_approve':
             return 1.8  # approve操作需要更大缓冲
@@ -504,6 +568,14 @@ def get_fallback_gas_limit(chain_id, tx_type, is_l2=True):
             'erc20_approve': 150000,  # Arbitrum approve需要更多gas
             'contract_call': 250000,
             'complex_contract': 400000
+        }
+    elif chain_id in [97, 56]:  # BSC networks
+        gas_map = {
+            'eth_transfer': 25000,
+            'erc20_transfer': 80000,
+            'erc20_approve': 120000,  # BSC approve保守估算
+            'contract_call': 200000,
+            'complex_contract': 350000
         }
     elif not is_l2:  # 主网
         gas_map = {

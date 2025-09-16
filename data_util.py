@@ -61,7 +61,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
         },
         #bsc testnet
         {
-            'rpc_url': 'https://data-seed-prebsc-1-s1.binance.org:8545',
+            'rpc_url': 'https://bsc-testnet.public.blastapi.io',
             'chain_id': 97,
             'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
             'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',

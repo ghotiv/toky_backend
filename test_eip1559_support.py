@@ -118,11 +118,12 @@ def main():
     
     # 要测试的网络列表
     test_chains = [
-        {"chain_id": 80002, "name": "Polygon Amoy 测试网"},
-        {"chain_id": 11155111, "name": "以太坊 Sepolia 测试网"},
-        {"chain_id": 84532, "name": "Base Sepolia 测试网"},
-        {"chain_id": 300, "name": "ZKSync Era Sepolia 测试网"},
-        {"chain_id": 59902, "name": "Metis Sepolia 测试网"},
+        {"chain_id": 97, "name": "BSC Testnet 测试网"},
+        # {"chain_id": 80002, "name": "Polygon Amoy 测试网"},
+        # {"chain_id": 11155111, "name": "以太坊 Sepolia 测试网"},
+        # {"chain_id": 84532, "name": "Base Sepolia 测试网"},
+        # {"chain_id": 300, "name": "ZKSync Era Sepolia 测试网"},
+        # {"chain_id": 59902, "name": "Metis Sepolia 测试网"},
     ]
     
     results = {}
