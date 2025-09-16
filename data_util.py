@@ -77,6 +77,87 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'BLAST_SEPOLIA',
             'is_mainnet': False,
         },
+        #scroll sepolia
+        {
+            'rpc_url': 'https://scroll-sepolia.drpc.org',
+            'chain_id': 534351,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0xeFA84c418CB370474bf082027635261A5a79262c',
+            'alchemy_network': 'SCROLL_SEPOLIA',
+            'is_mainnet': False,
+        },
+        #linea sepolia
+        {
+            'rpc_url': 'https://linea-sepolia-rpc.publicnode.com',
+            'chain_id': 59141,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
+            'alchemy_network': 'LINEA_SEPOLIA',
+            'is_mainnet': False,
+        },
+        #mantle sepolia
+        {
+            'rpc_url': 'https://rpc.sepolia.mantle.xyz',
+            'chain_id': 5003,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
+            'alchemy_network': 'MANTLE_SEPOLIA',
+            'is_mainnet': False,
+        },
+        #polygon zkevm cardona testnet
+        {
+            'rpc_url': 'https://rpc.cardona.zkevm-rpc.com',
+            'chain_id': 2442,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
+            'alchemy_network': 'CARDONA_ZKEVM',
+            'is_mainnet': False,
+        },
+        #mode sepolia
+        {
+            'rpc_url': 'https://sepolia.mode.network',
+            'chain_id': 919,
+            'contract_deposit': '0x62d105b659184cf82fe0e2f021397821ac5dca77',
+            'contract_fillRelay': '0x50F2A4c7eeD2836D1F175f6A317bC5f737AEbcde',
+            'alchemy_network': 'MODE_SEPOLIA',
+            'is_mainnet': False,
+        },
+        #zora sepolia
+        {
+            'rpc_url': 'https://sepolia.rpc.zora.energy',
+            'chain_id': 999999999,
+            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
+            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
+            'alchemy_network': 'ZORA_SEPOLIA',
+            'is_mainnet': False,
+        },
+        #manta sepolia
+        {
+            'rpc_url': 'https://pacific-rpc.sepolia-testnet.manta.network/http',
+            'chain_id': 3441006,
+            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
+            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
+            'alchemy_network': 'MANTA_SEPOLIA',
+            'is_mainnet': False,
+        },
+        #taiko hekla
+        {
+            'rpc_url': 'https://rpc.hekla.taiko.xyz',
+            'chain_id': 167009,
+            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
+            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
+            'alchemy_network': 'TAIKO_HEKLA',
+            'is_mainnet': False,
+        },
+        #opbnb testnet
+        {
+            'rpc_url': 'https://opbnb-testnet-rpc.bnbchain.org',
+            'chain_id': 5611,
+            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
+            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
+            'alchemy_network': 'OPBNB_TESTNET',
+            'is_mainnet': False,
+        },
     ]
     if all_chain:
         return res_dicts
@@ -188,6 +269,123 @@ def get_token(chain_id=None,token_name=None,token_address=None):
         },
         {
             'chain_id': 168587773,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Scroll Sepolia
+        {
+            'chain_id': 534351,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 534351,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Linea Sepolia
+        {
+            'chain_id': 59141,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 59141,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Mantle Sepolia
+        {
+            'chain_id': 5003,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 5003,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Polygon zkEVM Cardona
+        {
+            'chain_id': 2442,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 2442,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Mode Sepolia
+        {
+            'chain_id': 919,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 919,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Zora Sepolia
+        {
+            'chain_id': 999999999,
+            'token_name': 'MBT',
+            'token_address': '0xc4c5896a32e75ed3b59c48620e3b0833d0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 999999999,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Manta Sepolia
+        {
+            'chain_id': 3441006,
+            'token_name': 'MBT',
+            'token_address': '0xc4c5896a32e75ed3b59c48620e3b0833d0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 3441006,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # Taiko Hekla
+        {
+            'chain_id': 167009,
+            'token_name': 'MBT',
+            'token_address': '0xc4c5896a32e75ed3b59c48620e3b0833d0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 167009,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        # opBNB Testnet
+        {
+            'chain_id': 5611,
+            'token_name': 'MBT',
+            'token_address': '0xc4c5896a32e75ed3b59c48620e3b0833d0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 5611,
             'token_name': 'ETH',
             'token_address': '0x0000000000000000000000000000000000000000',
             'is_mainnet': False,
