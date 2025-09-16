@@ -387,6 +387,7 @@ def call_fill_relay_by_alchemy(data):
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
     alchemy_network = data['event']['network']
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
+    print(f"calldata_dict: {calldata_dict}")
     block_chainid = calldata_dict['destinationChainId']
     vault = to_checksum_address(calldata_dict['vault'])
     originChainId = get_chain(alchemy_network=alchemy_network)['chain_id']
