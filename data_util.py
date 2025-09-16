@@ -68,6 +68,15 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'BNB_TESTNET',
             'is_mainnet': False,
         },
+        #blast sepolia
+        {
+            'rpc_url': 'https://sepolia.blast.io',
+            'chain_id': 168587773,
+            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
+            'contract_fillRelay': '0x72254a6Bc561aBF70167eD155451b58C82c0b5Ad',
+            'alchemy_network': 'BLAST_SEPOLIA',
+            'is_mainnet': False,
+        },
     ]
     if all_chain:
         return res_dicts
@@ -167,6 +176,18 @@ def get_token(chain_id=None,token_name=None,token_address=None):
         },
         {
             'chain_id': 97,
+            'token_name': 'ETH',
+            'token_address': '0x0000000000000000000000000000000000000000',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 168587773,
+            'token_name': 'MBT',
+            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
+            'is_mainnet': False,
+        },
+        {
+            'chain_id': 168587773,
             'token_name': 'ETH',
             'token_address': '0x0000000000000000000000000000000000000000',
             'is_mainnet': False,
