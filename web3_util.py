@@ -180,6 +180,13 @@ def get_optimal_gas_price(w3, chain_id, priority='standard', is_l2=True):
 def check_eip1559_support(w3):
     """检查网络是否支持EIP-1559"""
     try:
+        # 对于POA链，先确保有POA中间件
+        chain_id = w3.eth.chain_id
+        if chain_id in [80002, 59902]:  # POA链
+            from web3.middleware import geth_poa_middleware
+            if not any('geth_poa' in str(middleware) for middleware in w3.middleware_onion):
+                w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        
         latest_block = w3.eth.get_block('latest')
         return hasattr(latest_block, 'baseFeePerGas') and latest_block.baseFeePerGas is not None
     except:
@@ -191,6 +198,15 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
     if not chain_id:
         return None
     try:
+        # 对于POA链，需要特殊处理
+        if chain_id in [80002]:  # Polygon Amoy等POA链
+            print(f"🔍 检测到POA链 (Chain {chain_id})，使用POA兼容模式...")
+            from web3.middleware import geth_poa_middleware
+            # 临时添加POA中间件来处理extraData问题
+            if hasattr(w3, 'middleware_onion') and not any('geth_poa' in str(middleware) for middleware in w3.middleware_onion):
+                w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+                print(f"✅ 已注入POA中间件")
+        
         latest_block = w3.eth.get_block('latest')
         base_fee = latest_block.baseFeePerGas
         print(f"🔍 EIP-1559参数计算: Chain={chain_id}, Priority={priority}, is_L2={is_l2}, BaseFee={w3.from_wei(base_fee, 'gwei'):.12f} gwei")
@@ -254,6 +270,13 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
 def get_network_congestion(w3):
     """检测网络拥堵程度"""
     try:
+        # 对于POA链，先确保有POA中间件
+        chain_id = w3.eth.chain_id
+        if chain_id in [80002, 59902]:  # POA链
+            from web3.middleware import geth_poa_middleware
+            if not any('geth_poa' in str(middleware) for middleware in w3.middleware_onion):
+                w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        
         latest_block = w3.eth.get_block('latest')
         if latest_block.gasLimit > 0:
             utilization = latest_block.gasUsed / latest_block.gasLimit

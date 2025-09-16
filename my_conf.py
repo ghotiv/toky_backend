@@ -2,7 +2,7 @@ from my_private_conf import *
 
 FILL_RATE = 0.9
 L1_CHAIN_IDS = [11155111,1]
-NOT_EIP1599_IDS = [59902]
+NOT_EIP1599_IDS = [59902]  # Metis Sepolia不支持EIP-1559
 
 DEPOSIT_ABI = [
     {

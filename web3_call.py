@@ -14,6 +14,14 @@ def get_w3(rpc_url='',chain_id=''):
     if not rpc_url:
         return
     w3 = Web3(Web3.HTTPProvider(rpc_url))
+    
+    # 为POA链添加中间件
+    if chain_id in [80002, 59902]:  # Polygon Amoy, Metis Sepolia等POA链
+        print(f"🔍 检测到POA链 (Chain {chain_id})，添加POA中间件...")
+        from web3.middleware import geth_poa_middleware
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        print(f"✅ 已为Chain {chain_id}注入POA中间件")
+    
     # print(w3.isConnected())
     return w3
 
