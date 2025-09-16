@@ -341,11 +341,20 @@ def check_eip1559_support(w3):
     except:
         return False
 
-def get_eip1559_params(w3, priority='standard', is_l2=True):
+def get_eip1559_params(w3, priority='standard', is_l2=None):
     """获取EIP-1559参数"""
     chain_id = w3.eth.chain_id
     if not chain_id:
         return None
+    
+    # 如果没有显式指定is_l2，根据链配置自动判断
+    if is_l2 is None:
+        from data_util import get_chain
+        try:
+            chain_config = get_chain(chain_id=chain_id)
+            is_l2 = chain_config.get('is_l2', True)  # 默认为L2
+        except:
+            is_l2 = True  # 回退默认值
     try:
         # 自动检测并注入POA中间件（如果需要）
         auto_inject_poa_middleware_if_needed(w3)
@@ -365,16 +374,44 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
             # L1网络使用动态优先费用
             print(f"📊 L1网络优先费用计算...")
             
-            # BSC网络特殊处理
+            # BSC网络特殊处理 - 基于链上实际价格的动态倍数
             if chain_id in [97, 56]:  # BSC Testnet/Mainnet
-                print(f"📊 BSC网络优先费用计算...")
-                if priority == 'fast':
-                    priority_fee = w3.to_wei('5', 'gwei')
-                elif priority == 'slow':
-                    priority_fee = w3.to_wei('3', 'gwei')
-                else:  # standard
-                    priority_fee = w3.to_wei('4', 'gwei')
-                print(f"📊 BSC {priority} 优先费用: {w3.from_wei(priority_fee, 'gwei')} gwei")
+                print(f"📊 BSC网络动态优先费用计算...")
+                
+                # 获取当前网络实际gas价格
+                try:
+                    current_gas_price = w3.eth.gas_price
+                    current_gwei = w3.from_wei(current_gas_price, 'gwei')
+                    print(f"📊 当前网络gas价格: {current_gwei:.2f} gwei")
+                    
+                    # 基于当前价格设置动态倍数
+                    if priority == 'fast':
+                        multiplier = 3.0  # 快速：当前价格的3倍
+                        priority_fee = int(current_gas_price * multiplier)
+                    elif priority == 'slow':
+                        multiplier = 1.2  # 慢速：当前价格的1.2倍  
+                        priority_fee = int(current_gas_price * multiplier)
+                    else:  # standard
+                        multiplier = 2.0  # 标准：当前价格的2倍
+                        priority_fee = int(current_gas_price * multiplier)
+                    
+                    # 设置最低限制，避免过低
+                    min_fee = w3.to_wei('0.1', 'gwei')  # 最低0.1 gwei
+                    priority_fee = max(priority_fee, min_fee)
+                    
+                    final_gwei = w3.from_wei(priority_fee, 'gwei')
+                    print(f"📊 BSC {priority} 优先费用: {final_gwei:.2f} gwei (当前价格 × {multiplier})")
+                    
+                except Exception as e:
+                    print(f"⚠️ 获取当前gas价格失败，使用默认值: {e}")
+                    # 回退到固定值
+                    if priority == 'fast':
+                        priority_fee = w3.to_wei('2', 'gwei')
+                    elif priority == 'slow':
+                        priority_fee = w3.to_wei('0.2', 'gwei')
+                    else:  # standard
+                        priority_fee = w3.to_wei('0.5', 'gwei')
+                    print(f"📊 BSC {priority} 优先费用(回退): {w3.from_wei(priority_fee, 'gwei')} gwei")
             elif suggested_priority_fee:
                 print(f"📊 使用建议优先费用: {w3.from_wei(suggested_priority_fee, 'gwei'):.12f} gwei")
                 if priority == 'fast':
@@ -405,9 +442,21 @@ def get_eip1559_params(w3, priority='standard', is_l2=True):
             elif chain_id in [421614, 42161]:  # Arbitrum Sepolia/Mainnet
                 min_priority_fee = w3.to_wei('0.01', 'gwei')  # Arbitrum 使用较低的费用
                 print(f"📊 Arbitrum 最低优先费用: {w3.from_wei(min_priority_fee, 'gwei')} gwei")
-            elif chain_id in [97, 56]:  # BSC Testnet/Mainnet
-                min_priority_fee = w3.to_wei('3', 'gwei')  # BSC 需要较高的优先费用
-                print(f"📊 BSC 最低优先费用: {w3.from_wei(min_priority_fee, 'gwei')} gwei")
+            elif chain_id in [97, 56]:  # BSC Testnet/Mainnet - L2模式动态计算
+                try:
+                    current_gas_price = w3.eth.gas_price
+                    current_gwei = w3.from_wei(current_gas_price, 'gwei')
+                    print(f"📊 BSC L2模式当前网络gas价格: {current_gwei:.2f} gwei")
+                    
+                    # L2模式使用更保守的倍数
+                    min_priority_fee = int(current_gas_price * 1.5)  # 当前价格的1.5倍
+                    min_priority_fee = max(min_priority_fee, w3.to_wei('0.1', 'gwei'))  # 最低0.1 gwei
+                    
+                    print(f"📊 BSC L2模式最低优先费用: {w3.from_wei(min_priority_fee, 'gwei'):.2f} gwei (当前价格 × 1.5)")
+                except Exception as e:
+                    print(f"⚠️ BSC L2模式获取gas价格失败，使用默认值: {e}")
+                    min_priority_fee = w3.to_wei('0.5', 'gwei')  # 回退默认值
+                    print(f"📊 BSC L2模式最低优先费用(回退): {w3.from_wei(min_priority_fee, 'gwei')} gwei")
             else:
                 min_priority_fee = w3.to_wei('0.001', 'gwei')  # 其他L2的默认最低值
             
@@ -628,7 +677,7 @@ def get_optimal_gas_limit(w3, chain_id, tx_type='contract_call', estimated_gas=N
     return final_gas_limit
 
 def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_type='contract_call', 
-                        estimated_gas=None, is_eip1559=True, is_l2=True):
+                        estimated_gas=None, is_eip1559=True, is_l2=None):
     """
     获取优化的gas参数
     
@@ -646,6 +695,17 @@ def get_gas_params(w3, account_address, chain_id=None, priority='standard', tx_t
             chain_id = w3.eth.chain_id
         except:
             chain_id = 0
+    
+    # 如果没有显式指定is_l2，根据链配置自动判断
+    if is_l2 is None:
+        from data_util import get_chain
+        try:
+            chain_config = get_chain(chain_id=chain_id)
+            is_l2 = chain_config.get('is_l2', True)  # 默认为L2
+            print(f"🔍 自动检测网络类型: Chain {chain_id} -> {'L2' if is_l2 else 'L1'}")
+        except:
+            is_l2 = True  # 回退默认值
+            print(f"⚠️ 无法检测网络类型，使用默认L2")
     
     print(f"⛽ 优化gas参数: Chain {chain_id}, Priority {priority}, Type {tx_type}")
     
