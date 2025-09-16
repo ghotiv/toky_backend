@@ -47,7 +47,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'chain_id': 421614,
             'contract_deposit': '0xDE194359D624C45718537625442e46A1E94529c6',
             'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'ARBITRUM_SEPOLIA',
+            'alchemy_network': 'ARB_SEPOLIA',
             'is_mainnet': False,
         },
         #optimism sepolia
