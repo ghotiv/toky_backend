@@ -2,7 +2,7 @@ from my_private_conf import *
 
 FILL_RATE = 0.9
 L1_CHAIN_IDS = [11155111, 1, 97, 56]  # Ethereum, BSC (侧链但gas行为类似L1)
-NOT_EIP1599_IDS = [59902]  # Metis Sepolia不支持EIP-1559
+NOT_EIP1599_IDS = [59902, 2442]  # Metis Sepolia、Polygon zkEVM Cardona不支持EIP-1559
 # 注意：BSC网络现在已经支持EIP-1559了
 
 POA_CHAIN_IDS = [
