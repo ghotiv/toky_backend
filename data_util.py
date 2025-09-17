@@ -38,7 +38,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'chain_id': 80002,
             'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
             'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'POLYGON_AMOY',
+            'alchemy_network': 'MATIC_AMOY',
             'is_mainnet': False,
         },
         #arbitrum sepolia
@@ -110,7 +110,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'chain_id': 2442,
             'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
             'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'CARDONA_ZKEVM',
+            'alchemy_network': 'POLYGONZKEVM_CARDONA',
             'is_mainnet': False,
         },
         #mode sepolia
