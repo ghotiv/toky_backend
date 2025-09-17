@@ -104,7 +104,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'MANTLE_SEPOLIA',
             'is_mainnet': False,
         },
-        #polygon zkevm cardona testnet
+        #polygon zkevm cardona testnet etherscan not supported 1101 正式网可以 Polygon zkEVM Mainnet
         {
             'rpc_url': 'https://rpc.cardona.zkevm-rpc.com',
             'chain_id': 2442,
@@ -113,7 +113,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'POLYGONZKEVM_CARDONA',
             'is_mainnet': False,
         },
-        #mode sepolia
+        #mode sepolia  etherscan api not supported
         {
             'rpc_url': 'https://sepolia.mode.network',
             'chain_id': 919,
@@ -122,7 +122,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'MODE_SEPOLIA',
             'is_mainnet': False,
         },
-        #zora sepolia
+        #zora sepolia  etherscan api not supported
         {
             'rpc_url': 'https://sepolia.rpc.zora.energy',
             'chain_id': 999999999,
@@ -131,7 +131,7 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
             'alchemy_network': 'ZORA_SEPOLIA',
             'is_mainnet': False,
         },
-        #manta sepolia
+        #manta sepolia  etherscan api not supported
         {
             'rpc_url': 'https://pacific-rpc.sepolia-testnet.manta.network/http',
             'chain_id': 3441006,

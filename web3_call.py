@@ -388,11 +388,16 @@ def call_fill_relay_by_alchemy(data):
 
     transaction_dict = data['event']['data']['block']['logs'][0]['transaction']
     alchemy_network = data['event']['network']
+    originChainId = get_chain(alchemy_network=alchemy_network)['chain_id']
+    depositHash = get_bytes32_address(transaction_dict['hash'])
     calldata_dict = get_decode_calldata(transaction_dict['inputData'])
-    # print(f"calldata_dict: {calldata_dict}")
+    res = call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash)
+    return res
+
+
+def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     block_chainid = calldata_dict['destinationChainId']
     vault = to_checksum_address(calldata_dict['vault'])
-    originChainId = get_chain(alchemy_network=alchemy_network)['chain_id']
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])['token_name']
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,).get('token_address',None)
 
@@ -403,7 +408,6 @@ def call_fill_relay_by_alchemy(data):
     outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
-    depositHash = get_bytes32_address(transaction_dict['hash'])
 
     if not check_fill_args(vault,originChainId,block_chainid):
         print(f"check_fill_args 不通过")
