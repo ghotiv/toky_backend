@@ -1,6 +1,16 @@
 from my_conf import *
 from eth_utils import to_checksum_address
 
+from redis_util import Redis
+
+redis_obj = Redis()
+
+def set_tmp_key(k,v,ex=None):
+    return redis_obj.set(k,v,ex)
+
+def get_tmp_key(k):
+    return redis_obj.get(k)
+
 #todo:数据来自数据库
 def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
     res = {}

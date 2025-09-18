@@ -1,4 +1,4 @@
-from data_util import get_chain,get_token
+from data_util import get_chain,get_token,set_tmp_key,get_tmp_key
 from web3 import Web3
 from web3_util import get_method_id, decode_contract_error, get_recipient_vaild_address, \
     get_gas_params,handle_already_known_transaction, get_bytes32_address
@@ -370,10 +370,18 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
             raise
     return res
 
-def check_fill_args(vault,originChainId,block_chainid):
+def check_fill_args(vault,depositHash,originChainId,block_chainid,outputToken):
     print(f"vault: {vault}")
     if vault not in VAULTS:
         print(f"❌  vault not in VAULTS: {vault}")
+        return False
+    if get_tmp_key(f"depositHash_{depositHash}"):
+        print(f"❌ depositHash已经存在: {depositHash}")
+        return False
+    #2minutes
+    set_tmp_key(f"depositHash_{depositHash}",'1',ex=60*2)
+    if not outputToken:
+        print(f"❌ outputToken代币不存在")
         return False
     origin_is_mainnet = get_chain(chain_id=originChainId).get('is_mainnet',None)
     if origin_is_mainnet is None:
@@ -424,15 +432,11 @@ def call_fill_relay_by_calldata(calldata,originChainId,depositHash):
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])['token_name']
     outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,).get('token_address',None)
 
-    if not outputToken:
-        print(f"❌ 代币不存在: {token_name_input}")
-        return res
-
     outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
 
-    if not check_fill_args(vault,originChainId,block_chainid):
+    if not check_fill_args(vault,depositHash,originChainId,block_chainid,outputToken):
         print(f"check_fill_args 不通过")
         return res
     try:
