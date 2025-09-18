@@ -417,7 +417,7 @@ def call_fill_relay_by_alchemy(data):
     res = call_fill_relay_by_calldata(calldata,originChainId,depositHash)
     return res
 
-def call_fill_relay_by_etherscan(chain_id='',limit=1,contract_type='contract_deposit'):
+def call_fill_relay_by_etherscan(chain_id='',limit=1, contract_type='contract_deposit'):
     tx_dicts = get_etherscan_txs(chain_id=chain_id,limit=limit,contract_type=contract_type)
     for tx_dict in tx_dicts:
         calldata = tx_dict['input']
