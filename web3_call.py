@@ -375,11 +375,12 @@ def check_fill_args(vault,depositHash,originChainId,block_chainid,outputToken):
     if vault not in VAULTS:
         print(f"❌  vault not in VAULTS: {vault}")
         return False
-    if get_tmp_key(f"depositHash_{depositHash}"):
-        print(f"❌ depositHash已经存在: {depositHash.hex()}")
+    tx_hash = depositHash.hex()
+    if get_tmp_key(f"depositHash_{tx_hash}"):
+        print(f"❌ depositHash已经存在: {tx_hash}")
         return False
     #2minutes
-    set_tmp_key(f"depositHash_{depositHash}",'1',ex=60*2)
+    set_tmp_key(f"depositHash_{tx_hash}",'1',ex=60*2)
     if not outputToken:
         print(f"❌ outputToken代币不存在")
         return False
