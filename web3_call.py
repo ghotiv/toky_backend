@@ -106,6 +106,18 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
         elif 'insufficient funds' in error_msg or 'insufficient balance' in error_msg:
             print(f"❌ 检测到余额不足错误，无法继续执行deposit")
             return None
+        elif 'out of gas' in error_msg or 'gas required exceeds' in error_msg:
+            # 提取需要的 gas 数量并增加缓冲
+            import re
+            gas_match = re.search(r'gas required exceeds: (\d+)', error_msg)
+            if gas_match:
+                required_gas = int(gas_match.group(1))
+                estimated_gas = int(required_gas * 2.0)  # 增加100%缓冲
+                print(f"🔧 检测到gas不足，尝试增加gas limit...")
+                print(f"📊 调整gas limit: {required_gas:,} -> {estimated_gas:,}")
+            else:
+                estimated_gas = 200000  # 为deposit设置一个更保守的默认值
+                print(f"📊 Gas不足但无法解析具体数值，使用保守估算: {estimated_gas:,}")
         else:
             # 其他错误，使用默认gas值尝试
             estimated_gas = 150000  # 为deposit设置一个保守的默认值

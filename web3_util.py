@@ -655,6 +655,13 @@ def get_gas_buffer_multiplier(chain_id, tx_type='contract_call', is_l2=True):
             return 3.0  # 复杂合约调用需要更大缓冲
         else:
             return 2.5  # 其他操作也需要较大缓冲
+    elif chain_id in [11155420, 10]:  # Optimism Sepolia/Mainnet
+        if tx_type == 'erc20_approve':
+            return 3.0  # Optimism approve操作需要更大缓冲
+        elif tx_type == 'contract_call':
+            return 2.5  # Optimism合约调用缓冲（针对您的问题优化）
+        else:
+            return 2.0  # Optimism其他操作缓冲
     elif chain_id in [97, 56]:  # BSC networks
         if tx_type == 'erc20_approve':
             return 3.0  # BSC approve操作需要更大缓冲
@@ -689,6 +696,14 @@ def get_fallback_gas_limit(chain_id, tx_type, is_l2=True):
             'erc20_approve': 150000,  # Arbitrum approve需要更多gas
             'contract_call': 250000,
             'complex_contract': 400000
+        }
+    elif chain_id in [11155420, 10]:  # Optimism Sepolia/Mainnet
+        gas_map = {
+            'eth_transfer': 25000,
+            'erc20_transfer': 80000,
+            'erc20_approve': 120000,  # Optimism approve保守估算
+            'contract_call': 200000,  # 针对您的问题增加回退值
+            'complex_contract': 350000
         }
     elif chain_id in [97, 56]:  # BSC networks
         gas_map = {
