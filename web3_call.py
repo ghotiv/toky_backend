@@ -376,7 +376,7 @@ def check_fill_args(vault,depositHash,originChainId,block_chainid,outputToken):
         print(f"❌  vault not in VAULTS: {vault}")
         return False
     if get_tmp_key(f"depositHash_{depositHash}"):
-        print(f"❌ depositHash已经存在: {depositHash}")
+        print(f"❌ depositHash已经存在: {depositHash.hex()}")
         return False
     #2minutes
     set_tmp_key(f"depositHash_{depositHash}",'1',ex=60*2)
@@ -426,6 +426,7 @@ def call_fill_relay_by_etherscan(chain_id='',limit=1,contract_type='contract_dep
 
 #todo FILL_RATE 来自across
 def call_fill_relay_by_calldata(calldata,originChainId,depositHash):
+    res = None
     calldata_dict = get_decode_calldata(calldata)
     block_chainid = calldata_dict['destinationChainId']
     vault = to_checksum_address(calldata_dict['vault'])
