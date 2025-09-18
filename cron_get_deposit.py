@@ -11,7 +11,7 @@ def main():
     while True:
         print(f"call_fill_relay_by_etherscan time: {time.strftime('%Y-%m-%d %H:%M:%S')}")
         call_fill_relay_by_etherscan(chain_id=args.chain_id,limit=args.limit)
-        time.sleep(args.time_sleep)
+        time.sleep(float(args.time_sleep))
 
 if __name__ == '__main__':
     main()
