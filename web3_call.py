@@ -422,8 +422,8 @@ def call_fill_relay_by_etherscan(chain_id='',limit=1,contract_type='contract_dep
     for tx_dict in tx_dicts:
         calldata = tx_dict['input']
         depositHash = get_bytes32_address(tx_dict['hash'])
-        res =call_fill_relay_by_calldata(calldata,chain_id,depositHash)
-        print(f"res: {res}")
+        # res =call_fill_relay_by_calldata(calldata,chain_id,depositHash)
+        # print(f"res: {res}")
 
 #todo FILL_RATE 来自across
 def call_fill_relay_by_calldata(calldata,originChainId,depositHash):
