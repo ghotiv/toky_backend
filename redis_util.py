@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import redis
-from my_conf import REDIS_HOST,REDIS_PORT,REDIS_PASS
+from my_conf import REDIS_HOST,REDIS_PORT,REDIS_PASSWORD
 
 
 class Redis(object):
@@ -15,7 +15,7 @@ class Redis(object):
     def _con(self, db=0):
         if self.r == '':
             pool = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=db, 
-                                            password=REDIS_PASS,decode_responses=True)
+                                            password=REDIS_PASSWORD,decode_responses=True)
             self.r = redis.StrictRedis(connection_pool=pool,)
 
     def set(self, key, value, ex=None):
