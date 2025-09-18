@@ -58,6 +58,7 @@ class DistributedDepositProcessor:
             
             return safe_nonce
 
+'''
 # 全局分布式处理器
 distributed_processor = DistributedDepositProcessor()
 
@@ -79,4 +80,6 @@ async def webhook_process_deposit(data):
 
 # 进程B: etherscan 使用相同逻辑
 def etherscan_process_deposit(tx_dict):
+    pass
     # ... 相同的处理逻辑
+'''
