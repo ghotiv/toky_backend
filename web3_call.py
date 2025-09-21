@@ -165,7 +165,7 @@ def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, 
     
     try:
         tx = contract.functions.deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message).build_transaction(tx_params)
-        # print(f"交易参数: {tx}")
+        print(f"交易参数: {tx_params}")
         signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
         tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
         print(f"交易已发送，哈希: {tx_hash.hex()}")
