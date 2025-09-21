@@ -1,9 +1,22 @@
-from my_conf import *
+import json
+import arrow
 from eth_utils import to_checksum_address
 
+from util import func_left_join
+from pg_util import Postgresql
 from redis_util import Redis
 
+from my_conf import *
+
 redis_obj = Redis()
+
+def get_pg_obj(host=DB_HOST,db=DB_DB,user=DB_USER,pwd=DB_PWD):
+    if not host:
+        return None
+    pg_obj = Postgresql(host,db,user,pwd)
+    return pg_obj
+
+pg_obj = get_pg_obj()
 
 def set_tmp_key(k,v,ex=None):
     return redis_obj.set(k,v,ex)
@@ -11,398 +24,74 @@ def set_tmp_key(k,v,ex=None):
 def get_tmp_key(k):
     return redis_obj.get(k)
 
-#todo:数据来自数据库
+def get_time_now(str_format=False):
+    time_now = arrow.utcnow().to(TZ)
+    if str_format:
+        time_now = time_now.format('YYYY-MM-DD HH:mm:ss')
+    return time_now
+
+def format_time(time_at):
+    return arrow.get(time_at).to(TZ).format('YYYY-MM-DD HH:mm:ss')
+
+def read_json_file(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return None
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON in file: {file_path}")
+        return None
+
+
 def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
-    res = {}
-    res_dicts = [
-        #sepolia
-        {
-            'rpc_url': 'https://ethereum-sepolia-rpc.publicnode.com',
-            'chain_id': 11155111,
-            'contract_deposit': '0x5bD6e85cD235d4c01E04344897Fc97DBd9011155',
-            'contract_fillRelay': '0xd9ACf96764781c6a0891734226E7Cb824e2017E2',
-            'alchemy_network': 'ETH_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #base sepolia
-        {
-            'rpc_url': 'https://sepolia.base.org',
-            'chain_id': 84532,
-            'contract_deposit': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'contract_fillRelay': '0x622201610744D2D2ec62fbb1bc9D8C16723B5330',
-            'alchemy_network': 'BASE_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #zksync sepolia
-        {
-            'rpc_url': 'https://rpc.ankr.com/zksync_era_sepolia',
-            'chain_id': 300,
-            'contract_deposit': '0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea',
-            'contract_fillRelay': '0x706a1b5D991ea32c7D60C7063d6f005da05c0cB5',
-            'alchemy_network': 'ZKSYNC_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #Polygon Amoy
-        {
-            'rpc_url': 'https://rpc-amoy.polygon.technology',
-            'chain_id': 80002,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'MATIC_AMOY',
-            'is_mainnet': False,
-        },
-        #arbitrum sepolia
-        {
-            'rpc_url': 'https://sepolia-rollup.arbitrum.io/rpc',
-            'chain_id': 421614,
-            'contract_deposit': '0xDE194359D624C45718537625442e46A1E94529c6',
-            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'ARB_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #optimism sepolia
-        {
-            'rpc_url': 'https://sepolia.optimism.io',
-            'chain_id': 11155420,
-            'contract_deposit': '0x72254a6Bc561aBF70167eD155451b58C82c0b5Ad',
-            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'alchemy_network': 'OPT_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #bsc testnet
-        {
-            'rpc_url': 'https://bsc-testnet.public.blastapi.io',
-            'chain_id': 97,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'alchemy_network': 'BNB_TESTNET',
-            'is_mainnet': False,
-        },
-        #blast sepolia
-        {
-            'rpc_url': 'https://rpc.ankr.com/blast_testnet_sepolia',
-            'chain_id': 168587773,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '0x72254a6Bc561aBF70167eD155451b58C82c0b5Ad',
-            'alchemy_network': 'BLAST_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #scroll sepolia
-        {
-            'rpc_url': 'https://scroll-sepolia.drpc.org',
-            'chain_id': 534351,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '0xeFA84c418CB370474bf082027635261A5a79262c',
-            'alchemy_network': 'SCROLL_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #linea sepolia
-        {
-            'rpc_url': 'https://linea-sepolia-rpc.publicnode.com',
-            'chain_id': 59141,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'LINEA_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #mantle sepolia
-        {
-            'rpc_url': 'https://rpc.sepolia.mantle.xyz',
-            'chain_id': 5003,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'MANTLE_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #polygon zkevm cardona testnet etherscan not supported 1101 正式网可以 Polygon zkEVM Mainnet
-        {
-            'rpc_url': 'https://rpc.cardona.zkevm-rpc.com',
-            'chain_id': 2442,
-            'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
-            'contract_fillRelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',
-            'alchemy_network': 'POLYGONZKEVM_CARDONA',
-            'is_mainnet': False,
-        },
-        #mode sepolia  etherscan api not supported
-        {
-            'rpc_url': 'https://sepolia.mode.network',
-            'chain_id': 919,
-            'contract_deposit': '0x62d105b659184cf82fe0e2f021397821ac5dca77',
-            'contract_fillRelay': '0xC4489dD6Fb5032BAD5bbF66583B2D6532Bc97293',
-            'alchemy_network': 'MODE_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #zora sepolia  etherscan api not supported
-        {
-            'rpc_url': 'https://sepolia.rpc.zora.energy',
-            'chain_id': 999999999,
-            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
-            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'alchemy_network': 'ZORA_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #manta sepolia  etherscan api not supported
-        {
-            'rpc_url': 'https://pacific-rpc.sepolia-testnet.manta.network/http',
-            'chain_id': 3441006,
-            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
-            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'alchemy_network': 'MANTA_SEPOLIA',
-            'is_mainnet': False,
-        },
-        #taiko hekla
-        {
-            'rpc_url': 'https://rpc.hekla.taiko.xyz',
-            'chain_id': 167009,
-            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
-            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'alchemy_network': 'TAIKO_HEKLA',
-            'is_mainnet': False,
-        },
-        #opbnb testnet
-        {
-            'rpc_url': 'https://opbnb-testnet-rpc.bnbchain.org',
-            'chain_id': 5611,
-            'contract_deposit': '0xe13d60316ce2aa7bd2c680e3bf20a0347e0fa5be',
-            'contract_fillRelay': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-            'alchemy_network': 'OPBNB_TESTNET',
-            'is_mainnet': False,
-        },
-    ]
+    res = None
+    sql = ''
     if all_chain:
-        return res_dicts
-    [i.update({'is_eip1559': i['chain_id'] not in NOT_EIP1599_IDS}) for i in res_dicts]
-    [i.update({'is_l2': i['chain_id'] not in L1_CHAIN_IDS}) for i in res_dicts]
+        sql = 'select * from chain'
     if chain_id:
-        res = next((item for item in res_dicts if item['chain_id'] == chain_id), {})
+        sql = f'select * from chain where chain_id = {chain_id}'
     if alchemy_network:
-        res = next((item for item in res_dicts if item['alchemy_network'] == alchemy_network), {})
+        sql = f"select * from chain where alchemy_network = '{alchemy_network}'"
+    if not sql:
+        return res
+    chain_dicts = pg_obj.query(sql)
+    chain_dicts = [i for i in chain_dicts if i['is_active']]
+    [i.update({'chain_db_id': i['id']}) for i in chain_dicts]
+    [i.update({'is_eip1559': i['chain_id'] not in NOT_EIP1599_IDS}) for i in chain_dicts]
+    [i.update({'is_l2': i['chain_id'] not in L1_CHAIN_IDS}) for i in chain_dicts]
+    if chain_dicts:
+        if all_chain:
+            res = chain_dicts
+        else:
+            res = chain_dicts[0]
     return res
 
 
-def get_token(chain_id=None,token_name=None,token_address=None):
+def get_token(chain_id=None,token_symbol=None,token_address=None):
     res = {}
-    if token_name:
-        token_name = token_name.upper()
+    if not chain_id:
+        return res
+    chain_dict = get_chain(chain_id=chain_id)
+    chain_db_id = chain_dict['chain_db_id']
+    if token_symbol:
+        token_symbol = token_symbol.upper()
     if token_address:
         token_address = to_checksum_address(token_address)
-    res_dicts = [
-        {
-            'chain_id': 11155111,
-            'token_name': 'MBT',
-            'token_address': '0xF904709e8a2E0825FcE724002bE52Dd853202750',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 11155111,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 84532,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 84532,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 300,
-            'token_name': 'MBT',
-            'token_address': '0x0c0CB7D85a0fADD43Be91656cAF933Fd18e98168',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 300,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 80002,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 80002,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 421614,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 421614,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 11155420,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 11155420,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 97,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 97,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 168587773,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 168587773,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Scroll Sepolia
-        {
-            'chain_id': 534351,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 534351,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Linea Sepolia
-        {
-            'chain_id': 59141,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 59141,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Mantle Sepolia
-        {
-            'chain_id': 5003,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 5003,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Polygon zkEVM Cardona
-        {
-            'chain_id': 2442,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 2442,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Mode Sepolia
-        {
-            'chain_id': 919,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 919,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Zora Sepolia
-        {
-            'chain_id': 999999999,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 999999999,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Manta Sepolia
-        {
-            'chain_id': 3441006,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 3441006,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # Taiko Hekla
-        {
-            'chain_id': 167009,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 167009,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-        # opBNB Testnet
-        {
-            'chain_id': 5611,
-            'token_name': 'MBT',
-            'token_address': '0xc4C5896a32e75ed3b59C48620E3b0833D0f98820',
-            'is_mainnet': False,
-        },
-        {
-            'chain_id': 5611,
-            'token_name': 'ETH',
-            'token_address': '0x0000000000000000000000000000000000000000',
-            'is_mainnet': False,
-        },
-    ]
-    if chain_id and token_name:
-        res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_name'] == token_name), {})
-    if chain_id and token_address:
-        res = next((item for item in res_dicts if item['chain_id'] == chain_id and item['token_address'] == token_address), {})
+    sql = ''
+    if token_symbol:
+        sql = f"select * from token where token_symbol = '{token_symbol}' and chain_db_id = {chain_db_id}"
+    if token_address:
+        sql = f"select * from token where token_address = '{token_address}' and chain_db_id = {chain_db_id}"
+    if not sql:
+        return res
+    token_dicts = pg_obj.query(sql)
+    token_dicts = [i for i in token_dicts if i['is_active']]
+    [i.update({'token_db_id': i['id']}) for i in token_dicts]
+    if token_dicts:
+        res_dicts = func_left_join(token_dicts,[chain_dict],['chain_db_id'])
+        if res_dicts:
+            res = res_dicts[0]
     return res

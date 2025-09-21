@@ -443,8 +443,8 @@ def call_fill_relay_by_calldata(calldata,originChainId,depositHash):
     calldata_dict = get_decode_calldata(calldata)
     block_chainid = calldata_dict['destinationChainId']
     vault = to_checksum_address(calldata_dict['vault'])
-    token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])['token_name']
-    outputToken = get_token(chain_id=block_chainid,token_name=token_name_input,).get('token_address',None)
+    token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])['token_symbol']
+    outputToken = get_token(chain_id=block_chainid,token_symbol=token_name_input).get('token_address',None)
 
     outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
     message = b''

@@ -14,15 +14,15 @@ def test_get_decode_calldata():
 def test_call_deposit(private_key=None,recipient=None):
     block_chainid = 300
     # block_chainid = 11155111
-    # block_chainid = 421614
+    # block_chainid = 11155420
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     # inputAmount = get_wei_amount(0.0001)
     # inputAmount = get_wei_amount(1000)
 
-    # inputToken = get_token(chain_id=block_chainid,token_name='ETH')['token_address']
+    # inputToken = get_token(chain_id=block_chainid,token_symbol='ETH')['token_address']
     # inputAmount = get_wei_amount(0.001)
-    inputToken = get_token(chain_id=block_chainid,token_name='MBT')['token_address']
+    inputToken = get_token(chain_id=block_chainid,token_symbol='MBT')['token_address']
     inputAmount = get_wei_amount(0.001)
     # inputAmount = get_wei_amount(1)
 
@@ -50,7 +50,7 @@ def test_call_fill_relay():
                         block_chainid, private_key=VAULT_PRIVATE_KEY)
 
 if __name__ == '__main__':
-    # test_call_deposit(private_key=CLIENT_PRIVATE_KEY,recipient=CLIENT)
-    test_call_deposit(private_key=DEPLOYER_PRIVATE_KEY,recipient=DEPLOYER)
+    test_call_deposit(private_key=CLIENT_PRIVATE_KEY,recipient=CLIENT)
+    # test_call_deposit(private_key=DEPLOYER_PRIVATE_KEY,recipient=DEPLOYER)
     # test_get_decode_calldata()
     # test_call_fill_relay()

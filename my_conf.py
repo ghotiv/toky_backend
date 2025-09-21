@@ -1,4 +1,5 @@
-from my_private_conf import *
+# TZ = 'Asia/Shanghai'
+TZ = 'UTC'
 
 FILL_RATE = 0.9
 L1_CHAIN_IDS = [11155111, 1, 97, 56, 59141, 59144]  # Ethereum, BSC, Linea (gas行为类似L1)
@@ -98,3 +99,5 @@ alchemy_network_chain_mainnet = {
     'ZORA_MAINNET': 7777777,
     'METIS_MAINNET': 1088
 }
+
+from my_private_conf import *
