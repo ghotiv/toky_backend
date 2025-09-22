@@ -419,7 +419,7 @@ def call_fill_relay_by_alchemy(data):
     '''
     res = None
 
-    # print(f"data: {data}")
+    print(f"data: {data}")
 
     tx_dict = data['event']['data']['block']['logs'][0]['transaction']
     alchemy_network = data['event']['network']
