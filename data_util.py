@@ -95,3 +95,16 @@ def get_token(chain_id=None,token_symbol=None,token_address=None):
         if res_dicts:
             res = res_dicts[0]
     return res
+
+
+def create_txl(tx_dict):
+    txl_dict = {
+        'tx_hash': tx_dict['hash'],
+        'status': 0,
+        'contract_addr_call': tx_dict['contract_addr_call'],
+        'txl_related_id': tx_dict['txl_related_id'],
+        'tx_status': 0,
+        'is_refund': 0,
+    }
+    pg_obj.insert('txline',txl_dict)
+    return txl_dict['id']

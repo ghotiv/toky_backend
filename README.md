@@ -135,31 +135,31 @@ null(初始)--1(成功)
 #tx_status
 来自接口
 {
-    'tx_hash':'0xe049123b1b9ca387e8a33cb20d6879e28ff77c473bf4cf1af9799b011daba32b',
+    'tx_hash':'0x5cdace5465cdc1689600e8b25982a76f6f09c27c60266c04fd99f2b371563784',
     'status':1
     #deposit fillRelay
-    'contract_addr_call': '0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2',
-    'txl_related_id':5,
-    'tx_status': 0,
+    'contract_addr_call': '0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea',
+    'txl_related_id':,
+    'tx_status': 1,   txlist txreceipt_status
     'is_refund': 0,
     'create_time': '',
     'update_time': '',
-    'tx_time': '',
-    'addr_from': '0xe8D083537d89EfC362D7fC84e023cc22169e68FB',
-    'addr_to': '0x118F662240E970A317E5f6F436486846f7Df359a',
-    'chain_db_id': 1,
-    'token_id': 5,
-    'num': 1700000000000012,
-    'tx_fee': 1005411541049,
-    'nonce': 5,
-    'gas_used': 21000,
-    'gas_price': 47237272,
-    'estimate_gas_limit': 31500,
-    'estimate_gas_price': 2539682539,
+    'tx_time': '',  #1758451689 to  txlist timestamp 
+    'addr_from': '0xd45f62ae86e01da43a162aa3cd320fca3c1b178d',  txlist from
+    'addr_to': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D',   calldata decode
+    'chain_db_id': 3,          calldata decode
+    'token_id': 10,            calldata decode
+    'num': 1000000000000000,   calldata decode
+    'tx_fee': 2309350000000,   25000000*92374  txlist gas
+    'nonce': 99,  txlist nonce
+    'gas_used': 92374,   txlist gasUsed
+    'gas_price': 25000000,  txlist gasPrice
+    'estimate_gas_limit': 415185,  tx_params.gas -- txlist gas
+    'estimate_gas_price': ,   eip1559 没这个值
     #EIP-1559 
     'eip_type': '0x2',
-    'max_fee_per_gas': 3047619046,
-    'max_priority_fee_per_gas': 5017619036,
+    'max_fee_per_gas': 38500000,          tx_params.maxFeePerGas
+    'max_priority_fee_per_gas': 1000000,   tx_params.maxPriorityFeePerGas
     'note': ''
 }
 
