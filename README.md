@@ -146,10 +146,11 @@ null(初始)--1(成功)
     'update_time': '',
     'tx_time': '',  #1758451689 to  txlist timestamp   webhook block.timestamp
     'addr_from': '0xd45f62ae86e01da43a162aa3cd320fca3c1b178d',  txlist from  webhook.from.address
-    'addr_to': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D',   calldata decode
-    'chain_db_id': 3,          calldata decode
-    'token_id': 10,            calldata decode
-    'num': 1000000000000000,   calldata decode
+    'addr_to': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D',   calldata 
+    'recipient': '' calldata
+    'chain_db_id': 3,          calldata 
+    'token_id': 10,            calldata 
+    'num': 1000000000000000,   calldata 
     'tx_fee': 2309350000000,   25000000*92374  txlist gas   
     'nonce': 99,  txlist nonce    webhook transaction.nonce
     'gas_used': 92374,   txlist gasUsed    webhook transaction.gasUsed
@@ -190,6 +191,7 @@ CREATE TABLE txline(
     tx_time TIMESTAMP DEFAULT NULL,
     addr_from VARCHAR(200) DEFAULT NULL,
     addr_to VARCHAR(200) DEFAULT NULL,
+    recipient VARCHAR(200) DEFAULT NULL,
     chain_db_id INTEGER DEFAULT NULL,
     token_id INTEGER NOT NULL,
     num NUMERIC(78,0) DEFAULT NULL,
@@ -209,6 +211,7 @@ CREATE TABLE txline(
 
 CREATE INDEX idx_txline_addr_from ON txline(addr_from);
 CREATE INDEX idx_txline_addr_to ON txline(addr_to);
+CREATE INDEX idx_txline_recipient ON txline(recipient);
 CREATE INDEX idx_txline_chain_db_id ON txline(chain_db_id);
 CREATE INDEX idx_txline_token_id ON txline(token_id);
 CREATE INDEX idx_txline_status ON txline(status);
