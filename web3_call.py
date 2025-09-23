@@ -426,10 +426,8 @@ def call_fill_relay_by_alchemy(data):
     originChainId = get_chain(alchemy_network=alchemy_network)['chain_id']
     depositHash = get_bytes32_address(tx_dict['hash'])
     calldata = tx_dict['inputData']
-    # calldata_dict = get_decode_calldata(calldata)
-    res = call_fill_relay_by_calldata(calldata,originChainId,depositHash)
-    # calldata_dict = get_decode_calldata(calldata)
-    # res = call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash)
+    calldata_dict = get_decode_calldata(calldata)
+    res = call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash)
     return res
 
 def call_fill_relay_by_etherscan(chain_id='',limit=1, contract_type='contract_deposit'):
@@ -443,10 +441,9 @@ def call_fill_relay_by_etherscan(chain_id='',limit=1, contract_type='contract_de
         print(f"res: {res}")
 
 #todo FILL_RATE 来自across
-# def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
-def call_fill_relay_by_calldata(calldata,originChainId,depositHash):
+def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     res = None
-    calldata_dict = get_decode_calldata(calldata)
+    # calldata_dict = get_decode_calldata(calldata)
     block_chainid = calldata_dict['destinationChainId']
     vault = to_checksum_address(calldata_dict['vault'])
     token_name_input = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])['token_symbol']
