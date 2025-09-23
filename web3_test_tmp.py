@@ -12,8 +12,11 @@ def test_get_decode_calldata():
     print(calldata_dict)
 
 def test_call_deposit(private_key=None,recipient=None):
-    block_chainid = 300
+    # block_chainid = 300
     # block_chainid = 11155111
+    # block_chainid = 80002
+    # block_chainid = 84532
+    block_chainid = 97
     # block_chainid = 11155420
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
@@ -27,8 +30,8 @@ def test_call_deposit(private_key=None,recipient=None):
     # inputAmount = get_wei_amount(1)
 
     # destinationChainId = 11155111
-    destinationChainId = 84532
-    # destinationChainId = 300
+    # destinationChainId = 84532
+    destinationChainId = 300
     message = b'hello'
     recipient_bytes32 = get_bytes32_address(recipient)
     call_deposit(VAULT, recipient_bytes32, inputToken, inputAmount, 
