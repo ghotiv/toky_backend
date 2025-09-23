@@ -12,8 +12,8 @@ def test_get_decode_calldata():
     print(calldata_dict)
 
 def test_call_deposit(private_key=None,recipient=None):
-    block_chainid = 300
-    # block_chainid = 11155111
+    # block_chainid = 300
+    block_chainid = 11155111
     # block_chainid = 11155420
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')

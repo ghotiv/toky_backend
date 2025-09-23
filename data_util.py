@@ -18,6 +18,19 @@ def get_pg_obj(host=DB_HOST,db=DB_DB,user=DB_USER,pwd=DB_PWD):
 
 pg_obj = get_pg_obj()
 
+def str_to_int(num):
+    '''
+        '0xf3c9e' -> 998558
+        998558 -> 998558
+    '''
+    num = str(num)
+    res = None
+    if num.startswith('0x'):
+        res = int(num, 16)
+    elif num.isdigit():
+        res = int(num)
+    return res
+
 def set_tmp_key(k,v,ex=None):
     return redis_obj.set(k,v,ex)
 
