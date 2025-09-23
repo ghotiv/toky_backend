@@ -168,17 +168,14 @@ def get_decode_calldata(calldata):
         decoded_data = decode(abi_types, decode_hex(encoded_data))
         recipient,outputToken,outputAmount,originChainId,depositHash,message = decoded_data
         res = {
-            'recipient':get_recipient_vaild_address(recipient),
+            'recipient':to_checksum_address(recipient),
             'outputToken':to_checksum_address(outputToken),
             'outputAmount':outputAmount,
             'originChainId':originChainId,
-            'depositHash':depositHash,
+            'depositHash':depositHash.hex(),
             'message':message
         }
     return res
-
-data = '0xeef40c38000000000000000000000000ba37d7ed1cff3ddab5f23ee99525291dca00999d000000000000000000000000d45f62ae86e01da43a162aa3cd320fca3c1b178d0000000000000000000000000c0cb7d85a0fadd43be91656caf933fd18e9816800000000000000000000000000000000000000000000000000038d7ea4c680000000000000000000000000000000000000000000000000000000000000014a3400000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000'
-print(get_decode_calldata(data))
 
 def decode_contract_error(error_data):
     """解码合约自定义错误"""

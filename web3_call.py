@@ -1,7 +1,5 @@
 
 import time
-import random
-import requests
 
 from eth_utils import to_checksum_address
 from web3 import Web3
@@ -10,22 +8,10 @@ from web3_util import decode_contract_error,get_gas_params,\
         handle_already_known_transaction, get_bytes32_address,\
         get_decode_calldata
 
-from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,create_txl_etherscan
-from my_conf import *
+from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,\
+    create_fill_txl_etherscan,get_etherscan_txs
 
-def get_etherscan_txs(chain_id='',limit=2,apikeys=ETHERSCAN_API_KEYS,contract_type='contract_deposit'):
-    res = []
-    apikey = random.choice(apikeys)
-    address = ''
-    if contract_type == 'contract_deposit':
-        address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_deposit',''))
-    if contract_type == 'contract_fillrelay':
-        address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_fillrelay',''))
-    if address:
-        url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=account&action=txlist&address={address}&page=1&offset={limit}&sort=desc&apikey={apikey}'
-        response = requests.get(url)
-        res = response.json()['result']
-    return res
+from my_conf import *
 
 def get_w3(rpc_url='',chain_id=''):
     if chain_id:
@@ -464,6 +450,6 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
                                 block_chainid, private_key=VAULT_PRIVATE_KEY)
     except Exception as e:
         print(f"❌ call_fill_relay_by_alchemy失败: {e}")
-    # if res:
-    #     create_txl_etherscan(tx_dict,calldata_dict)
+    if res:
+        create_fill_txl_etherscan(res,block_chainid)
     return res

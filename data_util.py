@@ -1,10 +1,15 @@
 import json
 import arrow
-from eth_utils import to_checksum_address
+import random
+import requests
+
+from eth_utils import to_checksum_address,add_0x_prefix
 
 from util import func_left_join,to_tztime
 from pg_util import Postgresql
 from redis_util import Redis
+
+from web3_util import get_decode_calldata
 
 from my_conf import *
 
@@ -58,6 +63,30 @@ def read_json_file(file_path):
         print(f"Error decoding JSON in file: {file_path}")
         return None
 
+def get_etherscan_apikey():
+    return random.choice(ETHERSCAN_API_KEYS)
+
+def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
+    res = []
+    apikey = get_etherscan_apikey()
+    address = ''
+    if contract_type == 'contract_deposit':
+        address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_deposit',''))
+    if contract_type == 'contract_fillrelay':
+        address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_fillrelay',''))
+    if address:
+        url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=account&action=txlist&address={address}&page=1&offset={limit}&sort=desc&apikey={apikey}'
+        response = requests.get(url)
+        res = response.json()['result']
+    return res
+
+def get_etherscan_tx_by_hash(chain_id='',tx_hash=''):
+    apikey = get_etherscan_apikey()
+    url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=proxy&action=eth_getTransactionByHash&txhash={tx_hash}&apikey={apikey}'
+    response = requests.get(url)
+    res = response.json()['result']
+    return res
+
 def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
     res = None
     sql = ''
@@ -108,6 +137,11 @@ def get_token(chain_id=None,token_symbol=None,token_address=None):
             res = res_dicts[0]
     return res
 
+def get_txl(tx_hash):
+    sql = f"select * from txline where tx_hash = '{tx_hash}'"
+    res = pg_obj.query(sql)
+    return res[0] if res else {}
+
 def create_txl_webhook(tx_dict,calldata_dict):
     gas_price = str_to_int(tx_dict['effectiveGasPrice'])
     gas_used = tx_dict['gasUsed']
@@ -143,34 +177,41 @@ def create_txl_webhook(tx_dict,calldata_dict):
     res = pg_obj.insert('txline',txl_dict)
     return res
 
-def create_txl_etherscan(tx_dict,calldata_dict):
-    gas_price = str_to_int(tx_dict['effectiveGasPrice'])
-    gas_used = tx_dict['gasUsed']
-    tx_fee = gas_price*gas_used
+def create_fill_txl_etherscan(tx_hash,block_chainid):
+    tx_dict = get_etherscan_tx_by_hash(chain_id=block_chainid,tx_hash=tx_hash)
+    calldata_dict = get_decode_calldata(tx_dict['input'])
+
+    chain_dict = get_chain(chain_id=block_chainid)
+    chain_db_id = chain_dict['chain_db_id']
+    token_dict = get_token(chain_id=block_chainid,token_address=calldata_dict['outputToken'])
+    token_id = token_dict['token_db_id']
+    depositHash = add_0x_prefix(calldata_dict['depositHash'])
+    txl_related_dict = get_txl(tx_hash=depositHash)
+
     txl_dict = {
         'tx_hash': tx_dict['hash'],
-        'status': tx_dict['status'],
-        'contract_addr_call': tx_dict['contract_addr_call'],
-        # 'txl_related_id': '',
-        'tx_status': tx_dict['status'],
+        # 'status': '',#todo
+        'contract_addr_call': tx_dict['to'],
+        'txl_related_id': txl_related_dict['id'],
+        # 'tx_status': '', #todo
         # 'is_refund': '',
         # 'create_time': '',
         # 'update_time': '',
-        'tx_time': to_tztime(tx_dict['timestamp']),
-        'addr_from': tx_dict['from']['address'],
-        'addr_to': calldata_dict['vault'],
+        'tx_time': '', #todo
+        'addr_from': tx_dict['from'],
+        'addr_to': calldata_dict['recipient'],
         'recipient': calldata_dict['recipient'],
-        'chain_db_id': calldata_dict['chain_db_id'],
-        'dst_chain_db_id': calldata_dict['dst_chain_db_id'],
-        'token_id': calldata_dict['token_id'],
-        'num': calldata_dict['inputAmount'],
-        'tx_fee': tx_fee,
-        'nonce': tx_dict['nonce'],
-        'gas_used': gas_used,
-        'gas_price': gas_price,
-        'estimate_gas_limit': tx_dict['gas'],
+        'chain_db_id': chain_db_id,
+        # 'dst_chain_db_id': '',
+        'token_id': token_id,
+        'num': calldata_dict['outputAmount'],
+        'tx_fee': '', #todo
+        'nonce': str_to_int(tx_dict['nonce']),
+        'gas_used': '', #todo
+        'gas_price': '', #todo
+        'estimate_gas_limit': str_to_int(tx_dict['gas']),
         # 'estimate_gas_price': '',
-        # 'eip_type': '0x2',
+        'eip_type': tx_dict['type'],
         'max_fee_per_gas': str_to_int(tx_dict['maxFeePerGas']),
         'max_priority_fee_per_gas': str_to_int(tx_dict['maxPriorityFeePerGas']),
         'note': ''
