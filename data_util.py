@@ -109,15 +109,33 @@ def get_token(chain_id=None,token_symbol=None,token_address=None):
             res = res_dicts[0]
     return res
 
-
-def create_txl(tx_dict):
+def create_txl_webhook(tx_dict,calldata_dict):
     txl_dict = {
         'tx_hash': tx_dict['hash'],
-        'status': 0,
+        'status': tx_dict['status'],
         'contract_addr_call': tx_dict['contract_addr_call'],
-        'txl_related_id': tx_dict['txl_related_id'],
-        'tx_status': 0,
-        'is_refund': 0,
+        # 'txl_related_id': '',
+        'tx_status': tx_dict['status'],
+        # 'is_refund': '',
+        # 'create_time': '',
+        # 'update_time': '',
+        'tx_time': tx_dict['timestamp'],
+        'addr_from': tx_dict['from']['address'],
+        'addr_to': calldata_dict['vault'],
+        'recipient': calldata_dict['recipient'],
+        'chain_db_id': calldata_dict['chain_dict']['chain_db_id'],
+        'token_id': calldata_dict['token_dict']['token_db_id'],
+        'num': calldata_dict['inputAmount'],
+        'tx_fee': '',
+        'nonce': tx_dict['nonce'],
+        'gas_used': tx_dict['gasUsed'],
+        'gas_price': tx_dict['effectiveGasPrice'],
+        'estimate_gas_limit': tx_dict['gas'],
+        # 'estimate_gas_price': '',
+        # 'eip_type': '0x2',
+        'max_fee_per_gas': tx_dict['maxFeePerGas'],
+        'max_priority_fee_per_gas': tx_dict['maxPriorityFeePerGas'],
+        'note': ''
     }
-    pg_obj.insert('txline',txl_dict)
-    return txl_dict['id']
+    res = pg_obj.insert('txline',txl_dict)
+    return res
