@@ -460,9 +460,9 @@ def call_fill_relay_by_calldata(calldata,originChainId,depositHash):
         print(f"check_fill_args 不通过")
         return res
     try:
+        print(f"call_fill_relay: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash}, {message}")
         res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                                 block_chainid, private_key=VAULT_PRIVATE_KEY)
     except Exception as e:
-        print(str(e))
         print(f"❌ call_fill_relay_by_alchemy失败: {e}")
     return res
