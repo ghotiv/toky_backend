@@ -177,13 +177,13 @@ def create_txl_webhook(tx_dict,calldata_dict):
     res = pg_obj.insert('txline',txl_dict)
     return res
 
-def create_fill_txl_etherscan(tx_hash,block_chainid):
-    tx_dict = get_etherscan_tx_by_hash(chain_id=block_chainid,tx_hash=tx_hash)
+def create_fill_txl_etherscan(tx_hash,chain_id):
+    tx_dict = get_etherscan_tx_by_hash(chain_id=chain_id,tx_hash=tx_hash)
     calldata_dict = get_decode_calldata(tx_dict['input'])
 
-    chain_dict = get_chain(chain_id=block_chainid)
+    chain_dict = get_chain(chain_id=chain_id)
     chain_db_id = chain_dict['chain_db_id']
-    token_dict = get_token(chain_id=block_chainid,token_address=calldata_dict['outputToken'])
+    token_dict = get_token(chain_id=chain_id,token_address=calldata_dict['outputToken'])
     token_id = token_dict['token_db_id']
     depositHash = add_0x_prefix(calldata_dict['depositHash'])
     txl_related_dict = get_txl(tx_hash=depositHash)

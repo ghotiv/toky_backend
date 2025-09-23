@@ -451,5 +451,6 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     except Exception as e:
         print(f"❌ call_fill_relay_by_alchemy失败: {e}")
     if res:
-        create_fill_txl_etherscan(res,block_chainid)
+        print(f"time: {time.time()}, create_fill_txl_etherscan: {res}")
+        create_fill_txl_etherscan(tx_hash=res,chain_id=block_chainid)
     return res
