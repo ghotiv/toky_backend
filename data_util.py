@@ -2,7 +2,7 @@ import json
 import arrow
 from eth_utils import to_checksum_address
 
-from util import func_left_join
+from util import func_left_join,to_tztime
 from pg_util import Postgresql
 from redis_util import Redis
 
@@ -119,7 +119,7 @@ def create_txl_webhook(tx_dict,calldata_dict):
         # 'is_refund': '',
         # 'create_time': '',
         # 'update_time': '',
-        'tx_time': tx_dict['timestamp'],
+        'tx_time': to_tztime(tx_dict['timestamp']),
         'addr_from': tx_dict['from']['address'],
         'addr_to': calldata_dict['vault'],
         'recipient': calldata_dict['recipient'],
