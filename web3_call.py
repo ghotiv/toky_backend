@@ -459,6 +459,7 @@ def call_fill_relay_by_alchemy(data):
     depositHash = get_bytes32_address(tx_dict['hash'])
 
     token_dict = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])
+    print(f"token_dict: {token_dict}")
 
     tx_dict.update({
         'contract_addr_call': to_checksum_address(log_dict['account']['address']),
