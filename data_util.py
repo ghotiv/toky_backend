@@ -197,7 +197,7 @@ def create_fill_txl_etherscan(tx_hash,block_chainid):
         # 'is_refund': '',
         # 'create_time': '',
         # 'update_time': '',
-        'tx_time': '', #todo
+        # 'tx_time': '', #todo
         'addr_from': tx_dict['from'],
         'addr_to': calldata_dict['recipient'],
         'recipient': calldata_dict['recipient'],
