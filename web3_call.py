@@ -423,10 +423,13 @@ def call_fill_relay_by_alchemy(data):
     # print(f"data: {data}")
 
     log_dict = data['event']['data']['block']['logs'][0]
+    print(f"log_dict: {log_dict}")
     tx_dict = log_dict['transaction']
+    print(f"tx_dict: {tx_dict}")
 
     alchemy_network = data['event']['network']
     chain_dict = get_chain(alchemy_network=alchemy_network)
+    print(f"chain_dict: {chain_dict}")
     originChainId = chain_dict['chain_id']
     depositHash = get_bytes32_address(tx_dict['hash'])
     calldata = tx_dict['inputData']
