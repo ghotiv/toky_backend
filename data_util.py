@@ -195,12 +195,13 @@ def create_fill_txl_etherscan(tx_hash,chain_id):
     token_id = token_dict['token_db_id']
     depositHash = add_0x_prefix(calldata_dict['depositHash'])
     txl_related_dict = get_txl(tx_hash=depositHash)
+    txl_related_id = txl_related_dict['id']
 
     txl_dict = {
         'tx_hash': tx_dict['hash'],
         # 'status': '',#todo
         'contract_addr_call': to_checksum_address(tx_dict['to']),
-        'txl_related_id': txl_related_dict['id'],
+        'txl_related_id': txl_related_id,
         # 'tx_status': '', #todo
         # 'is_refund': '',
         # 'create_time': '',
@@ -239,6 +240,7 @@ def create_fill_txl_etherscan(tx_hash,chain_id):
             'gas_used': gas_used,
             'gas_price': gas_price,
         })
+        pg_obj.update('txline',{'status':1},condition=f"txl_related_id = '{txl_related_id}'")
 
     res = pg_obj.insert('txline',txl_dict)
     return res
