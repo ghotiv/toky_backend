@@ -68,21 +68,29 @@ def get_etherscan_apikey():
 
 def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
     res = []
-    apikey = get_etherscan_apikey()
+    api_key = get_etherscan_apikey()
     address = ''
     if contract_type == 'contract_deposit':
         address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_deposit',''))
     if contract_type == 'contract_fillrelay':
         address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_fillrelay',''))
     if address:
-        url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=account&action=txlist&address={address}&page=1&offset={limit}&sort=desc&apikey={apikey}'
+        url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=account&action=txlist&address={address}&page=1&offset={limit}&sort=desc&apikey={api_key}'
         response = requests.get(url)
         res = response.json()['result']
     return res
 
 def get_etherscan_tx_by_hash(chain_id='',tx_hash=''):
-    apikey = get_etherscan_apikey()
-    url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=proxy&action=eth_getTransactionByHash&txhash={tx_hash}&apikey={apikey}'
+    api_key = get_etherscan_apikey()
+    url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=proxy&action=eth_getTransactionByHash&txhash={tx_hash}&apikey={api_key}'
+    response = requests.get(url)
+    res = response.json()['result']
+    return res
+    
+#eth_getTransactionReceipt    
+def get_etherscan_tx_receipt(chain_id='',tx_hash=''):
+    api_key = get_etherscan_apikey()
+    url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=proxy&action=eth_getTransactionReceipt&txhash={tx_hash}&apikey={api_key}'
     response = requests.get(url)
     res = response.json()['result']
     return res
@@ -148,7 +156,7 @@ def create_txl_webhook(tx_dict,calldata_dict):
     tx_fee = gas_price*gas_used
     txl_dict = {
         'tx_hash': tx_dict['hash'],
-        'status': tx_dict['status'],
+        'status': 0,
         'contract_addr_call': tx_dict['contract_addr_call'],
         # 'txl_related_id': '',
         'tx_status': tx_dict['status'],
@@ -191,16 +199,16 @@ def create_fill_txl_etherscan(tx_hash,chain_id):
     txl_dict = {
         'tx_hash': tx_dict['hash'],
         # 'status': '',#todo
-        'contract_addr_call': tx_dict['to'],
+        'contract_addr_call': to_checksum_address(tx_dict['to']),
         'txl_related_id': txl_related_dict['id'],
         # 'tx_status': '', #todo
         # 'is_refund': '',
         # 'create_time': '',
         # 'update_time': '',
         # 'tx_time': '', #todo
-        'addr_from': tx_dict['from'],
-        'addr_to': calldata_dict['recipient'],
-        'recipient': calldata_dict['recipient'],
+        'addr_from': to_checksum_address(tx_dict['from']),
+        'addr_to': to_checksum_address(calldata_dict['recipient']),
+        'recipient': to_checksum_address(calldata_dict['recipient']),
         'chain_db_id': chain_db_id,
         # 'dst_chain_db_id': '',
         'token_id': token_id,
@@ -216,5 +224,21 @@ def create_fill_txl_etherscan(tx_hash,chain_id):
         'max_priority_fee_per_gas': str_to_int(tx_dict['maxPriorityFeePerGas']),
         'note': ''
     }
+
+    tx_receipt_dict = get_etherscan_tx_receipt(chain_id=chain_id,tx_hash=tx_hash)
+    if str_to_int(tx_receipt_dict['status']) == 1:
+        gas_used = str_to_int(tx_receipt_dict['gasUsed'])
+        gas_price = str_to_int(tx_receipt_dict['effectiveGasPrice'])
+        tx_fee = gas_used*gas_price
+        time_stamp = str_to_int(tx_receipt_dict['logs'][0]['blockTimestamp'])
+        txl_dict.update({
+            'status': 1,
+            'tx_status': 1,
+            'tx_time': to_tztime(time_stamp),
+            'tx_fee': tx_fee,
+            'gas_used': gas_used,
+            'gas_price': gas_price,
+        })
+
     res = pg_obj.insert('txline',txl_dict)
     return res
