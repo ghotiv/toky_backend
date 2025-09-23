@@ -58,7 +58,6 @@ def read_json_file(file_path):
         print(f"Error decoding JSON in file: {file_path}")
         return None
 
-
 def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
     res = None
     sql = ''

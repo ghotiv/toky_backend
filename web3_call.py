@@ -1,12 +1,14 @@
 
-from web3 import Web3
-from web3_util import get_method_id, decode_contract_error, get_recipient_vaild_address, \
-    get_gas_params,handle_already_known_transaction, get_bytes32_address
-from eth_abi import decode
-from eth_utils import to_checksum_address, decode_hex
 import time
 import random
 import requests
+
+from eth_utils import to_checksum_address
+from web3 import Web3
+
+from web3_util import decode_contract_error,get_gas_params,\
+        handle_already_known_transaction, get_bytes32_address,\
+        get_decode_calldata
 
 from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,create_txl_etherscan
 from my_conf import *
@@ -40,54 +42,6 @@ def get_w3(rpc_url='',chain_id=''):
     
     # print(w3.isConnected())
     return w3
-
-def get_decode_calldata(calldata):
-    res = {}
-    method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
-    method_id_fill_relay = get_method_id("fillRelay(address,address,uint256,uint256,bytes32,bytes)")
-    method_id = calldata[:10]
-    encoded_data = calldata[10:]
-    if method_id == method_id_transfer_deposit:
-        function_abi = [
-            {"type": "address", "name": "vault"},
-            {"type": "bytes32", "name": "recipient"},
-            {"type": "address", "name": "inputToken"},
-            {"type": "uint256", "name": "inputAmount"},
-            {"type": "uint256", "name": "destinationChainId"},
-            {"type": "bytes", "name": "message"},
-        ]
-        abi_types = [item["type"] for item in function_abi]
-        decoded_data = decode(abi_types, decode_hex(encoded_data))
-        vault,recipient,inputToken,inputAmount,destinationChainId,message = decoded_data
-        res = {
-            'vault':to_checksum_address(vault),
-            'recipient':get_recipient_vaild_address(recipient),
-            'inputToken':to_checksum_address(inputToken),
-            'inputAmount':inputAmount,
-            'destinationChainId':destinationChainId,
-            'message':message
-        }
-    if method_id == method_id_fill_relay:
-        function_abi = [
-            {"type": "address", "name": "recipient"},
-            {"type": "address", "name": "outputToken"},
-            {"type": "uint256", "name": "outputAmount"},
-            {"type": "uint256", "name": "originChainId"},
-            {"type": "bytes32", "name": "depositHash"},
-            {"type": "bytes", "name": "message"},
-        ]
-        abi_types = [item["type"] for item in function_abi]
-        decoded_data = decode(abi_types, decode_hex(encoded_data))
-        recipient,outputToken,outputAmount,originChainId,depositHash,message = decoded_data
-        res = {
-            'recipient':get_recipient_vaild_address(recipient),
-            'outputToken':to_checksum_address(outputToken),
-            'outputAmount':outputAmount,
-            'originChainId':originChainId,
-            'depositHash':depositHash,
-            'message':message
-        }
-    return res
 
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
@@ -459,7 +413,7 @@ def call_fill_relay_by_alchemy(data):
     depositHash = get_bytes32_address(tx_dict['hash'])
 
     token_dict = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])
-    print(f"token_dict: {token_dict}")
+    # print(f"token_dict: {token_dict}")
 
     tx_dict.update({
         'contract_addr_call': to_checksum_address(log_dict['account']['address']),
@@ -468,6 +422,7 @@ def call_fill_relay_by_alchemy(data):
     calldata_dict.update({
         'chain_db_id': chain_dict['chain_db_id'],
         'token_id': token_dict['token_db_id'],
+        'token_symbol': token_dict['token_symbol'],
         'dst_chain_db_id': dst_chain_dict['chain_db_id'],
     })
     # print(f"tx_dict: {tx_dict}")
@@ -494,7 +449,7 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     res = None
     block_chainid = calldata_dict['destinationChainId']
     vault = to_checksum_address(calldata_dict['vault'])
-    token_symbol_input = calldata_dict['token_dict']['token_symbol']
+    token_symbol_input = calldata_dict['token_symbol']
     outputToken = get_token(chain_id=block_chainid,token_symbol=token_symbol_input).get('token_address',None)
 
     outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
@@ -509,6 +464,6 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
                                 block_chainid, private_key=VAULT_PRIVATE_KEY)
     except Exception as e:
         print(f"❌ call_fill_relay_by_alchemy失败: {e}")
-    if res:
-        create_txl_etherscan(tx_dict,calldata_dict)
+    # if res:
+    #     create_txl_etherscan(tx_dict,calldata_dict)
     return res

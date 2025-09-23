@@ -1,6 +1,8 @@
 import time
 
-from eth_utils import to_checksum_address, keccak, is_address, to_bytes
+from eth_utils import to_checksum_address, keccak, is_address, to_bytes,\
+        decode_hex
+from eth_abi import decode
 
 from my_conf import *
 
@@ -126,6 +128,57 @@ def get_recipient_vaild_address(recipient):
 
 def get_method_id(func_sign):
     return '0x'+keccak(text=func_sign).hex()[:8]
+
+def get_decode_calldata(calldata):
+    res = {}
+    method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
+    method_id_fill_relay = get_method_id("fillRelay(address,address,uint256,uint256,bytes32,bytes)")
+    method_id = calldata[:10]
+    encoded_data = calldata[10:]
+    if method_id == method_id_transfer_deposit:
+        function_abi = [
+            {"type": "address", "name": "vault"},
+            {"type": "bytes32", "name": "recipient"},
+            {"type": "address", "name": "inputToken"},
+            {"type": "uint256", "name": "inputAmount"},
+            {"type": "uint256", "name": "destinationChainId"},
+            {"type": "bytes", "name": "message"},
+        ]
+        abi_types = [item["type"] for item in function_abi]
+        decoded_data = decode(abi_types, decode_hex(encoded_data))
+        vault,recipient,inputToken,inputAmount,destinationChainId,message = decoded_data
+        res = {
+            'vault':to_checksum_address(vault),
+            'recipient':get_recipient_vaild_address(recipient),
+            'inputToken':to_checksum_address(inputToken),
+            'inputAmount':inputAmount,
+            'destinationChainId':destinationChainId,
+            'message':message
+        }
+    if method_id == method_id_fill_relay:
+        function_abi = [
+            {"type": "address", "name": "recipient"},
+            {"type": "address", "name": "outputToken"},
+            {"type": "uint256", "name": "outputAmount"},
+            {"type": "uint256", "name": "originChainId"},
+            {"type": "bytes32", "name": "depositHash"},
+            {"type": "bytes", "name": "message"},
+        ]
+        abi_types = [item["type"] for item in function_abi]
+        decoded_data = decode(abi_types, decode_hex(encoded_data))
+        recipient,outputToken,outputAmount,originChainId,depositHash,message = decoded_data
+        res = {
+            'recipient':get_recipient_vaild_address(recipient),
+            'outputToken':to_checksum_address(outputToken),
+            'outputAmount':outputAmount,
+            'originChainId':originChainId,
+            'depositHash':depositHash,
+            'message':message
+        }
+    return res
+
+data = '0xeef40c38000000000000000000000000ba37d7ed1cff3ddab5f23ee99525291dca00999d000000000000000000000000d45f62ae86e01da43a162aa3cd320fca3c1b178d0000000000000000000000000c0cb7d85a0fadd43be91656caf933fd18e9816800000000000000000000000000000000000000000000000000038d7ea4c680000000000000000000000000000000000000000000000000000000000000014a3400000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000'
+print(get_decode_calldata(data))
 
 def decode_contract_error(error_data):
     """解码合约自定义错误"""
