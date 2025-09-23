@@ -237,7 +237,7 @@ CREATE TABLE txline(
     gas_price BIGINT DEFAULT NULL,
     estimate_gas_limit BIGINT DEFAULT NULL, 
     estimate_gas_price BIGINT DEFAULT NULL,  
-    eip_type VARCHAR(50) DEFAULT NULL,  
+    eip_type INTEGER DEFAULT NULL,  
     max_fee_per_gas BIGINT DEFAULT NULL,
     max_priority_fee_per_gas BIGINT DEFAULT NULL,
     note TEXT,
@@ -249,9 +249,10 @@ CREATE INDEX idx_txline_addr_from ON txline(addr_from);
 CREATE INDEX idx_txline_addr_to ON txline(addr_to);
 CREATE INDEX idx_txline_recipient ON txline(recipient);
 CREATE INDEX idx_txline_chain_db_id ON txline(chain_db_id);
-CREATE INDEX idx_txline_chain_db_id ON txline(dst_chain_db_id);
+CREATE INDEX idx_txline_dst_chain_db_id ON txline(dst_chain_db_id);
 CREATE INDEX idx_txline_token_id ON txline(token_id);
 CREATE INDEX idx_txline_status ON txline(status);
 CREATE INDEX idx_txline_tx_status ON txline(tx_status);
 CREATE INDEX idx_txline_tx_time ON txline(tx_time);
 CREATE INDEX idx_txline_create_time ON txline(create_time);
+CREATE INDEX idx_txline_eip_type ON txline(eip_type);

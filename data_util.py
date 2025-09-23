@@ -219,7 +219,7 @@ def create_fill_txl_etherscan(tx_hash,chain_id):
         # 'gas_price': '', #todo
         'estimate_gas_limit': str_to_int(tx_dict['gas']),
         # 'estimate_gas_price': '',
-        'eip_type': tx_dict['type'],
+        'eip_type': str_to_int(tx_dict['type']),
         'max_fee_per_gas': str_to_int(tx_dict['maxFeePerGas']),
         'max_priority_fee_per_gas': str_to_int(tx_dict['maxPriorityFeePerGas']),
         'note': ''
