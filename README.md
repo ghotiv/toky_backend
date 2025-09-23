@@ -135,7 +135,7 @@ null(初始)--1(成功)
 #tx_status
 来自接口
 {
-    'tx_hash':'0x5cdace5465cdc1689600e8b25982a76f6f09c27c60266c04fd99f2b371563784', webhook transaction.hash
+    'tx_hash':'0x5cdace5465cdc1689600e8b25982a76f6f09c27c60266c04fd99f2b371563784', webhook transaction.hash  scan_hash hash
     'status':1
     #deposit fillRelay
     'contract_addr_call': '0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea',    webhook logs0.account.address  transaction.to 
@@ -145,23 +145,23 @@ null(初始)--1(成功)
     'create_time': '',
     'update_time': '',
     'tx_time': '',  #1758451689 to  txlist timestamp   webhook block.timestamp
-    'addr_from': '0xd45f62ae86e01da43a162aa3cd320fca3c1b178d',  txlist from  webhook.from.address
-    'addr_to': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D',   calldata 
+    'addr_from': '0xd45f62ae86e01da43a162aa3cd320fca3c1b178d',  txlist from  webhook.from.address scan_hash from
+    'addr_to': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D',   calldata  
     'recipient': '' calldata
     'chain_db_id': 3,          calldata 
-    'dst_chain_db_id':''
+    'dst_chain_db_id':''       calldata
     'token_id': 10,            calldata 
     'num': 1000000000000000,   calldata 
     'tx_fee': 2309350000000,   25000000*92374  txlist gas    webhook.effectiveGasPrice*gasUsed
-    'nonce': 99,  txlist nonce    webhook transaction.nonce
-    'gas_used': 92374,   txlist gasUsed    webhook transaction.gasUsed
+    'nonce': 99,  txlist nonce    webhook transaction.nonce  scan_hash nonce
+    'gas_used': 92374,   txlist gasUsed    webhook transaction.gasUsed 
     'gas_price': 25000000,  txlist gasPrice   webhook transaction.effectiveGasPrice /gasPrice  
-    'estimate_gas_limit': 415185,  tx_params.gas -- txlist gas    webhook transaction.gas
+    'estimate_gas_limit': 415185,  tx_params.gas -- txlist gas    webhook transaction.gas  scan_hash gas
     'estimate_gas_price': ,   eip1559 没这个值
     #EIP-1559 
     'eip_type': '0x2',  eth_getTransactionReceipt.type
-    'max_fee_per_gas': 38500000,          tx_params.maxFeePerGas     webhook transaction.maxFeePerGas
-    'max_priority_fee_per_gas': 1000000,   tx_params.maxPriorityFeePerGas   webhook transaction.maxPriorityFeePerGas
+    'max_fee_per_gas': 38500000,          tx_params.maxFeePerGas     webhook transaction.maxFeePerGas scan_hash maxFeePerGas
+    'max_priority_fee_per_gas': 1000000,   tx_params.maxPriorityFeePerGas   webhook transaction.maxPriorityFeePerGas scan_hash maxPriorityFeePerGas
     'note': ''
 }
 

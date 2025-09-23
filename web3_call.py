@@ -8,7 +8,7 @@ import time
 import random
 import requests
 
-from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook
+from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,create_txl_etherscan
 from my_conf import *
 
 def get_etherscan_txs(chain_id='',limit=2,apikeys=ETHERSCAN_API_KEYS,contract_type='contract_deposit'):
@@ -44,6 +44,7 @@ def get_w3(rpc_url='',chain_id=''):
 def get_decode_calldata(calldata):
     res = {}
     method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
+    method_id_fill_relay = get_method_id("fillRelay(address,address,uint256,uint256,bytes32,bytes)")
     method_id = calldata[:10]
     encoded_data = calldata[10:]
     if method_id == method_id_transfer_deposit:
@@ -64,6 +65,26 @@ def get_decode_calldata(calldata):
             'inputToken':to_checksum_address(inputToken),
             'inputAmount':inputAmount,
             'destinationChainId':destinationChainId,
+            'message':message
+        }
+    if method_id == method_id_fill_relay:
+        function_abi = [
+            {"type": "address", "name": "recipient"},
+            {"type": "address", "name": "outputToken"},
+            {"type": "uint256", "name": "outputAmount"},
+            {"type": "uint256", "name": "originChainId"},
+            {"type": "bytes32", "name": "depositHash"},
+            {"type": "bytes", "name": "message"},
+        ]
+        abi_types = [item["type"] for item in function_abi]
+        decoded_data = decode(abi_types, decode_hex(encoded_data))
+        recipient,outputToken,outputAmount,originChainId,depositHash,message = decoded_data
+        res = {
+            'recipient':get_recipient_vaild_address(recipient),
+            'outputToken':to_checksum_address(outputToken),
+            'outputAmount':outputAmount,
+            'originChainId':originChainId,
+            'depositHash':depositHash,
             'message':message
         }
     return res
@@ -487,4 +508,6 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
                                 block_chainid, private_key=VAULT_PRIVATE_KEY)
     except Exception as e:
         print(f"❌ call_fill_relay_by_alchemy失败: {e}")
+    if res:
+        create_txl_etherscan(tx_dict,calldata_dict)
     return res
