@@ -126,7 +126,7 @@ def create_txl_webhook(tx_dict,calldata_dict):
         'chain_db_id': calldata_dict['chain_dict']['chain_db_id'],
         'token_id': calldata_dict['token_dict']['token_db_id'],
         'num': calldata_dict['inputAmount'],
-        'tx_fee': '',
+        'tx_fee': tx_dict['effectiveGasPrice']*tx_dict['gasUsed'],
         'nonce': tx_dict['nonce'],
         'gas_used': tx_dict['gasUsed'],
         'gas_price': tx_dict['effectiveGasPrice'],

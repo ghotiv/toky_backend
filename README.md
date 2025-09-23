@@ -151,7 +151,7 @@ null(初始)--1(成功)
     'chain_db_id': 3,          calldata 
     'token_id': 10,            calldata 
     'num': 1000000000000000,   calldata 
-    'tx_fee': 2309350000000,   25000000*92374  txlist gas   
+    'tx_fee': 2309350000000,   25000000*92374  txlist gas    webhook.effectiveGasPrice*gasUsed
     'nonce': 99,  txlist nonce    webhook transaction.nonce
     'gas_used': 92374,   txlist gasUsed    webhook transaction.gasUsed
     'gas_price': 25000000,  txlist gasPrice   webhook transaction.effectiveGasPrice /gasPrice  
