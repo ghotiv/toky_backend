@@ -440,6 +440,8 @@ def call_fill_relay_by_alchemy(data):
         'chain_dict': chain_dict,
         'token_dict': token_dict,
     })
+    print(f"tx_dict: {tx_dict}")
+    print(f"calldata_dict: {calldata_dict}")
 
     res_create_txl_webhook = create_txl_webhook(tx_dict,calldata_dict)
     print(f"res_create_txl_webhook: {res_create_txl_webhook}")
