@@ -240,7 +240,15 @@ def create_fill_txl_etherscan(tx_hash,chain_id):
             'gas_used': gas_used,
             'gas_price': gas_price,
         })
-        pg_obj.update('txline',{'status':1},condition=f"txl_related_id = '{txl_related_id}'")
+        #更新from单状态
+        update_sql = f'''
+            UPDATE txline
+            SET status = 1
+            WHERE id IN (
+                SELECT id FROM txline WHERE id = {txl_related_id} ORDER BY id LIMIT 1
+            );
+        '''
+        pg_obj.execute(update_sql)
 
     res = pg_obj.insert('txline',txl_dict)
     return res
