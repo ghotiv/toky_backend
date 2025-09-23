@@ -235,6 +235,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     chain_dict = get_chain(chain_id=block_chainid)
     is_eip1559 = chain_dict['is_eip1559']
     is_l2 = chain_dict['is_l2']
+    print(f"chain_dict: {chain_dict}")
     contract_address = chain_dict['contract_fillRelay']
 
     print(f"call_fill_relay 入参 时间: {time.time()}: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash.hex()}, {message}")
@@ -457,7 +458,6 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
         print(f"check_fill_args 不通过")
         return res
     try:
-        print(f"call_fill_relay: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash}, {message}")
         res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                                 block_chainid, private_key=VAULT_PRIVATE_KEY)
     except Exception as e:
