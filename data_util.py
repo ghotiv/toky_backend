@@ -205,10 +205,10 @@ def create_fill_txl_etherscan(tx_hash,block_chainid):
         # 'dst_chain_db_id': '',
         'token_id': token_id,
         'num': calldata_dict['outputAmount'],
-        'tx_fee': '', #todo
+        # 'tx_fee': '', #todo
         'nonce': str_to_int(tx_dict['nonce']),
-        'gas_used': '', #todo
-        'gas_price': '', #todo
+        # 'gas_used': '', #todo
+        # 'gas_price': '', #todo
         'estimate_gas_limit': str_to_int(tx_dict['gas']),
         # 'estimate_gas_price': '',
         'eip_type': tx_dict['type'],
