@@ -12,7 +12,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/ETH.png",
         "rpc_url": "https://ethereum-sepolia-rpc.publicnode.com",
         "contract_deposit": "0x5bD6e85cD235d4c01E04344897Fc97DBd9011155",
-        "contract_fillRelay": "0xd9ACf96764781c6a0891734226E7Cb824e2017E2",
+        "contract_fillrelay": "0xd9ACf96764781c6a0891734226E7Cb824e2017E2",
         "alchemy_network": "ETH_SEPOLIA",
         "is_mainnet": false
     },
@@ -29,7 +29,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/USDT.png",
         "rpc_url": "https://ethereum-sepolia-rpc.publicnode.com",
         "contract_deposit": "0x5bD6e85cD235d4c01E04344897Fc97DBd9011155",
-        "contract_fillRelay": "0xd9ACf96764781c6a0891734226E7Cb824e2017E2",
+        "contract_fillrelay": "0xd9ACf96764781c6a0891734226E7Cb824e2017E2",
         "alchemy_network": "ETH_SEPOLIA",
         "is_mainnet": false
     },
@@ -46,7 +46,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/ETH.png",
         "rpc_url": "https://sepolia.base.org",
         "contract_deposit": "0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2",
-        "contract_fillRelay": "0x622201610744D2D2ec62fbb1bc9D8C16723B5330",
+        "contract_fillrelay": "0x622201610744D2D2ec62fbb1bc9D8C16723B5330",
         "alchemy_network": "BASE_SEPOLIA",
         "is_mainnet": false
     },
@@ -63,7 +63,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/USDT.png",
         "rpc_url": "https://sepolia.base.org",
         "contract_deposit": "0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2",
-        "contract_fillRelay": "0x622201610744D2D2ec62fbb1bc9D8C16723B5330",
+        "contract_fillrelay": "0x622201610744D2D2ec62fbb1bc9D8C16723B5330",
         "alchemy_network": "BASE_SEPOLIA",
         "is_mainnet": false
     },
@@ -80,7 +80,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/ETH.png",
         "rpc_url": "https://rpc.ankr.com/zksync_era_sepolia",
         "contract_deposit": "0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea",
-        "contract_fillRelay": "0x706a1b5D991ea32c7D60C7063d6f005da05c0cB5",
+        "contract_fillrelay": "0x706a1b5D991ea32c7D60C7063d6f005da05c0cB5",
         "alchemy_network": "ZKSYNC_SEPOLIA",
         "is_mainnet": false
     },
@@ -97,7 +97,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/USDT.png",
         "rpc_url": "https://rpc.ankr.com/zksync_era_sepolia",
         "contract_deposit": "0x9AA8668E11B1e9670B4DC8e81add17751bA1a4Ea",
-        "contract_fillRelay": "0x706a1b5D991ea32c7D60C7063d6f005da05c0cB5",
+        "contract_fillrelay": "0x706a1b5D991ea32c7D60C7063d6f005da05c0cB5",
         "alchemy_network": "ZKSYNC_SEPOLIA",
         "is_mainnet": false
     },
@@ -114,7 +114,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/ETH.png",
         "rpc_url": "https://rpc-amoy.polygon.technology",
         "contract_deposit": "0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE",
-        "contract_fillRelay": "0x707aC01D82C3F38e513675C26F487499280D84B8",
+        "contract_fillrelay": "0x707aC01D82C3F38e513675C26F487499280D84B8",
         "alchemy_network": "MATIC_AMOY",
         "is_mainnet": false
     },
@@ -131,7 +131,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/USDT.png",
         "rpc_url": "https://rpc-amoy.polygon.technology",
         "contract_deposit": "0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE",
-        "contract_fillRelay": "0x707aC01D82C3F38e513675C26F487499280D84B8",
+        "contract_fillrelay": "0x707aC01D82C3F38e513675C26F487499280D84B8",
         "alchemy_network": "MATIC_AMOY",
         "is_mainnet": false
     },
@@ -148,7 +148,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/ETH.png",
         "rpc_url": "https://bsc-testnet.public.blastapi.io",
         "contract_deposit": "0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE",
-        "contract_fillRelay": "0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2",
+        "contract_fillrelay": "0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2",
         "alchemy_network": "BNB_TESTNET",
         "is_mainnet": false
     },
@@ -165,7 +165,7 @@
         "token_logo_url": "https://owlto.finance/icon/token/USDT.png",
         "rpc_url": "https://bsc-testnet.public.blastapi.io",
         "contract_deposit": "0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE",
-        "contract_fillRelay": "0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2",
+        "contract_fillrelay": "0xEF6242FC3a8c3C7216E4F594271086BbbdaF3ac2",
         "alchemy_network": "BNB_TESTNET",
         "is_mainnet": false
     }

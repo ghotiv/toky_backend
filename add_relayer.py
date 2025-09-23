@@ -53,7 +53,7 @@ def add_authorized_relayer(chain_id, relayer_address):
             return None
         
         # 获取fillRelay合约地址（通常这个合约也有addAuthorizedRelayer功能）
-        contract_address = chain_dict.get('contract_fillRelay')
+        contract_address = chain_dict.get('contract_fillrelay')
         if not contract_address or contract_address == '' or contract_address == '0x1234567890123456789012345678901234567890':
             print(f"❌ 链ID {chain_id} 的 fillRelay 合约地址未配置或无效")
             print(f"💡 请在 data_util.py 中配置正确的合约地址")
@@ -189,7 +189,7 @@ def main():
         print("\n可用网络:")
         for key, network in networks.items():
             # 检查是否有有效的合约地址
-            contract_address = network['config'].get('contract_fillRelay', '')
+            contract_address = network['config'].get('contract_fillrelay', '')
             status = "✅" if contract_address and contract_address != '' else "❌"
             print(f"  {key}. {network['name']} (Chain ID: {network['chain_id']}) {status}")
         

@@ -15,8 +15,8 @@ def get_etherscan_txs(chain_id='',limit=2,apikeys=ETHERSCAN_API_KEYS,contract_ty
     address = ''
     if contract_type == 'contract_deposit':
         address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_deposit',''))
-    if contract_type == 'contract_fillRelay':
-        address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_fillRelay',''))
+    if contract_type == 'contract_fillrelay':
+        address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_fillrelay',''))
     if address:
         url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=account&action=txlist&address={address}&page=1&offset={limit}&sort=desc&apikey={apikey}'
         response = requests.get(url)
@@ -236,7 +236,7 @@ def call_fill_relay(recipient, outputToken, outputAmount, originChainId, deposit
     is_eip1559 = chain_dict['is_eip1559']
     is_l2 = chain_dict['is_l2']
     print(f"chain_dict: {chain_dict}")
-    contract_address = chain_dict['contract_fillRelay']
+    contract_address = chain_dict['contract_fillrelay']
 
     print(f"call_fill_relay 入参 时间: {time.time()}: {recipient}, {outputToken}, {outputAmount}, {originChainId}, {depositHash.hex()}, {message}")
 

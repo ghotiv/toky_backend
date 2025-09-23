@@ -21,7 +21,7 @@ for i in token_infos_gas:
         'block_explorer':i['explorer_url'],
         'chain_logo_url': i['icon'],
         'contract_deposit': i['contract_deposit'],
-        'contract_fillRelay': i['contract_fillRelay'],
+        'contract_fillrelay': i['contract_fillrelay'],
         'alchemy_network': i['alchemy_network'],
         'chain_note': '',
     }
