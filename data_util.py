@@ -110,6 +110,9 @@ def get_token(chain_id=None,token_symbol=None,token_address=None):
     return res
 
 def create_txl_webhook(tx_dict,calldata_dict):
+    gas_price = str_to_int(tx_dict['effectiveGasPrice'])
+    gas_used = tx_dict['gasUsed']
+    tx_fee = gas_price*gas_used
     txl_dict = {
         'tx_hash': tx_dict['hash'],
         'status': tx_dict['status'],
@@ -126,15 +129,15 @@ def create_txl_webhook(tx_dict,calldata_dict):
         'chain_db_id': calldata_dict['chain_dict']['chain_db_id'],
         'token_id': calldata_dict['token_dict']['token_db_id'],
         'num': calldata_dict['inputAmount'],
-        'tx_fee': tx_dict['effectiveGasPrice']*tx_dict['gasUsed'],
+        'tx_fee': tx_fee,
         'nonce': tx_dict['nonce'],
-        'gas_used': tx_dict['gasUsed'],
-        'gas_price': tx_dict['effectiveGasPrice'],
+        'gas_used': gas_used,
+        'gas_price': gas_price,
         'estimate_gas_limit': tx_dict['gas'],
         # 'estimate_gas_price': '',
         # 'eip_type': '0x2',
-        'max_fee_per_gas': tx_dict['maxFeePerGas'],
-        'max_priority_fee_per_gas': tx_dict['maxPriorityFeePerGas'],
+        'max_fee_per_gas': str_to_int(tx_dict['maxFeePerGas']),
+        'max_priority_fee_per_gas': str_to_int(tx_dict['maxPriorityFeePerGas']),
         'note': ''
     }
     res = pg_obj.insert('txline',txl_dict)
