@@ -426,13 +426,17 @@ def call_fill_relay_by_alchemy(data):
 
     log_dict = data['event']['data']['block']['logs'][0]
     tx_dict = log_dict['transaction']
+    calldata = tx_dict['inputData']
+    calldata_dict = get_decode_calldata(calldata)
+
     alchemy_network = data['event']['network']
     print(f"alchemy_network: {alchemy_network}")
     chain_dict = get_chain(alchemy_network=alchemy_network)
+    dst_chain_dict = get_chain(chain_id=calldata_dict['destinationChainId'])
+
     originChainId = chain_dict['chain_id']
     depositHash = get_bytes32_address(tx_dict['hash'])
-    calldata = tx_dict['inputData']
-    calldata_dict = get_decode_calldata(calldata)
+
     token_dict = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])
 
     tx_dict.update({
@@ -440,8 +444,9 @@ def call_fill_relay_by_alchemy(data):
         'timestamp': data['event']['data']['block']['timestamp'],
     })
     calldata_dict.update({
-        'chain_dict': chain_dict,
-        'token_dict': token_dict,
+        'chain_db_id': chain_dict['chain_db_id'],
+        'token_id': token_dict['token_db_id'],
+        'dst_chain_db_id': dst_chain_dict['chain_db_id'],
     })
     # print(f"tx_dict: {tx_dict}")
     # print(f"calldata_dict: {calldata_dict}")

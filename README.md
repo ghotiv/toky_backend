@@ -149,6 +149,7 @@ null(初始)--1(成功)
     'addr_to': '0xbA37D7ed1cFF3dDab5f23ee99525291dcA00999D',   calldata 
     'recipient': '' calldata
     'chain_db_id': 3,          calldata 
+    'dst_chain_db_id':''
     'token_id': 10,            calldata 
     'num': 1000000000000000,   calldata 
     'tx_fee': 2309350000000,   25000000*92374  txlist gas    webhook.effectiveGasPrice*gasUsed
@@ -193,6 +194,7 @@ CREATE TABLE txline(
     addr_to VARCHAR(200) DEFAULT NULL,
     recipient VARCHAR(200) DEFAULT NULL,
     chain_db_id INTEGER DEFAULT NULL,
+    dst_chain_db_id INTEGER DEFAULT NULL,
     token_id INTEGER NOT NULL,
     num NUMERIC(78,0) DEFAULT NULL,
     tx_fee NUMERIC(78,0) DEFAULT NULL,
@@ -213,6 +215,7 @@ CREATE INDEX idx_txline_addr_from ON txline(addr_from);
 CREATE INDEX idx_txline_addr_to ON txline(addr_to);
 CREATE INDEX idx_txline_recipient ON txline(recipient);
 CREATE INDEX idx_txline_chain_db_id ON txline(chain_db_id);
+CREATE INDEX idx_txline_chain_db_id ON txline(dst_chain_db_id);
 CREATE INDEX idx_txline_token_id ON txline(token_id);
 CREATE INDEX idx_txline_status ON txline(status);
 CREATE INDEX idx_txline_tx_status ON txline(tx_status);
