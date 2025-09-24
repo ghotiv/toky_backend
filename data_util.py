@@ -153,6 +153,7 @@ def create_txl_webhook(tx_dict,calldata_dict):
     gas_price = str_to_int(tx_dict['effectiveGasPrice'])
     gas_used = tx_dict['gasUsed']
     tx_fee = gas_price*gas_used
+    tx_fee += str_to_int(tx_dict.get('l1Fee',0))
     txl_dict = {
         'tx_hash': add_0x_prefix(tx_dict['hash']),
         'status': 0,
