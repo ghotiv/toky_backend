@@ -440,7 +440,10 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     res = None
     block_chainid = calldata_dict['destinationChainId']
     vault = to_checksum_address(calldata_dict['vault'])
-    token_symbol_input = calldata_dict['token_symbol']
+
+    token_input_dict = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])
+    token_symbol_input = token_input_dict['token_symbol']
+
     outputToken = get_token(chain_id=block_chainid,token_symbol=token_symbol_input).get('token_address',None)
 
     outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
