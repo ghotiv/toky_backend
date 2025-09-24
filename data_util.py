@@ -240,15 +240,19 @@ def create_fill_txl_etherscan_by_hash(tx_hash,chain_id):
         tx_fee = gas_used*gas_price
         tx_fee += str_to_int(tx_receipt_dict.get('l1Fee',0))
         print('tx_receipt_dict logs[0] : ',tx_receipt_dict['logs'][0])
-        time_stamp = str_to_int(tx_receipt_dict['logs'][0]['blockTimestamp'])
         txl_dict.update({
             'status': 1,
             'tx_status': 1,
-            'tx_time': to_tztime(time_stamp),
+            # 'tx_time': to_tztime(time_stamp),
             'tx_fee': tx_fee,
             'gas_used': gas_used,
             'gas_price': gas_price,
         })
+        blockTimestamp = tx_receipt_dict.get('blockTimestamp','')
+        if blockTimestamp:
+            txl_dict.update({
+                'tx_time': to_tztime(str_to_int(blockTimestamp)),
+            })
         #更新from单状态
         update_sql = f'''
             UPDATE txline
