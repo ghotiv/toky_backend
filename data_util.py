@@ -150,6 +150,9 @@ def get_etherscan_tx_receipt(chain_id='',tx_hash=''):
     return res
 
 def create_txl_webhook(tx_dict,calldata_dict):
+
+    print(f"tx_dict: {tx_dict}")
+
     gas_price = str_to_int(tx_dict['effectiveGasPrice'])
     gas_used = tx_dict['gasUsed']
     tx_fee = gas_price*gas_used
