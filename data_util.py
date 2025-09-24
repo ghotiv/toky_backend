@@ -273,6 +273,7 @@ def create_txl_etherscan_txlist(chain_id,tx_dict):
         gas_used = str_to_int(tx_dict['gasUsed'])
         gas_price = str_to_int(tx_dict['gasPrice'])
         tx_fee = gas_used*gas_price
+        tx_fee += str_to_int(tx_dict.get('L1FeesPaid',0))
         txl_dict = {
             'tx_hash': tx_hash,
             # 'status': 0,  #todo
