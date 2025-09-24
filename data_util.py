@@ -193,6 +193,7 @@ def create_txl_webhook(tx_dict,calldata_dict):
 
 def create_fill_txl_etherscan_by_hash(tx_hash,chain_id):
     tx_dict = get_etherscan_tx_by_hash(chain_id=chain_id,tx_hash=tx_hash)
+    print('create_fill_txl_etherscan_by_hash tx_dict : ',tx_dict)
     calldata_dict = get_decode_calldata(tx_dict['input'])
 
     chain_dict = get_chain(chain_id=chain_id)
