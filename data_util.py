@@ -238,6 +238,7 @@ def create_fill_txl_etherscan_by_hash(tx_hash,chain_id):
         gas_price = str_to_int(tx_receipt_dict['effectiveGasPrice'])
         tx_fee = gas_used*gas_price
         tx_fee += str_to_int(tx_receipt_dict.get('l1Fee',0))
+        print('tx_receipt_dict logs[0] : ',tx_receipt_dict['logs'][0])
         time_stamp = str_to_int(tx_receipt_dict['logs'][0]['blockTimestamp'])
         txl_dict.update({
             'status': 1,
