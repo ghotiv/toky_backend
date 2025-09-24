@@ -9,7 +9,7 @@ from web3_util import decode_contract_error,get_gas_params,\
         get_decode_calldata
 
 from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,\
-    create_fill_txl_etherscan,get_etherscan_txs
+    create_fill_txl_etherscan_by_hash,get_etherscan_txs,str_to_int,create_txl_etherscan_txlist
 
 from my_conf import *
 
@@ -424,11 +424,16 @@ def call_fill_relay_by_etherscan(chain_id='',limit=1, contract_type='contract_de
     tx_dicts = get_etherscan_txs(chain_id=chain_id,limit=limit,contract_type=contract_type)
     for tx_dict in tx_dicts:
         print(f"tx_dict: {tx_dict}")
-        calldata = tx_dict['input']
-        depositHash = get_bytes32_address(tx_dict['hash'])
-        calldata_dict = get_decode_calldata(calldata)
-        res = call_fill_relay_by_calldata(calldata_dict,chain_id,depositHash)
-        print(f"res: {res}")
+        if str_to_int(tx_dict['txreceipt_status']) == 1:
+            calldata = tx_dict['input']
+            depositHash = get_bytes32_address(tx_dict['hash'])
+            calldata_dict = get_decode_calldata(calldata)
+            
+            res_create = create_txl_etherscan_txlist(chain_id=chain_id,tx_dict=tx_dict)
+            print(f"create_txl_etherscan_txlist: {res_create}")
+
+            res = call_fill_relay_by_calldata(calldata_dict,chain_id,depositHash)
+            print(f"res: {res}")
 
 #todo FILL_RATE 来自across
 def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
@@ -452,5 +457,5 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
         print(f"❌ call_fill_relay_by_alchemy失败: {e}")
     if res:
         print(f"time: {time.time()}, create_fill_txl_etherscan: {res}")
-        create_fill_txl_etherscan(tx_hash=res,chain_id=block_chainid)
+        create_fill_txl_etherscan_by_hash(tx_hash=res,chain_id=block_chainid)
     return res

@@ -153,7 +153,8 @@ def get_decode_calldata(calldata):
             'inputToken':to_checksum_address(inputToken),
             'inputAmount':inputAmount,
             'destinationChainId':destinationChainId,
-            'message':message
+            'message':message,
+            'contract_type':'contract_deposit',
         }
     if method_id == method_id_fill_relay:
         function_abi = [
@@ -173,7 +174,8 @@ def get_decode_calldata(calldata):
             'outputAmount':outputAmount,
             'originChainId':originChainId,
             'depositHash':depositHash.hex(),
-            'message':message
+            'message':message,
+            'contract_type':'contract_fillrelay',
         }
     return res
 
