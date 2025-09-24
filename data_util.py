@@ -151,7 +151,7 @@ def get_etherscan_tx_receipt(chain_id='',tx_hash=''):
 
 def create_txl_webhook(tx_dict,calldata_dict):
 
-    print(f"tx_dict: {tx_dict}")
+    # print(f"tx_dict: {tx_dict}")
 
     gas_price = str_to_int(tx_dict['effectiveGasPrice'])
     gas_used = tx_dict['gasUsed']
@@ -184,6 +184,10 @@ def create_txl_webhook(tx_dict,calldata_dict):
         'max_priority_fee_per_gas': str_to_int(tx_dict['maxPriorityFeePerGas']),
         'note': ''
     }
+    if tx_dict.get('type',None):
+        txl_dict.update({
+            'eip_type': str_to_int(tx_dict['type']),
+        })
     res = pg_obj.insert('txline',txl_dict)
     return res
 
