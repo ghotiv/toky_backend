@@ -153,7 +153,6 @@ def create_txl_webhook(tx_dict,calldata_dict):
     gas_price = str_to_int(tx_dict['effectiveGasPrice'])
     gas_used = tx_dict['gasUsed']
     tx_fee = gas_price*gas_used
-    tx_fee += str_to_int(tx_dict.get('l1Fee',0))
     txl_dict = {
         'tx_hash': add_0x_prefix(tx_dict['hash']),
         'status': 0,
@@ -231,6 +230,7 @@ def create_fill_txl_etherscan_by_hash(tx_hash,chain_id):
         gas_used = str_to_int(tx_receipt_dict['gasUsed'])
         gas_price = str_to_int(tx_receipt_dict['effectiveGasPrice'])
         tx_fee = gas_used*gas_price
+        tx_fee += str_to_int(tx_receipt_dict.get('l1Fee',0))
         time_stamp = str_to_int(tx_receipt_dict['logs'][0]['blockTimestamp'])
         txl_dict.update({
             'status': 1,
