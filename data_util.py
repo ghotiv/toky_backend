@@ -23,6 +23,17 @@ def get_pg_obj(host=DB_HOST,db=DB_DB,user=DB_USER,pwd=DB_PWD):
 
 pg_obj = get_pg_obj()
 
+def decorator_res(func):
+    def wrapper(*args, **kwargs):
+        try:
+            res_func = func(*args, **kwargs)
+            return {'data':res_func}
+        except Exception as e:
+            print(str(e))
+            #to do message 给用户看
+            return {'errorCode':500,'message':str(e)}
+    return wrapper
+
 def str_to_int(num):
     '''
         '0xf3c9e' -> 998558
@@ -357,5 +368,10 @@ def get_create_txls_etherscan_txlist(chain_id,limit=1,contract_type=''):
             res_create = create_txl_etherscan_txlist(chain_id=chain_id,tx_dict=tx_dict)
             print(f"res_create: {res_create}")
 
-# get_create_txl_etherscan(chain_id=300,limit=1,contract_type='contract_deposit')
-# get_create_txls_etherscan_txlist(chain_id=84532,limit=1,contract_type='contract_fillrelay')
+
+@decorator_res
+def get_vault_addr():
+    res = {
+        'vault_addr':VAULT,
+    }
+    return res

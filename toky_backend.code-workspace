@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../react-bridge"
+		},
+		{
+			"path": "../react-prediction"
+		},
+		{
+			"path": "../react-ethers"
+		},
+		{
+			"path": "../lot_fronted"
+		}
+	],
+	"settings": {}
+}
