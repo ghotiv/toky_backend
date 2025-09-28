@@ -457,9 +457,10 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     vault = to_checksum_address(calldata_dict['vault'])
 
     token_input_dict = get_token(chain_id=originChainId,token_address=calldata_dict['inputToken'])
-    token_symbol_input = token_input_dict['token_symbol']
+    # token_symbol_input = token_input_dict['token_symbol']
+    token_group_input = token_input_dict['token_group']
 
-    outputToken = get_token(chain_id=block_chainid,token_symbol=token_symbol_input).get('token_address',None)
+    outputToken = get_token(chain_id=block_chainid,token_group=token_group_input).get('token_address',None)
 
     outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
     message = b''
