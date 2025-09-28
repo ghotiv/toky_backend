@@ -14,6 +14,12 @@
 		},
 		{
 			"path": "../lot_fronted"
+		},
+		{
+			"path": "../contract_test/my_token"
+		},
+		{
+			"path": "../react_study"
 		}
 	],
 	"settings": {}

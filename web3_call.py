@@ -6,7 +6,7 @@ from web3 import Web3
 
 from web3_util import decode_contract_error,get_gas_params,\
         handle_already_known_transaction, get_bytes32_address,\
-        get_decode_calldata
+        get_decode_calldata,get_wei_amount
 
 from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,\
     create_fill_txl_etherscan_by_hash,get_etherscan_txs,str_to_int,create_txl_etherscan_txlist
@@ -29,6 +29,21 @@ def get_w3(rpc_url='',chain_id=''):
     # print(w3.isConnected())
     return w3
 
+def get_deposit_args(token_group,from_chain_id,dst_chain_id,num_input,recipient,vault=VAULT,message=''):
+    deposit_dict = {}
+    token_dict = get_token(chain_id=from_chain_id,token_group=token_group)
+    inputToken = token_dict['token_address']
+    inputAmount = get_wei_amount(num_input,decimals=int(token_dict['decimals']))
+    # recipient_bytes32 = get_bytes32_address(to_checksum_address(recipient))
+    deposit_dict.update({
+        'vault': vault,
+        'recipient': to_checksum_address(recipient),
+        'inputToken': inputToken,
+        'inputAmount': inputAmount,
+        'destinationChainId': dst_chain_id,
+        'message': message,
+    })
+    return deposit_dict
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
                     block_chainid, private_key=None):

@@ -6,7 +6,8 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 
-from data_util import get_vault_addr
+from data_util import get_vault_address, api_get_token_groups, api_get_chains_by_token_group
+from web3_call import get_deposit_args
 
 app = FastAPI(title='bridge',description='bridge api')
 
@@ -33,39 +34,43 @@ app.add_middleware(
 )
 
 
-@app.get("/get_vault_addr",summary='get vault address',
+@app.get("/get_vault_address",summary='get vault address',
         description='''
             get vault address
         ''')
-def fast_get_vault_addr():
-    return get_vault_addr()
+def fast_get_vault_address():
+    return get_vault_address()
 
+@app.get("/get_token_groups",summary='get token groups',
+        description='''
+            get token groups
+        ''')
+def fast_get_token_groups():
+    return api_get_token_groups()
+
+
+@app.get("/get_chains_by_token_group",summary='get chains by token group',
+        description='''
+            get chains by token group
+        ''')
+def fast_get_chains_by_token_group(token_group: str):
+    return api_get_chains_by_token_group(token_group)
+
+@app.get("/get_deposit_args",summary='get deposit args',
+        description='''
+            get deposit args
+        ''')
+def fast_get_deposit_args(token_group: str,from_chain_id: int,dst_chain_id: int,num_input: float,recipient: str):
+    res = get_deposit_args(token_group,from_chain_id,dst_chain_id,num_input,recipient)
+    return res
 
 #todo
 def get_balances():
     return {}
 
-
-@app.get("/get_chain_dicts",summary='get chain list',
-        description='''
-            get chain list
-        ''')
-def fast_get_chain_dicts():
-    return get_chain_dicts()
-
-
-
-@app.get("/get_token_dicts",summary='get token list',
-        description='''
-            get token list
-        ''')
-def fast_get_token_dicts():
-    return get_token_dicts()
-
-
 @app.get("/get_txls",summary='get_txls',
         description='''
-            get_txls 获取转账详情
+            get_txls get transfer details
         ''')
 def fast_get_txls(txl_id: str='', tx_hash: str='',
                     page: int = 1, prepage: int = 10):

@@ -163,3 +163,4 @@ cython_debug/
 *test.py
 my_private_conf.py
 somedata/
+*code-workspace

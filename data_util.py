@@ -23,6 +23,7 @@ def get_pg_obj(host=DB_HOST,db=DB_DB,user=DB_USER,pwd=DB_PWD):
 
 pg_obj = get_pg_obj()
 
+#not used
 def decorator_res(func):
     def wrapper(*args, **kwargs):
         try:
@@ -77,11 +78,9 @@ def read_json_file(file_path):
 def get_etherscan_apikey():
     return random.choice(ETHERSCAN_API_KEYS)
 
-def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
+def get_chain(chain_id=None,alchemy_network=None):
     res = None
     sql = ''
-    if all_chain:
-        sql = 'select * from chain'
     if chain_id:
         sql = f'select * from chain where chain_id = {chain_id}'
     if alchemy_network:
@@ -94,13 +93,23 @@ def get_chain(chain_id=None,alchemy_network=None,all_chain=False):
     [i.update({'is_eip1559': i['chain_id'] not in NOT_EIP1599_IDS}) for i in chain_dicts]
     [i.update({'is_l2': i['chain_id'] not in L1_CHAIN_IDS}) for i in chain_dicts]
     if chain_dicts:
-        if all_chain:
-            res = chain_dicts
-        else:
-            res = chain_dicts[0]
+        res = chain_dicts[0]
     return res
 
-def get_token(chain_id=None,token_symbol=None,token_address=None):
+def get_chains(chain_ids=None):
+    res = None
+    sql = 'select * from chain'
+    if chain_ids:
+        sql = f'select * from chain where id in ({','.join(map(str,chain_ids))})'
+    chain_dicts = pg_obj.query(sql)
+    chain_dicts = [i for i in chain_dicts if i['is_active']]
+    [i.update({'chain_db_id': i['id']}) for i in chain_dicts]
+    [i.update({'is_eip1559': i['chain_id'] not in NOT_EIP1599_IDS}) for i in chain_dicts]
+    [i.update({'is_l2': i['chain_id'] not in L1_CHAIN_IDS}) for i in chain_dicts]
+    res = chain_dicts
+    return res
+
+def get_token(chain_id=None,token_symbol=None,token_address=None,token_group=None):
     res = {}
     if not chain_id:
         return res
@@ -111,6 +120,8 @@ def get_token(chain_id=None,token_symbol=None,token_address=None):
     if token_address:
         token_address = to_checksum_address(token_address)
     sql = ''
+    if token_group:
+        sql = f"select * from token where token_group = '{token_group}' and chain_db_id = {chain_db_id}"
     if token_symbol:
         sql = f"select * from token where token_symbol = '{token_symbol}' and chain_db_id = {chain_db_id}"
     if token_address:
@@ -126,10 +137,76 @@ def get_token(chain_id=None,token_symbol=None,token_address=None):
             res = res_dicts[0]
     return res
 
+def get_tokens(token_symbol=None,token_address=None,token_group=None):
+    res = {}
+    sql = ''
+    if token_symbol:
+        token_symbol = token_symbol.upper()
+        sql = f"select * from token where token_symbol = '{token_symbol}'"
+    if token_address:
+        token_address = to_checksum_address(token_address)
+        sql = f"select * from token where token_address = '{token_address}'"
+    if token_group:
+        sql = f"select * from token where token_group = '{token_group}'"
+    if not sql:
+        return res
+    token_dicts = pg_obj.query(sql)
+    token_dicts = [i for i in token_dicts if i['is_active']]
+    [i.update({'token_db_id': i['id']}) for i in token_dicts]
+    res = token_dicts
+    return res
+
+def get_vault_address():
+    return VAULT
+
+def get_token_set():
+    res_pg = pg_obj.query('select distinct token_group from token')
+    res = [i['token_group'] for i in res_pg]
+    return res
+
+def get_chains_by_token_group(token_group):
+    res_tokens = get_tokens(token_group=token_group)
+    chain_db_ids = [i['chain_db_id'] for i in res_tokens]
+    res = get_chains(chain_ids=chain_db_ids)
+    return res
+
 def get_txl(tx_hash):
     sql = f"select * from txline where tx_hash = '{tx_hash}'"
     res = pg_obj.query(sql)
     return res[0] if res else {}
+
+def get_txl(tx_hash):
+    sql = f"select * from txline where tx_hash = '{tx_hash}'"
+    res = pg_obj.query(sql)
+    return res[0] if res else {}
+
+#for api
+def api_get_token_groups():
+    res = [
+        {
+            'token_group': 'ETH',
+            'token_logo_url': 'https://owlto.finance/icon/token/ETH.png',
+        },
+        {
+            'token_group': 'MBT',
+            'token_logo_url': 'https://owlto.finance/icon/token/USDT.png',
+        },
+    ]
+    return res
+
+def api_get_chains_by_token_group(token_group):
+    res = []
+    res_chains = get_chains_by_token_group(token_group)
+    if res_chains:
+        res = [{
+            'chain_id': i['chain_id'],
+            'contract_deposit': i['contract_deposit'],
+            # 'contract_fillrelay': i['contract_fillrelay'],
+            'alias_name': i['alias_name'],
+            'rpc_url': i['rpc_url'],
+            'chain_logo_url': i['chain_logo_url'],
+        } for i in res_chains]
+    return res
 
 def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
     res = []
@@ -367,11 +444,3 @@ def get_create_txls_etherscan_txlist(chain_id,limit=1,contract_type=''):
 
             res_create = create_txl_etherscan_txlist(chain_id=chain_id,tx_dict=tx_dict)
             print(f"res_create: {res_create}")
-
-
-@decorator_res
-def get_vault_addr():
-    res = {
-        'vault_addr':VAULT,
-    }
-    return res
