@@ -408,7 +408,7 @@ def call_fill_relay_by_alchemy(data):
     alchemy_network = data['event']['network']
     print(f"alchemy_network: {alchemy_network}")
     chain_dict = get_chain(alchemy_network=alchemy_network)
-    dst_chain_dict = get_chain(chain_id=calldata_dict['destinationChainId'])
+    # dst_chain_dict = get_chain(chain_id=calldata_dict['destinationChainId'])
 
     originChainId = chain_dict['chain_id']
     depositHash = get_bytes32_address(tx_dict['hash'])
@@ -424,7 +424,7 @@ def call_fill_relay_by_alchemy(data):
         'chain_db_id': chain_dict['chain_db_id'],
         'token_id': token_dict['token_db_id'],
         'token_symbol': token_dict['token_symbol'],
-        'dst_chain_db_id': dst_chain_dict['chain_db_id'],
+        # 'dst_chain_db_id': dst_chain_dict['chain_db_id'],
     })
     # print(f"tx_dict: {tx_dict}")
     # print(f"calldata_dict: {calldata_dict}")

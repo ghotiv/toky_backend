@@ -325,7 +325,7 @@ def create_txl_webhook(tx_dict,calldata_dict):
         'addr_to': to_checksum_address(calldata_dict['vault']),
         'recipient': to_checksum_address(calldata_dict['recipient']),
         'chain_db_id': calldata_dict['chain_db_id'],
-        'dst_chain_db_id': calldata_dict['dst_chain_db_id'],
+        # 'dst_chain_db_id': calldata_dict['dst_chain_db_id'],
         'token_id': calldata_dict['token_id'],
         'num': calldata_dict['inputAmount'],
         'tx_fee': tx_fee,
@@ -337,6 +337,7 @@ def create_txl_webhook(tx_dict,calldata_dict):
         # 'eip_type': '0x2',
         'max_fee_per_gas': str_to_int(tx_dict['maxFeePerGas']),
         'max_priority_fee_per_gas': str_to_int(tx_dict['maxPriorityFeePerGas']),
+        'calldata': calldata_dict['calldata'],
         'note': ''
     }
     if tx_dict.get('type',None):
@@ -385,6 +386,7 @@ def create_fill_txl_etherscan_by_hash(tx_hash,chain_id):
         'eip_type': str_to_int(tx_dict['type']),
         'max_fee_per_gas': str_to_int(tx_dict['maxFeePerGas']),
         'max_priority_fee_per_gas': str_to_int(tx_dict['maxPriorityFeePerGas']),
+        'calldata': calldata_dict['calldata'],
         'note': ''
     }
 
@@ -461,17 +463,18 @@ def create_txl_etherscan_txlist(chain_id,tx_dict):
             # 'eip_type': '0x2',
             # 'max_fee_per_gas': '',  #todo
             # 'max_priority_fee_per_gas': '',  #todo
+            'calldata': calldata_dict['calldata'],
             'note': ''
         }
         chain_dict = get_chain(chain_id=chain_id)
         if contract_type == 'contract_deposit':
-            dst_chain_dict = get_chain(chain_id=calldata_dict['destinationChainId'])
+            # dst_chain_dict = get_chain(chain_id=calldata_dict['destinationChainId'])
             token_dict = get_token(chain_id=chain_id,token_address=calldata_dict['inputToken'])
             txl_dict.update({
                 'addr_to': to_checksum_address(calldata_dict['vault']),
                 'recipient': to_checksum_address(calldata_dict['recipient']),
                 'chain_db_id': chain_dict['chain_db_id'],
-                'dst_chain_db_id': dst_chain_dict['chain_db_id'],
+                # 'dst_chain_db_id': dst_chain_dict['chain_db_id'],
                 'token_id': token_dict['token_db_id'],
                 'num': calldata_dict['inputAmount'],
             })

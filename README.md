@@ -69,8 +69,7 @@ CREATE TABLE chain(
     contract_deposit varchar(200) NULL,
     contract_fillrelay varchar(200) NULL,
     block_explorer varchar(500) NOT NULL,
-    explorer_template varchar(500) NOT NULL DEFAULT 'https://{domain}/tx/{hash}'
-    tx_prefix varchar(50) NOT NUll,
+    explorer_template varchar(500) NOT NULL DEFAULT 'https://{domain}/tx/{hash}',
     chain_logo_url varchar(500) NOT NULL,
     alchemy_network varchar(200) NULL,
     chain_note TEXT NULL,
@@ -230,10 +229,10 @@ CREATE TABLE txline(
     addr_to VARCHAR(200) DEFAULT NULL,
     recipient VARCHAR(200) DEFAULT NULL,
     chain_db_id INTEGER DEFAULT NULL,
-    dst_chain_db_id INTEGER DEFAULT NULL,
     token_id INTEGER NOT NULL,
     num NUMERIC(78,0) DEFAULT NULL,
     tx_fee NUMERIC(78,0) DEFAULT NULL,
+    l1_fee NUMERIC(78,0) DEFAULT NULL,
     nonce BIGINT DEFAULT NULL,
     gas_used BIGINT DEFAULT NULL,  
     gas_price BIGINT DEFAULT NULL,
@@ -242,6 +241,7 @@ CREATE TABLE txline(
     eip_type INTEGER DEFAULT NULL,  
     max_fee_per_gas BIGINT DEFAULT NULL,
     max_priority_fee_per_gas BIGINT DEFAULT NULL,
+    calldata TEXT NOT NULL,
     note TEXT,
     create_time TIMESTAMP DEFAULT NOW() NOT NULL,
     update_time TIMESTAMP DEFAULT NULL
@@ -251,7 +251,6 @@ CREATE INDEX idx_txline_addr_from ON txline(addr_from);
 CREATE INDEX idx_txline_addr_to ON txline(addr_to);
 CREATE INDEX idx_txline_recipient ON txline(recipient);
 CREATE INDEX idx_txline_chain_db_id ON txline(chain_db_id);
-CREATE INDEX idx_txline_dst_chain_db_id ON txline(dst_chain_db_id);
 CREATE INDEX idx_txline_token_id ON txline(token_id);
 CREATE INDEX idx_txline_status ON txline(status);
 CREATE INDEX idx_txline_tx_status ON txline(tx_status);

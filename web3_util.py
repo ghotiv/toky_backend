@@ -155,6 +155,7 @@ def get_decode_calldata(calldata):
             'destinationChainId':destinationChainId,
             'message':message,
             'contract_type':'contract_deposit',
+            'calldata':calldata,
         }
     if method_id == method_id_fill_relay:
         function_abi = [
@@ -176,6 +177,7 @@ def get_decode_calldata(calldata):
             'depositHash':depositHash.hex(),
             'message':message,
             'contract_type':'contract_fillrelay',
+            'calldata':calldata,
         }
     return res
 
