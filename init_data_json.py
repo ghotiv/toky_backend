@@ -44,7 +44,7 @@ for i in res_join:
         'is_native_token':is_native_token,
         'token_symbol':i['token_name'],
         'token_name':i['token_name'],
-        'token_group':'',
+        'token_group':i['token_name'],
         'token_note':'',
         'token_address':i['token_address'],
         'decimals':i['decimals'], 
