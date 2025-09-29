@@ -6,7 +6,8 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 
-from data_util import get_vault_address, api_get_token_groups, api_get_chains_by_token_group
+from data_util import get_vault_address, api_get_token_groups, \
+    api_get_chains_by_token_group, get_txls_pair
 from web3_call import get_deposit_args
 
 app = FastAPI(title='bridge',description='bridge api')
@@ -68,14 +69,10 @@ def fast_get_deposit_args(token_group: str,from_chain_id: int,dst_chain_id: int,
 def get_balances():
     return {}
 
-@app.get("/get_txls",summary='get_txls',
+@app.get("/get_txls_pair",summary='get_txls_pair',
         description='''
-            get_txls get transfer details
+            get_txls_pair get transfer details
         ''')
-def fast_get_txls(txl_id: str='', tx_hash: str='',
-                    page: int = 1, prepage: int = 10):
-    items = get_txls(txl_id,tx_hash)
-    res = {"items": items[(page-1)*prepage:page*prepage],
-        "total": len(items),
-        }
+def fast_get_txls_pair(addr: str, status: int = None, limit: int = 50, offset: int = 0):
+    res = get_txls_pair(addr=addr, status=status, limit=limit, offset=offset)
     return res

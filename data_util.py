@@ -1,4 +1,5 @@
 import json
+import re
 import arrow
 import random
 import requests
@@ -47,6 +48,13 @@ def str_to_int(num):
     elif num.isdigit():
         res = int(num)
     return res
+
+def get_human_amount(num,decimals=18):
+    return num/10**decimals
+
+def get_tx_url(block_explorer,tx_hash,explorer_template='{domain}/tx/{hash}'):
+    tx_url = explorer_template.format(domain=block_explorer, hash=tx_hash)
+    return tx_url
 
 def set_tmp_key(k,v,ex=None):
     return redis_obj.set(k,v,ex)
@@ -139,7 +147,7 @@ def get_token(chain_id=None,token_symbol=None,token_address=None,token_group=Non
 
 def get_tokens(token_symbol=None,token_address=None,token_group=None):
     res = {}
-    sql = ''
+    sql = 'select * from token'
     if token_symbol:
         token_symbol = token_symbol.upper()
         sql = f"select * from token where token_symbol = '{token_symbol}'"
@@ -148,8 +156,8 @@ def get_tokens(token_symbol=None,token_address=None,token_group=None):
         sql = f"select * from token where token_address = '{token_address}'"
     if token_group:
         sql = f"select * from token where token_group = '{token_group}'"
-    if not sql:
-        return res
+    # if not sql:
+    #     return res
     token_dicts = pg_obj.query(sql)
     token_dicts = [i for i in token_dicts if i['is_active']]
     [i.update({'token_db_id': i['id']}) for i in token_dicts]
@@ -175,10 +183,65 @@ def get_txl(tx_hash):
     res = pg_obj.query(sql)
     return res[0] if res else {}
 
-def get_txl(tx_hash):
-    sql = f"select * from txline where tx_hash = '{tx_hash}'"
-    res = pg_obj.query(sql)
-    return res[0] if res else {}
+def get_txls(addr):
+    sql_from = f"select * from txline where addr_from = '{addr}'"
+    res_from = pg_obj.query(sql_from)
+    sql_to = f"select * from txline where addr_to = '{addr}'"
+    res_to = pg_obj.query(sql_to)
+    res = res_from + res_to
+    return res
+
+def get_txls_pair(addr='',status=None, limit=50, offset=0):
+    res = []
+    sql_from = f'''
+        select txline.id as txl_related_id,num as num_from,txline.chain_db_id as chain_id_from,
+               token_id as token_db_id,addr_from,tx_hash as tx_hash_from,tx_time,status,
+                chain.alias_name as chain_alias_name_from,chain.block_explorer as block_explorer_from,
+                chain.explorer_template as explorer_template_from,chain.chain_logo_url as chain_logo_url_from,
+                token.decimals as decimals_from,
+                token.token_group
+        from txline
+            left join chain on txline.chain_db_id = chain.id
+            left join token on txline.token_id = token.id
+        where addr_from= '{addr}'
+        {f'and status = {status}' if status!=None else ''}
+        order by txline.id DESC
+        limit {limit} OFFSET {offset}
+    '''
+    # print(f"sql_from: {sql_from}")
+    res_from = pg_obj.query(sql_from)
+    if not res_from:
+        return res
+    [i.update({
+        'num_human_from': get_human_amount(i['num_from'],decimals=i['decimals_from']),
+        'tx_url_from': get_tx_url(i["block_explorer_from"],i["tx_hash_from"],explorer_template=i["explorer_template_from"])
+        }) 
+        for i in res_from if i['num_from']]
+    txl_related_ids = [i['txl_related_id'] for i in res_from]
+    sql_to = f'''
+        select txl_related_id,num as num_to,txline.chain_db_id as chain_id_to,
+               token_id as token_db_id,addr_to,tx_hash as tx_hash_to,
+                chain.alias_name as chain_alias_name_to,chain.block_explorer as block_explorer_to,
+                chain.explorer_template as explorer_template_to,
+                chain.chain_logo_url as chain_logo_url_to,
+                token.decimals as decimals_to
+        from txline
+            left join chain on txline.chain_db_id = chain.id
+            left join token on txline.token_id = token.id
+        where 
+            addr_to= '{addr}' 
+            and txl_related_id in ({','.join(map(str,txl_related_ids))})
+    '''
+    res_to = pg_obj.query(sql_to)
+    [i.update({
+        'num_human_to': get_human_amount(i['num_to'],decimals=i['decimals_to']),
+        'tx_url_to': get_tx_url(i["block_explorer_to"],i["tx_hash_to"],explorer_template=i["explorer_template_to"])
+        }) 
+        for i in res_to if i['num_to']]
+    res = func_left_join(res_from,res_to,['txl_related_id'])
+    res_sorted = sorted(res,key=lambda x: x['tx_time'],reverse=True)
+    return res_sorted
+
 
 #for api
 def api_get_token_groups():
@@ -206,6 +269,10 @@ def api_get_chains_by_token_group(token_group):
             'rpc_url': i['rpc_url'],
             'chain_logo_url': i['chain_logo_url'],
         } for i in res_chains]
+    return res
+
+def api_get_txls(addr):
+    res = get_txls(addr)
     return res
 
 def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):

@@ -69,6 +69,8 @@ CREATE TABLE chain(
     contract_deposit varchar(200) NULL,
     contract_fillrelay varchar(200) NULL,
     block_explorer varchar(500) NOT NULL,
+    explorer_template varchar(500) NOT NULL DEFAULT 'https://{domain}/tx/{hash}'
+    tx_prefix varchar(50) NOT NUll,
     chain_logo_url varchar(500) NOT NULL,
     alchemy_network varchar(200) NULL,
     chain_note TEXT NULL,
@@ -110,7 +112,7 @@ CREATE TABLE token(
     token_symbol VARCHAR(20) NULL,
     token_group varchar(50) NULL,
     token_address varchar(200) NULL,
-    decimals varchar(20) NOT NULL,
+    decimals integer NOT NULL,
     min_num decimal DEFAULT NULL,
     max_num decimal DEFAULT NULL,
     token_logo_url varchar(500) NULL,
