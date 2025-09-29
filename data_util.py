@@ -292,6 +292,7 @@ def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
 def get_etherscan_tx_by_hash(chain_id='',tx_hash=''):
     api_key = get_etherscan_apikey()
     url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=proxy&action=eth_getTransactionByHash&txhash={tx_hash}&apikey={api_key}'
+    print(f"get_etherscan_tx_by_hash url: {url}")
     response = requests.get(url)
     res = response.json()['result']
     return res
