@@ -8,12 +8,13 @@ pip install -r requirements.txt
 
 #createdb
 sudo -u postgres psql
-postgres=# CREATE USER ghoti WITH PASSWORD '';
-postgres=# ALTER USER ghoti WITH SUPERUSER;
+#postgres=# 
+CREATE USER ghoti WITH PASSWORD '';
+ALTER USER ghoti WITH SUPERUSER;
 <!-- postgres=# alter user ghoti with password ''; -->
-postgres=# create database bridge;
-postgres=# \c bridge;
-postgres=# GRANT ALL PRIVILEGES ON DATABASE bridge TO ghoti;
+create database bridge;
+\c bridge;
+GRANT ALL PRIVILEGES ON DATABASE bridge TO ghoti;
 
 <!-- CREATE USER ghoti WITH PASSWORD '*#$dTDN!'; -->
 <!-- ALTER USER ghoti WITH SUPERUSER; -->

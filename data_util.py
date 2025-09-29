@@ -301,6 +301,7 @@ def get_etherscan_tx_by_hash(chain_id='',tx_hash=''):
 def get_etherscan_tx_receipt(chain_id='',tx_hash=''):
     api_key = get_etherscan_apikey()
     url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=proxy&action=eth_getTransactionReceipt&txhash={tx_hash}&apikey={api_key}'
+    print(f"get_etherscan_tx_receipt url: {url}")
     response = requests.get(url)
     res = response.json()['result']
     return res
