@@ -194,7 +194,7 @@ def get_txls(addr):
 def get_txls_pair(addr='',status=None, limit=50, offset=0):
     res = []
     sql_from = f'''
-        select txline.id as txl_related_id,num as num_from,txline.chain_db_id as chain_id_from,
+        select txline.id as txl_related_id,num as num_from,chain.chain_id as chain_id_from,
                token_id as token_db_id,addr_from,tx_hash as tx_hash_from,tx_time,status,
                 chain.alias_name as chain_alias_name_from,chain.block_explorer as block_explorer_from,
                 chain.explorer_template as explorer_template_from,chain.chain_logo_url as chain_logo_url_from,
@@ -219,7 +219,7 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
         for i in res_from if i['num_from']]
     txl_related_ids = [i['txl_related_id'] for i in res_from]
     sql_to = f'''
-        select txl_related_id,num as num_to,txline.chain_db_id as chain_id_to,
+        select txl_related_id,num as num_to,chain.chain_id as chain_id_to,
                token_id as token_db_id,addr_to,tx_hash as tx_hash_to,
                 chain.alias_name as chain_alias_name_to,chain.block_explorer as block_explorer_to,
                 chain.explorer_template as explorer_template_to,

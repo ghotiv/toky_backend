@@ -82,7 +82,7 @@ chain_dicts = [
     },
     #linea sepolia
     {
-        'rpc_url': 'https://linea-sepolia-rpc.publicnode.com',
+        'rpc_url': 'https://linea-sepolia.drpc.org',
         'chain_id': 59141,
         'contract_deposit': '0xe13D60316ce2Aa7bd2C680E3BF20a0347E0fa5bE',
         'contract_fillrelay': '0x707aC01D82C3F38e513675C26F487499280D84B8',

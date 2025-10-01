@@ -61,8 +61,8 @@ CREATE TABLE partner(
 
 CREATE TABLE chain(
     id SERIAL PRIMARY KEY,
-    chain_name varchar(50) NULL,
-    alias_name varchar(20) NULL,
+    chain_name varchar(100) NULL,
+    alias_name varchar(100) NULL,
     is_mainnet BOOLEAN NOT NULL DEFAULT true,
     rpc_url varchar(500) NULL,
     rpc_url_bak varchar(500) NULL,
@@ -108,9 +108,9 @@ CREATE TABLE token(
     id  SERIAL PRIMARY KEY,
     chain_db_id integer NOT NULL,
     is_native_token boolean DEFAULT FALSE,
-    token_name varchar(50) NULL,
-    token_symbol VARCHAR(20) NULL,
-    token_group varchar(50) NULL,
+    token_name varchar(100) NULL,
+    token_symbol VARCHAR(100) NULL,
+    token_group varchar(100) NULL,
     token_address varchar(200) NULL,
     decimals integer NOT NULL,
     min_num decimal DEFAULT NULL,
