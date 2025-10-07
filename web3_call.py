@@ -30,10 +30,15 @@ def get_w3(rpc_url='',chain_id=''):
     return w3
 
 def call_erc_allowance(chain_id, token_address, spender_address, 
-            owner_address, human=True, decimals=18):
+            owner_address, human=True):
     w3 = get_w3(chain_id=chain_id)
-    allowance = get_erc_allowance(w3, token_address, spender_address, 
-            owner_address, human=human, decimals=decimals)
+    token_dict = get_token(chain_id=chain_id, token_address=to_checksum_address(token_address))
+    if token_dict is None:
+        return None
+    decimals = int(token_dict['decimals'])
+    allowance = get_erc_allowance(w3, to_checksum_address(token_address), 
+            to_checksum_address(spender_address), to_checksum_address(owner_address), 
+            human=human, decimals=decimals)
     print(allowance)
     return allowance
 
