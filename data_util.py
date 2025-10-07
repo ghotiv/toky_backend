@@ -444,7 +444,9 @@ def create_txl_etherscan_txlist(chain_id,tx_dict):
 
     if not txl_dict_search:
         calldata_dict = get_decode_calldata(tx_dict['input'])
-        contract_type = calldata_dict['contract_type']
+        contract_type = calldata_dict.get('contract_type','')
+        if not contract_type:
+            return res_create
         gas_used = str_to_int(tx_dict['gasUsed'])
         gas_price = str_to_int(tx_dict['gasPrice'])
         tx_fee = gas_used*gas_price
