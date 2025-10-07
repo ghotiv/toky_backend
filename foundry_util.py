@@ -41,18 +41,23 @@ def verify_contract(chain_id, contract_address, contract_type, etherscan_api_key
     run_cmd(cmd_str)
     return 
 
-def deposit_add_whitelist(contract_address, rpc_url, private_key=DEPLOYER_PRIVATE_KEY, vault=VAULT, is_eip1559=True):
+def deploy_add_vault_author(contract_address, contract_type, rpc_url, private_key=DEPLOYER_PRIVATE_KEY, vault=VAULT, is_eip1559=True):
     legacy_flag = '--legacy' if not is_eip1559 else ''
-    cmd_str = f'cast send {contract_address} "addVaultToWhitelist(address)" {vault} --private-key {private_key} --rpc-url {rpc_url} {legacy_flag}'
+    if contract_type == 'deposit':
+        func_name = 'addVaultToWhitelist'
+    if contract_type == 'fill_relay':
+        func_name = 'addAuthorizedRelayer'
+    cmd_str = f'cast send {contract_address} "{func_name}(address)" {vault} --private-key {private_key} --rpc-url {rpc_url} {legacy_flag}'
     print(cmd_str)
     run_cmd(cmd_str)
     return 
 
 # cast send $TOKEN_ADDRESS "approve(address,uint256)" $DEPOSITOR_ADDRESS "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" --private-key $CLIENT_PRIVATE_KEY --rpc-url $RPC_URL
 
-def approve_token(token_address, contract_address, rpc_url, private_key=VAULT_PRIVATE_KEY, is_eip1559=True):
+def approve_token(token_address, contract_address, rpc_url, private_key=VAULT_PRIVATE_KEY, is_eip1559=True, zero=False):
     legacy_flag = '--legacy' if not is_eip1559 else ''
-    cmd_str = f'cast send {token_address} "approve(address,uint256)" {contract_address} "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" --private-key {private_key} --rpc-url {rpc_url} {legacy_flag}'
+    amount = '0' if zero else '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+    cmd_str = f'cast send {token_address} "approve(address,uint256)" {contract_address} {amount} --private-key {private_key} --rpc-url {rpc_url} {legacy_flag}'
     print(cmd_str)
     run_cmd(cmd_str)
     return 

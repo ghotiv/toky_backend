@@ -6,7 +6,7 @@ from web3 import Web3
 
 from web3_util import decode_contract_error,get_gas_params,\
         handle_already_known_transaction, get_bytes32_address,\
-        get_decode_calldata,get_wei_amount
+        get_decode_calldata,get_wei_amount,get_erc_allowance
 
 from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,\
     create_fill_txl_etherscan_by_hash,get_etherscan_txs,str_to_int,create_txl_etherscan_txlist
@@ -28,6 +28,14 @@ def get_w3(rpc_url='',chain_id=''):
     
     # print(w3.isConnected())
     return w3
+
+def call_erc_allowance(chain_id, token_address, spender_address, 
+            owner_address, human=True, decimals=18):
+    w3 = get_w3(chain_id=chain_id)
+    allowance = get_erc_allowance(w3, token_address, spender_address, 
+            owner_address, human=human, decimals=decimals)
+    print(allowance)
+    return allowance
 
 def get_deposit_args(token_group,from_chain_id,dst_chain_id,num_input,recipient,vault=VAULT,message=''):
     deposit_dict = {}

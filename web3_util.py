@@ -109,6 +109,9 @@ def auto_inject_poa_middleware_if_needed(w3):
 def get_wei_amount(human_amount, decimals=18):
     return int(human_amount * 10**decimals)
 
+def get_human_amount(num,decimals=18):
+    return num/10**decimals
+
 def get_bytes32_address(address):
     #暂时支持evm
     #有没'0x'都支持
@@ -211,6 +214,26 @@ def decode_contract_error(error_data):
             return f"UnknownError({error_selector})"
     
     return str(error_data)
+
+def get_erc_allowance(w3, token_address, spender_address, owner_address, human=False, decimals=18):
+    abi = [
+        {
+            "inputs": [
+                {"name": "owner", "type": "address"},
+                {"name": "spender", "type": "address"}
+            ],
+            "name": "allowance",
+            "outputs": [{"name": "", "type": "uint256"}],
+            "stateMutability": "view",  # 关键：view 函数
+            "type": "function"
+        }
+    ]
+    res = None
+    contract = w3.eth.contract(address=token_address, abi=abi)
+    allowance = contract.functions.allowance(owner_address, spender_address).call()
+    if human:
+        res = get_human_amount(allowance, decimals=decimals)
+    return res
 
 def get_safe_nonce(w3, account_address):
     """获取安全的nonce，使用pending避免冲突"""

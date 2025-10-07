@@ -8,7 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from data_util import get_vault_address, api_get_token_groups, \
     api_get_chains_by_token_group, get_txls_pair
-from web3_call import get_deposit_args
+from web3_call import get_deposit_args, call_erc_allowance
 
 app = FastAPI(title='bridge',description='bridge api')
 
@@ -63,6 +63,16 @@ def fast_get_chains_by_token_group(token_group: str):
         ''')
 def fast_get_deposit_args(token_group: str,from_chain_id: int,dst_chain_id: int,num_input: float,recipient: str):
     res = get_deposit_args(token_group,from_chain_id,dst_chain_id,num_input,recipient)
+    return res
+
+@app.get("/get_erc_allowance",summary='get erc allowance',
+        description='''
+            get erc allowance
+        ''')
+def fast_get_erc_allowance(chain_id: int, token_address: str, spender_address: str, 
+                owner_address: str, human: bool = True, decimals: int = 18):
+    res = call_erc_allowance(chain_id, token_address, spender_address,
+                owner_address, human=human, decimals=decimals)
     return res
 
 #todo
