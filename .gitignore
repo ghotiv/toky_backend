@@ -161,6 +161,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 *test.py
-my_private_conf.py
+my_private_conf*.py
 somedata/
 *code-workspace
