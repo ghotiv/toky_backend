@@ -1,8 +1,10 @@
 import time
+from decimal import Decimal
 
 from eth_utils import to_checksum_address, keccak, is_address, to_bytes,\
         decode_hex
 from eth_abi import decode
+from web3 import Web3
 
 from my_conf import *
 
@@ -110,7 +112,15 @@ def get_wei_amount(human_amount, decimals=18):
     return int(human_amount * 10**decimals)
 
 def get_human_amount(num,decimals=18):
-    return num/10**decimals
+    return str(Decimal(str(num))/Decimal(str(10**decimals)))
+
+def get_human_amount_from_wei(wei_amount, decimals=18):
+    res = None
+    if decimals == 18:
+        res = Web3.from_wei(int(wei_amount), 'ether')
+    if decimals == 6:
+        res = Web3.from_wei(int(wei_amount), 'mwei')
+    return res
 
 def get_bytes32_address(address):
     #暂时支持evm
@@ -215,7 +225,7 @@ def decode_contract_error(error_data):
     
     return str(error_data)
 
-def get_erc_allowance(w3, token_address, spender_address, owner_address, human=False, decimals=18):
+def get_erc_allowance(w3, token_address, spender_address, owner_address, human=True, decimals=18):
     abi = [
         {
             "inputs": [
@@ -228,11 +238,12 @@ def get_erc_allowance(w3, token_address, spender_address, owner_address, human=F
             "type": "function"
         }
     ]
-    res = None
     contract = w3.eth.contract(address=token_address, abi=abi)
     allowance = contract.functions.allowance(owner_address, spender_address).call()
+    res = str(allowance)
+    print(f"🔍 获取ERC20授权额度: {res} {human} {decimals}")
     if human:
-        res = get_human_amount(allowance, decimals=decimals)
+        res = str(get_human_amount_from_wei(allowance, decimals=decimals))
     return res
 
 def get_safe_nonce(w3, account_address):
