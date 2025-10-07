@@ -6,11 +6,27 @@ L1_CHAIN_IDS = [11155111, 1, 97, 56, 59141, 59144]  # Ethereum, BSC, Linea (gas�
 NOT_EIP1599_IDS = [2442]  # Metis Sepolia、Polygon zkEVM Cardona不支持EIP-1559
 # 注意：BSC网络现在已经支持EIP-1559了
 
+CMD_PATH = '~/project/my_token'
+
 POA_CHAIN_IDS = [
         97,      # BSC Testnet
         56,      # BSC Mainnet 
         80002,   # Polygon Amoy (POA特性)
     ]
+
+DEPLOY_PATH_MAP = {
+    'deposit': 'script/DeployToky.s.sol:DeployTokyScript',
+    'deposit_zksync': 'script/DeployTokyZkSync.s.sol:DeployTokyZkSyncScript',
+    'fill_relay': 'script/DeployTokyFillRelay.s.sol:DeployTokyFillRelayScript',
+    'fill_relay_zksync': 'script/DeployTokyFillRelayZkSync.s.sol:DeployTokyFillRelayZkSyncScript',
+    'token': 'script/Deploy.s.sol:DeployScript',
+    'token_zksync': 'script/DeployZkSync.s.sol:DeployZkSyncScript',
+}
+
+VERIFY_PATH_MAP = {
+    'deposit': 'src/TokyDeposit.sol:Depositor',
+    'fill_relay': 'src/TokyFillRelay.sol:TokyFillRelay',
+}
 
 DEPOSIT_ABI = [
     {

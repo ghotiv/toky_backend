@@ -56,6 +56,10 @@ def get_tx_url(block_explorer,tx_hash,explorer_template='{domain}/tx/{hash}'):
     tx_url = explorer_template.format(domain=block_explorer, hash=tx_hash)
     return tx_url
 
+def get_address_url(block_explorer,address,explorer_template='{domain}/address/{address}'):
+    address_url = explorer_template.format(domain=block_explorer, address=address)
+    return address_url
+
 def set_tmp_key(k,v,ex=None):
     return redis_obj.set(k,v,ex)
 
@@ -162,6 +166,12 @@ def get_tokens(token_symbol=None,token_address=None,token_group=None):
     token_dicts = [i for i in token_dicts if i['is_active']]
     [i.update({'token_db_id': i['id']}) for i in token_dicts]
     res = token_dicts
+    return res
+
+def get_tokens_with_chains(token_symbol=None,token_address=None,token_group=None):
+    res_tokens = get_tokens(token_symbol=token_symbol,token_address=token_address,token_group=token_group)
+    res_chains = get_chains()
+    res = func_left_join(res_tokens,res_chains,['chain_db_id'])
     return res
 
 def get_vault_address():
