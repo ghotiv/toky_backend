@@ -23,7 +23,7 @@ def deploy_contract(rpc_url, contract_type, private_key=DEPLOYER_PRIVATE_KEY, is
     print(cmd_str)
     res = run_cmd(cmd_str)
 
-    # # # print(res.stdout)
+    # print(res.stdout)
 
     for line in res.stdout.strip().split('\n'):
         try:
@@ -33,6 +33,18 @@ def deploy_contract(rpc_url, contract_type, private_key=DEPLOYER_PRIVATE_KEY, is
         if {'tx_hash', 'contract_address'}.issubset(line_dict.keys()) and \
                 line_dict['status'] == 'success' and is_checksum_address(line_dict['contract_address']):
             return line_dict['contract_address']
+
+    #有的只有logs
+    for line in res.stdout.strip().split('\n'):
+        try:
+            line_dict = json.loads(line)
+        except:
+            continue
+        if {'logs', 'success'}.issubset(line_dict.keys()) and line_dict['success'] == True :
+            for i in line_dict['logs']:
+                if 'deployed to:' in i:
+                    contract_address = i.split(':')[1].strip()
+                    return contract_address
     return None
 
 
