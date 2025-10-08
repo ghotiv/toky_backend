@@ -5,6 +5,9 @@ from eth_utils import is_checksum_address
 
 from my_conf import CMD_PATH,DEPLOYER_PRIVATE_KEY,ETHERSCAN_API_KEY,VAULT,DEPLOY_PATH_MAP,VERIFY_PATH_MAP,VAULT_PRIVATE_KEY
 
+def get_wei_amount(human_amount, decimals=18):
+    return int(human_amount * 10**decimals)
+
 def run_cmd(cmd_str, cwd=CMD_PATH,timeout=1200):
     cmd_list = shlex.split(cmd_str)
     res = subprocess.run(cmd_list, cwd=cwd, 
@@ -61,3 +64,24 @@ def approve_token(token_address, contract_address, rpc_url, private_key=VAULT_PR
     print(cmd_str)
     run_cmd(cmd_str)
     return 
+
+# cast send $RECIPIENT_ADDRESS --value $transfer_amount_wei --private-key $SENDER_PRIVATE_KEY --rpc-url $RPC_URL
+# cast send $TRANSFER_TOKEN_ADDRESS "transfer(address,uint256)" $RECIPIENT_ADDRESS $transfer_amount_wei --private-key $SENDER_PRIVATE_KEY --rpc-url $RPC_URL
+
+def transfer_eth(recipient_address, amount_human, rpc_url, decimals=18, private_key=VAULT_PRIVATE_KEY, is_eip1559=True):
+    legacy_flag = '--legacy' if not is_eip1559 else ''
+    amount_wei = str(get_wei_amount(amount_human, decimals=decimals))
+    cmd_str = f'cast send {recipient_address} --value {amount_wei} --private-key {private_key} --rpc-url {rpc_url} {legacy_flag}'
+    print(cmd_str)
+    run_cmd(cmd_str)
+    return 
+
+def transfer_erc(token_address, recipient_address, amount_human, rpc_url, 
+        decimals=18, private_key=VAULT_PRIVATE_KEY, is_eip1559=True):
+    legacy_flag = '--legacy' if not is_eip1559 else ''
+    amount_wei = str(get_wei_amount(amount_human, decimals=decimals))
+    cmd_str = f'cast send {token_address} "transfer(address,uint256)" {recipient_address} {amount_wei} --private-key {private_key} --rpc-url {rpc_url} {legacy_flag}'
+    print(cmd_str)
+    run_cmd(cmd_str)
+    return 
+

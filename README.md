@@ -63,6 +63,8 @@ CREATE TABLE chain(
     id SERIAL PRIMARY KEY,
     chain_name varchar(100) NULL,
     alias_name varchar(100) NULL,
+    native_token_name varchar(100) NULL,
+    native_token_decimals INTEGER DEFAULT 18,
     is_mainnet BOOLEAN NOT NULL DEFAULT true,
     rpc_url varchar(500) NULL,
     rpc_url_bak varchar(500) NULL,
