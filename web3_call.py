@@ -456,12 +456,15 @@ def call_fill_relay_by_etherscan(chain_id='',limit=1, contract_type='contract_de
             calldata = tx_dict['input']
             depositHash = get_bytes32_address(tx_dict['hash'])
             calldata_dict = get_decode_calldata(calldata)
-            
-            res_create = create_txl_etherscan_txlist(chain_id=chain_id,tx_dict=tx_dict)
-            print(f"create_txl_etherscan_txlist: {res_create}")
+            if calldata_dict.get('contract_type',''):
 
-            res = call_fill_relay_by_calldata(calldata_dict,chain_id,depositHash)
-            print(f"res: {res}")
+                res_create = create_txl_etherscan_txlist(chain_id=chain_id,tx_dict=tx_dict)
+                print(f"create_txl_etherscan_txlist: {res_create}")
+
+                res = call_fill_relay_by_calldata(calldata_dict,chain_id,depositHash)
+                print(f"res: {res}")
+            else:
+                print(f"❌ contract_type不存在: {tx_dict['hash']}")
 
 #todo FILL_RATE 来自across
 def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
