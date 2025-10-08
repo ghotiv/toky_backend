@@ -70,7 +70,7 @@ def fast_get_deposit_args(token_group: str,from_chain_id: int,dst_chain_id: int,
             get erc allowance
         ''')
 def fast_get_erc_allowance(chain_id: int, token_address: str, spender_address: str, 
-                owner_address: str, human: bool = True):
+                owner_address: str, human: bool = False):
     res = call_erc_allowance(chain_id, token_address, spender_address,
                 owner_address, human=human)
     return res

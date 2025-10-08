@@ -30,7 +30,7 @@ def get_w3(rpc_url='',chain_id=''):
     return w3
 
 def call_erc_allowance(chain_id, token_address, spender_address, 
-            owner_address, human=True):
+            owner_address, human=False):
     w3 = get_w3(chain_id=chain_id)
     token_dict = get_token(chain_id=chain_id, token_address=to_checksum_address(token_address))
     if token_dict is None:

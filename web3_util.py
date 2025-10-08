@@ -225,7 +225,7 @@ def decode_contract_error(error_data):
     
     return str(error_data)
 
-def get_erc_allowance(w3, token_address, spender_address, owner_address, human=True, decimals=18):
+def get_erc_allowance(w3, token_address, spender_address, owner_address, human=False, decimals=18):
     abi = [
         {
             "inputs": [
