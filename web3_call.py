@@ -485,11 +485,13 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     if not check_fill_args(vault,depositHash,originChainId,block_chainid,outputToken):
         print(f"check_fill_args 不通过")
         return res
-    try:
-        res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                                block_chainid, private_key=VAULT_PRIVATE_KEY)
-    except Exception as e:
-        print(f"❌ call_fill_relay_by_alchemy失败: {e}")
+    res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+                            block_chainid, private_key=VAULT_PRIVATE_KEY)
+    # try:
+    #     res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+    #                             block_chainid, private_key=VAULT_PRIVATE_KEY)
+    # except Exception as e:
+    #     print(f"❌ call_fill_relay_by_alchemy失败: {e}")
     if res:
         print(f"time: {time.time()}, create_fill_txl_etherscan: {res}")
         create_fill_txl_etherscan_by_hash(tx_hash=res,chain_id=block_chainid)
