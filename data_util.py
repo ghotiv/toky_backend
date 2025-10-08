@@ -361,6 +361,9 @@ def create_txl_webhook(tx_dict,calldata_dict):
 
 def create_fill_txl_etherscan_by_hash(tx_hash,chain_id):
     tx_dict = get_etherscan_tx_by_hash(chain_id=chain_id,tx_hash=tx_hash)
+    if not tx_dict:
+        print(f"❌ tx_dict不存在: {tx_hash}")
+        return None
     print('create_fill_txl_etherscan_by_hash tx_dict : ',tx_dict)
     calldata_dict = get_decode_calldata(tx_dict['input'])
 
