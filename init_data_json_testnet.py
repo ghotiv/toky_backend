@@ -5,7 +5,7 @@ from util import func_left_join
 from data_util import pg_obj,read_json_file
 
 # token_infos = read_json_file('chain_token.json')
-token_infos = read_json_file('chain_token_now.json')
+token_infos = read_json_file('chain_token_testnet.json')
 
 token_infos_gas = [i for i in token_infos if i['token_address'] == '0x0000000000000000000000000000000000000000']
 for i in token_infos_gas:
@@ -13,15 +13,16 @@ for i in token_infos_gas:
     insert_dict = {
         'chain_name':i['chain_name'],
         'alias_name':i['alias_name'],
-        'is_mainnet':1,
+        # 'is_mainnet':1,
+        'is_mainnet':0,
         'rpc_url':rpc_url,
         'rpc_url_bak':i.get('official_rpc',''),
         'chain_id':i['chain_id'],
         'block_explorer':i['explorer_url'],
         'chain_logo_url': i['icon'],
-        # 'contract_deposit': i['contract_deposit'],
-        # 'contract_fillrelay': i['contract_fillrelay'],
-        # 'alchemy_network': i['alchemy_network'],
+        'contract_deposit': i['contract_deposit'],
+        'contract_fillrelay': i['contract_fillrelay'],
+        'alchemy_network': i['alchemy_network'],
         'chain_note': '',
     }
     print(i['chain_name'],rpc_url)
