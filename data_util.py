@@ -32,9 +32,14 @@ def get_chain(chain_id=None,alchemy_network=None):
         res = chain_dicts[0]
     return res
 
-def get_chains(chain_ids=None):
+def get_chains(chain_ids=None,is_mainnet=None):
+    '''
+        is_mainnet: None 所有网络, True 主网, False 测试网
+    '''
     res = None
     sql = 'select * from chain'
+    if is_mainnet is not None:
+        sql = f'select * from chain where is_mainnet = {is_mainnet}'
     if chain_ids:
         sql = f'select * from chain where id in ({','.join(map(str,chain_ids))})'
     chain_dicts = pg_obj.query(sql)
@@ -92,10 +97,11 @@ def get_tokens(token_symbol=None,token_address=None,token_group=None):
     res = token_dicts
     return res
 
-def get_tokens_with_chains(token_symbol=None,token_address=None,token_group=None):
+def get_tokens_with_chains(token_symbol=None,token_address=None,token_group=None,is_mainnet=None):
     res_tokens = get_tokens(token_symbol=token_symbol,token_address=token_address,token_group=token_group)
-    res_chains = get_chains()
+    res_chains = get_chains(is_mainnet=is_mainnet)
     res = func_left_join(res_tokens,res_chains,['chain_db_id'])
+    res = [i for i in res if i.get('chain_name',None)]
     return res
 
 def get_vault_address():
