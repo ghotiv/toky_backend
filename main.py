@@ -31,7 +31,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get("/get_vault_address",summary='get vault address',
         description='''
             get vault address
@@ -45,7 +44,6 @@ def fast_get_vault_address():
         ''')
 def fast_get_token_groups():
     return api_get_token_groups()
-
 
 @app.get("/get_chains_by_token_group",summary='get chains by token group',
         description='''

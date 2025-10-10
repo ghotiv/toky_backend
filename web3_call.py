@@ -4,8 +4,8 @@ import time
 from eth_utils import to_checksum_address
 from web3 import Web3
 
-from local_util import get_web3_wei_amount,get_tmp_key,set_tmp_key,\
-    get_web3_wei_amount,get_bytes32_address,get_decode_calldata,\
+from local_util import get_tmp_key,set_tmp_key,\
+    get_bytes32_address,get_decode_calldata,\
     str_to_int,get_w3
 
 from web3_util import decode_contract_error,get_gas_params,\
@@ -15,7 +15,7 @@ from data_util import get_chain,get_token,create_txl_webhook,\
     create_fill_txl_etherscan_by_hash,get_etherscan_txs,\
     create_txl_etherscan_txlist
 
-from my_conf import DEPOSIT_ABI,FILL_RELAY_ABI,CHECK_RELAY_FILLED_ABI,VAULT
+from my_conf import DEPOSIT_ABI,FILL_RELAY_ABI,CHECK_RELAY_FILLED_ABI,VAULTS,FILL_RATE
 
 def call_erc_allowance(chain_id, token_address, spender_address, 
             owner_address, human=False):
