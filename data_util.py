@@ -1,4 +1,5 @@
 import random
+import time
 import requests
 
 from eth_utils import to_checksum_address,add_0x_prefix
@@ -239,6 +240,7 @@ def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
             res = response.json()['result']
         except Exception as e:
             print(f"get_etherscan_txs error: {e}")
+            time.sleep(2)
             return []
     return res
 
