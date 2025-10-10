@@ -1,10 +1,12 @@
 from eth_utils import to_checksum_address
 
-from my_conf import *
-
+from local_util import get_web3_wei_amount
 from data_util import get_token
-from web3_util import get_wei_amount, get_bytes32_address
+
+from web3_util import get_bytes32_address
 from web3_call import get_decode_calldata, call_deposit, call_fill_relay
+
+from my_conf import *
 
 def test_get_decode_calldata():
     calldata = '0xeef40c38000000000000000000000000ba37d7ed1cff3ddab5f23ee99525291dca00999d000000000000000000000000d45f62ae86e01da43a162aa3cd320fca3c1b178d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005af3107a40000000000000000000000000000000000000000000000000000000000000014a3400000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000'
@@ -20,14 +22,14 @@ def test_call_deposit(private_key=None,recipient=None):
     # block_chainid = 11155420
 
     # inputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
-    # inputAmount = get_wei_amount(0.0001)
-    # inputAmount = get_wei_amount(1000)
+    # inputAmount = get_web3_wei_amount(0.0001)
+    # inputAmount = get_web3_wei_amount(1000)
 
     # inputToken = get_token(chain_id=block_chainid,token_symbol='ETH')['token_address']
-    # inputAmount = get_wei_amount(0.001)
+    # inputAmount = get_web3_wei_amount(0.001)
     inputToken = get_token(chain_id=block_chainid,token_symbol='MBT')['token_address']
-    inputAmount = get_wei_amount(0.001)
-    # inputAmount = get_wei_amount(1)
+    inputAmount = get_web3_wei_amount(0.001)
+    # inputAmount = get_web3_wei_amount(1)
 
     # destinationChainId = 11155111
     # destinationChainId = 84532
@@ -42,8 +44,8 @@ def test_call_fill_relay():
     block_chainid = 84532
     outputToken = to_checksum_address('0x0000000000000000000000000000000000000000')
     # outputToken = to_checksum_address('0xc4C5896a32e75ed3b59C48620E3b0833D0f98820')
-    outputAmount = get_wei_amount(1*0.9)
-    # inputAmount = get_wei_amount(1000)
+    outputAmount = get_web3_wei_amount(1*0.9)
+    # inputAmount = get_web3_wei_amount(1000)
     originChainId = 11155111
     message = b'hello'
     recipient = to_checksum_address(CLIENT)

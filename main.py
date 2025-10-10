@@ -1,14 +1,11 @@
-import time
-from datetime import datetime, timedelta
-
-from fastapi import FastAPI, BackgroundTasks, HTTPException, status
-from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field
+from fastapi import FastAPI
+# from typing import Dict, Any, Optional
+# from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 
 from data_util import get_vault_address, api_get_token_groups, \
-    api_get_chains_by_token_group, get_txls_pair
-from web3_call import get_deposit_args, call_erc_allowance
+    api_get_chains_by_token_group, get_txls_pair, get_deposit_args
+from web3_call import call_erc_allowance
 
 app = FastAPI(title='bridge',description='bridge api')
 

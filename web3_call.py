@@ -4,30 +4,18 @@ import time
 from eth_utils import to_checksum_address
 from web3 import Web3
 
+from local_util import get_web3_wei_amount,get_tmp_key,set_tmp_key,\
+    get_web3_wei_amount,get_bytes32_address,get_decode_calldata,\
+    str_to_int,get_w3
+
 from web3_util import decode_contract_error,get_gas_params,\
-        handle_already_known_transaction, get_bytes32_address,\
-        get_decode_calldata,get_wei_amount,get_erc_allowance
+        handle_already_known_transaction,get_erc_allowance
 
-from data_util import get_chain,get_token,set_tmp_key,get_tmp_key,create_txl_webhook,\
-    create_fill_txl_etherscan_by_hash,get_etherscan_txs,str_to_int,create_txl_etherscan_txlist
+from data_util import get_chain,get_token,create_txl_webhook,\
+    create_fill_txl_etherscan_by_hash,get_etherscan_txs,\
+    create_txl_etherscan_txlist
 
-from my_conf import *
-
-def get_w3(rpc_url='',chain_id=''):
-    if chain_id:
-        rpc_url = get_chain(chain_id=chain_id).get('rpc_url','')
-    if not rpc_url:
-        return
-    w3 = Web3(Web3.HTTPProvider(rpc_url))
-    
-    # 自动检测并注入POA中间件（如果需要）
-    from web3_util import auto_inject_poa_middleware_if_needed
-    poa_result = auto_inject_poa_middleware_if_needed(w3)
-    if poa_result and poa_result not in ["not_needed", "already_exists"]:
-        print(f"🔗 Chain {chain_id} POA中间件状态: {poa_result}")
-    
-    # print(w3.isConnected())
-    return w3
+from my_conf import DEPOSIT_ABI,FILL_RELAY_ABI,CHECK_RELAY_FILLED_ABI,VAULT
 
 def call_erc_allowance(chain_id, token_address, spender_address, 
             owner_address, human=False):
@@ -41,22 +29,6 @@ def call_erc_allowance(chain_id, token_address, spender_address,
             human=human, decimals=decimals)
     print(allowance)
     return allowance
-
-def get_deposit_args(token_group,from_chain_id,dst_chain_id,num_input,recipient,vault=VAULT,message=''):
-    deposit_dict = {}
-    token_dict = get_token(chain_id=from_chain_id,token_group=token_group)
-    inputToken = token_dict['token_address']
-    inputAmount = get_wei_amount(num_input,decimals=int(token_dict['decimals']))
-    # recipient_bytes32 = get_bytes32_address(to_checksum_address(recipient))
-    deposit_dict.update({
-        'vault': vault,
-        'recipient': to_checksum_address(recipient),
-        'inputToken': inputToken,
-        'inputAmount': inputAmount,
-        'destinationChainId': dst_chain_id,
-        'message': message,
-    })
-    return deposit_dict
 
 def call_deposit(vault, recipient, inputToken, inputAmount, destinationChainId, message, 
                     block_chainid, private_key=None):

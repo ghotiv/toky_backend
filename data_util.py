@@ -1,91 +1,14 @@
-import json
-import re
-import arrow
 import random
 import requests
 
 from eth_utils import to_checksum_address,add_0x_prefix
 
 from util import func_left_join,to_tztime
-from pg_util import Postgresql
-from redis_util import Redis
+from local_util import get_web3_human_amount,get_decode_calldata,get_web3_wei_amount,\
+    pg_obj,str_to_int,get_tx_url
 
-from web3_util import get_decode_calldata
+from my_conf import ETHERSCAN_API_KEYS,NOT_EIP1599_IDS,L1_CHAIN_IDS,VAULT
 
-from my_conf import *
-
-redis_obj = Redis()
-
-def get_pg_obj(host=DB_HOST,db=DB_DB,user=DB_USER,pwd=DB_PWD):
-    if not host:
-        return None
-    pg_obj = Postgresql(host,db,user,pwd)
-    return pg_obj
-
-pg_obj = get_pg_obj()
-
-#not used
-def decorator_res(func):
-    def wrapper(*args, **kwargs):
-        try:
-            res_func = func(*args, **kwargs)
-            return {'data':res_func}
-        except Exception as e:
-            print(str(e))
-            #to do message 给用户看
-            return {'errorCode':500,'message':str(e)}
-    return wrapper
-
-def str_to_int(num):
-    '''
-        '0xf3c9e' -> 998558
-        998558 -> 998558
-    '''
-    num = str(num)
-    res = None
-    if num.startswith('0x'):
-        res = int(num, 16)
-    elif num.isdigit():
-        res = int(num)
-    return res
-
-def get_human_amount(num,decimals=18):
-    return num/10**decimals
-
-def get_tx_url(block_explorer,tx_hash,explorer_template='{domain}/tx/{hash}'):
-    tx_url = explorer_template.format(domain=block_explorer, hash=tx_hash)
-    return tx_url
-
-def get_address_url(block_explorer,address,explorer_template='{domain}/address/{address}'):
-    address_url = explorer_template.format(domain=block_explorer, address=address)
-    return address_url
-
-def set_tmp_key(k,v,ex=None):
-    return redis_obj.set(k,v,ex)
-
-def get_tmp_key(k):
-    return redis_obj.get(k)
-
-def get_time_now(str_format=False):
-    time_now = arrow.utcnow().to(TZ)
-    if str_format:
-        time_now = time_now.format('YYYY-MM-DD HH:mm:ss')
-    return time_now
-
-def format_time(time_at):
-    return arrow.get(time_at).to(TZ).format('YYYY-MM-DD HH:mm:ss')
-
-def read_json_file(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-        return data
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-        return None
-    except json.JSONDecodeError:
-        print(f"Error decoding JSON in file: {file_path}")
-        return None
 
 def get_etherscan_apikey():
     return random.choice(ETHERSCAN_API_KEYS)
@@ -223,7 +146,7 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
     if not res_from:
         return res
     [i.update({
-        'num_human_from': get_human_amount(i['num_from'],decimals=i['decimals_from']),
+        'num_human_from': str(get_web3_human_amount(i['num_from'],decimals=i['decimals_from'])),
         'tx_url_from': get_tx_url(i["block_explorer_from"],i["tx_hash_from"],explorer_template=i["explorer_template_from"])
         }) 
         for i in res_from if i['num_from']]
@@ -244,7 +167,7 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
     '''
     res_to = pg_obj.query(sql_to)
     [i.update({
-        'num_human_to': get_human_amount(i['num_to'],decimals=i['decimals_to']),
+        'num_human_to': str(get_web3_human_amount(i['num_to'],decimals=i['decimals_to'])),
         'tx_url_to': get_tx_url(i["block_explorer_to"],i["tx_hash_to"],explorer_template=i["explorer_template_to"])
         }) 
         for i in res_to if i['num_to']]
@@ -254,6 +177,22 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
 
 
 #for api
+def get_deposit_args(token_group,from_chain_id,dst_chain_id,num_input,recipient,vault=VAULT,message=''):
+    deposit_dict = {}
+    token_dict = get_token(chain_id=from_chain_id,token_group=token_group)
+    inputToken = token_dict['token_address']
+    inputAmount = get_web3_wei_amount(num_input,decimals=int(token_dict['decimals']))
+    # recipient_bytes32 = get_bytes32_address(to_checksum_address(recipient))
+    deposit_dict.update({
+        'vault': vault,
+        'recipient': to_checksum_address(recipient),
+        'inputToken': inputToken,
+        'inputAmount': inputAmount,
+        'destinationChainId': dst_chain_id,
+        'message': message,
+    })
+    return deposit_dict
+
 def api_get_token_groups():
     res = [
         {

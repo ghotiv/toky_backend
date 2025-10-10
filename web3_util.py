@@ -1,12 +1,14 @@
 import time
-from decimal import Decimal
 
-from eth_utils import to_checksum_address, keccak, is_address, to_bytes,\
-        decode_hex
-from eth_abi import decode
-from web3 import Web3
+from local_util import get_web3_human_amount
 
-from my_conf import *
+from my_conf import POA_CHAIN_IDS
+
+def get_balance(w3, account_address,human=True,decimals=18):
+    res = w3.eth.get_balance(account_address)
+    if human:
+        res = w3.from_wei(res, 'ether')
+    return res
 
 def is_poa_chain(w3):
     """检测是否为POA链"""
@@ -108,95 +110,8 @@ def auto_inject_poa_middleware_if_needed(w3):
             print(f"⚠️ POA检测失败: {e}")
             return None
 
-def get_wei_amount(human_amount, decimals=18):
-    return int(human_amount * 10**decimals)
-
-def get_human_amount(num,decimals=18):
-    return str(Decimal(str(num))/Decimal(str(10**decimals)))
-
-def get_human_amount_from_wei(wei_amount, decimals=18):
-    res = None
-    if decimals == 18:
-        res = Web3.from_wei(int(wei_amount), 'ether')
-    if decimals == 6:
-        res = Web3.from_wei(int(wei_amount), 'mwei')
-    return res
-
-def get_bytes32_address(address):
-    #暂时支持evm
-    #有没'0x'都支持
-    res = to_bytes(hexstr=address).rjust(32, b'\0')
-    return res
-
-#暂时只支持evm地址
-def get_recipient_vaild_address(recipient):
-    res = None
-    recipient_str = recipient.hex()
-    if 24*'0' in recipient_str:
-        recipient_replace = recipient_str.replace(24*'0','')
-        if is_address(recipient_replace):
-            #自动加0x前缀
-            res = to_checksum_address(recipient_replace)
-    return res
-
-def get_method_id(func_sign):
-    return '0x'+keccak(text=func_sign).hex()[:8]
-
-def get_decode_calldata(calldata):
-    res = {}
-    method_id_transfer_deposit = get_method_id("deposit(address,bytes32,address,uint256,uint256,bytes)")
-    method_id_fill_relay = get_method_id("fillRelay(address,address,uint256,uint256,bytes32,bytes)")
-    method_id = calldata[:10]
-    encoded_data = calldata[10:]
-    if method_id == method_id_transfer_deposit:
-        function_abi = [
-            {"type": "address", "name": "vault"},
-            {"type": "bytes32", "name": "recipient"},
-            {"type": "address", "name": "inputToken"},
-            {"type": "uint256", "name": "inputAmount"},
-            {"type": "uint256", "name": "destinationChainId"},
-            {"type": "bytes", "name": "message"},
-        ]
-        abi_types = [item["type"] for item in function_abi]
-        decoded_data = decode(abi_types, decode_hex(encoded_data))
-        vault,recipient,inputToken,inputAmount,destinationChainId,message = decoded_data
-        res = {
-            'vault':to_checksum_address(vault),
-            'recipient':get_recipient_vaild_address(recipient),
-            'inputToken':to_checksum_address(inputToken),
-            'inputAmount':inputAmount,
-            'destinationChainId':destinationChainId,
-            'message':message,
-            'contract_type':'contract_deposit',
-            'calldata':calldata,
-        }
-    if method_id == method_id_fill_relay:
-        function_abi = [
-            {"type": "address", "name": "recipient"},
-            {"type": "address", "name": "outputToken"},
-            {"type": "uint256", "name": "outputAmount"},
-            {"type": "uint256", "name": "originChainId"},
-            {"type": "bytes32", "name": "depositHash"},
-            {"type": "bytes", "name": "message"},
-        ]
-        abi_types = [item["type"] for item in function_abi]
-        decoded_data = decode(abi_types, decode_hex(encoded_data))
-        recipient,outputToken,outputAmount,originChainId,depositHash,message = decoded_data
-        res = {
-            'recipient':to_checksum_address(recipient),
-            'outputToken':to_checksum_address(outputToken),
-            'outputAmount':outputAmount,
-            'originChainId':originChainId,
-            'depositHash':depositHash.hex(),
-            'message':message,
-            'contract_type':'contract_fillrelay',
-            'calldata':calldata,
-        }
-    return res
-
 def decode_contract_error(error_data):
     """解码合约自定义错误"""
-    # 常见的错误选择器映射
     error_selectors = {
         '0xea8e4eb5': 'NotAuthorized()',
         '0x4ff64a9f': 'RelayAlreadyFilled()',
@@ -212,7 +127,6 @@ def decode_contract_error(error_data):
         '0xa9059cbb': 'transfer(address,uint256)',  # ERC20 transfer
         '0x095ea7b3': 'approve(address,uint256)',   # ERC20 approve
     }
-    
     if isinstance(error_data, tuple) and len(error_data) >= 1:
         error_selector = error_data[0]
         if error_selector in error_selectors:
@@ -222,7 +136,6 @@ def decode_contract_error(error_data):
         else:
             print(f"❓ 未知错误选择器: {error_selector}")
             return f"UnknownError({error_selector})"
-    
     return str(error_data)
 
 def get_erc_allowance(w3, token_address, spender_address, owner_address, human=False, decimals=18):
@@ -234,7 +147,7 @@ def get_erc_allowance(w3, token_address, spender_address, owner_address, human=F
             ],
             "name": "allowance",
             "outputs": [{"name": "", "type": "uint256"}],
-            "stateMutability": "view",  # 关键：view 函数
+            "stateMutability": "view",
             "type": "function"
         }
     ]
@@ -243,7 +156,7 @@ def get_erc_allowance(w3, token_address, spender_address, owner_address, human=F
     res = str(allowance)
     print(f"🔍 获取ERC20授权额度: {res} {human} {decimals}")
     if human:
-        res = str(get_human_amount_from_wei(allowance, decimals=decimals))
+        res = str(get_web3_human_amount(allowance, decimals=decimals))
     return res
 
 def get_safe_nonce(w3, account_address):
