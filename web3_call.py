@@ -15,7 +15,8 @@ from data_util import get_chain,get_token,create_txl_webhook,\
     create_fill_txl_etherscan_by_hash,get_etherscan_txs,\
     create_txl_etherscan_txlist
 
-from my_conf import DEPOSIT_ABI,FILL_RELAY_ABI,CHECK_RELAY_FILLED_ABI,VAULTS,FILL_RATE
+from my_conf import DEPOSIT_ABI,FILL_RELAY_ABI,CHECK_RELAY_FILLED_ABI,VAULTS,FILL_RATE,\
+    VAULT_PRIVATE_KEY
 
 def call_erc_allowance(chain_id, token_address, spender_address, 
             owner_address, human=False):
