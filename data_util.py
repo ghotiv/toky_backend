@@ -234,6 +234,7 @@ def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
         address = to_checksum_address(get_chain(chain_id=chain_id).get('contract_fillrelay',''))
     if address:
         url = f'https://api.etherscan.io/v2/api?chainid={chain_id}&module=account&action=txlist&address={address}&page=1&offset={limit}&sort=desc&apikey={api_key}'
+        print(f"get_etherscan_txs url: {url}")
         response = requests.get(url)
         res = response.json()['result']
     return res
