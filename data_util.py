@@ -188,7 +188,7 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
         }) 
         for i in res_to if i['num_to']]
     res = func_left_join(res_from,res_to,['txl_related_id'])
-    res_sorted = sorted(res,key=lambda x: x.get('tx_time',''),reverse=True)
+    res_sorted = sorted(res,key=lambda x: x.get('tx_time',' '),reverse=True)
     return res_sorted
 
 
