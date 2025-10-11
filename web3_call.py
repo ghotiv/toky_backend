@@ -450,14 +450,12 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     # token_symbol_input = token_input_dict['token_symbol']
     token_group_input = token_input_dict['token_group']
 
-    outputToken = get_token(chain_id=block_chainid,token_group=token_group_input).get('token_address',None)
+    output_token_dict = get_token(chain_id=block_chainid,token_group=token_group_input)
+    outputToken = output_token_dict.get('token_address',None)
 
     input_amount_human = get_web3_human_amount(calldata_dict['inputAmount'],int(token_input_dict['decimals']))
-    print(f"input_amount_human: {input_amount_human}, decimals: {int(token_input_dict['decimals'])}")
     input_amount_human_after = input_amount_human*Decimal(str(FILL_RATE))
-    print(f"input_amount_human_after: {input_amount_human_after},outputToken_decimals: {outputToken['decimals']}")
-    outputToken_decimals = int(outputToken['decimals'])
-    outputAmount = get_web3_wei_amount(input_amount_human_after,outputToken_decimals)
+    outputAmount = get_web3_wei_amount(input_amount_human_after,int(output_token_dict['decimals']))
 
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
