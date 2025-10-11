@@ -27,8 +27,9 @@ def decode_contract_error(error_data):
     """解码合约自定义错误"""
     error_selectors = {
         '0xea8e4eb5': 'NotAuthorized()',
-        '0x4ff64a9f': 'RelayAlreadyFilled()',
-        '0x7a2c8890': 'InsufficientBalance()', 
+        '0x4ff64a9f': 'AmountError()',
+        '0x7a2c8890': 'RelayAlreadyFilled()',
+        '0x5b67e2c6': 'InsufficientBalance()', 
         '0x8c379a00': 'Error(string)',  # 标准revert错误
         '0x4e487b71': 'Panic(uint256)',  # Panic错误
         '0x08c379a0': 'Error(string)',  # 另一种格式

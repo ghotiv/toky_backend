@@ -453,7 +453,9 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     outputToken = get_token(chain_id=block_chainid,token_group=token_group_input).get('token_address',None)
 
     input_amount_human = get_web3_human_amount(calldata_dict['inputAmount'],int(token_input_dict['decimals']))
+    print(f"input_amount_human: {input_amount_human}, decimals: {int(token_input_dict['decimals'])}")
     outputAmount = get_web3_wei_amount(input_amount_human*Decimal(str(FILL_RATE)),int(outputToken['decimals']))
+    print(f"outputAmount: {outputAmount}, decimals: {int(outputToken['decimals'])}")
 
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
@@ -461,13 +463,16 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     if not check_fill_args(vault,depositHash,originChainId,block_chainid,outputToken):
         print(f"check_fill_args 不通过")
         return res
+
     res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
                             block_chainid, private_key=VAULT_PRIVATE_KEY)
+
     # try:
     #     res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
     #                             block_chainid, private_key=VAULT_PRIVATE_KEY)
     # except Exception as e:
     #     print(f"❌ call_fill_relay_by_alchemy失败: {e}")
+
     if res:
         print(f"time: {time.time()}, create_fill_txl_etherscan: {res}")
         create_fill_txl_etherscan_by_hash(tx_hash=res,chain_id=block_chainid)
