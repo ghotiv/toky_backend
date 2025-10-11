@@ -13,9 +13,6 @@ def get_eth_balance(account_address, w3=None, chain_id=None, human=False, decima
         res = get_web3_human_amount(res, decimals=decimals)
     return res
 
-res = get_eth_balance(chain_id=8453, account_address=CLIENT, human=True, decimals=18)
-print(res)
-
 def get_erc_balance(account_address, token_address, w3=None, chain_id=None, human=False):
     if chain_id:
         w3 = get_w3(chain_id=chain_id)
@@ -25,9 +22,6 @@ def get_erc_balance(account_address, token_address, w3=None, chain_id=None, huma
         decimals = contract.functions.decimals().call()
         balance = get_web3_human_amount(balance, decimals=decimals)
     return balance
-
-res = get_erc_balance(chain_id=8453, account_address=CLIENT, token_address='0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', human=True)
-print(res)
 
 def decode_contract_error(error_data):
     """解码合约自定义错误"""
