@@ -113,7 +113,8 @@ def deploy_add_vault_authors_concurrent(contract_type,is_mainnet=False):
 
 def approve_token_one(token_dict):
     if token_dict.get('token_address',None):
-        approve_token(token_dict['token_address'], token_dict['contract_fillrelay'], token_dict['rpc_url'], is_eip1559=token_dict['is_eip1559'])
+        approve_token(token_dict['token_address'], token_dict['contract_fillrelay'], 
+            token_dict['rpc_url'], is_eip1559=token_dict['is_eip1559'])
 
 def approve_tokens(token_symbol=None,token_address=None,token_group=None,is_mainnet=False):
     token_dicts = get_tokens_with_chains(token_symbol=token_symbol,

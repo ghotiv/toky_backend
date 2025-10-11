@@ -1,12 +1,13 @@
 
 import time
+from decimal import Decimal
 
 from eth_utils import to_checksum_address
 from web3 import Web3
 
 from local_util import get_tmp_key,set_tmp_key,\
     get_bytes32_address,get_decode_calldata,\
-    str_to_int,get_w3
+    str_to_int,get_w3,get_web3_wei_amount,get_web3_human_amount
 
 from web3_util import decode_contract_error,get_gas_params,\
         handle_already_known_transaction,get_erc_allowance
@@ -451,7 +452,9 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
 
     outputToken = get_token(chain_id=block_chainid,token_group=token_group_input).get('token_address',None)
 
-    outputAmount = int(calldata_dict['inputAmount']*FILL_RATE)
+    input_amount_human = get_web3_human_amount(calldata_dict['inputAmount'],token_input_dict['decimals'])
+    outputAmount = get_web3_wei_amount(input_amount_human*Decimal(str(FILL_RATE)),outputToken['decimals'])
+
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
 
