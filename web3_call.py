@@ -455,8 +455,8 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     input_amount_human = get_web3_human_amount(calldata_dict['inputAmount'],int(token_input_dict['decimals']))
     print(f"input_amount_human: {input_amount_human}, decimals: {int(token_input_dict['decimals'])}")
     input_amount_human_after = input_amount_human*Decimal(str(FILL_RATE))
+    print(f"input_amount_human_after: {input_amount_human_after},outputToken_decimals: {outputToken['decimals']}")
     outputToken_decimals = int(outputToken['decimals'])
-    print(f"input_amount_human_after: {input_amount_human_after},outputToken_decimals: {outputToken_decimals}")
     outputAmount = get_web3_wei_amount(input_amount_human_after,outputToken_decimals)
 
     message = b''
