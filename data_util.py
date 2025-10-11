@@ -97,10 +97,19 @@ def get_tokens(token_symbol=None,token_address=None,token_group=None):
     res = token_dicts
     return res
 
+def get_token_with_chain(chain_id=None,token_symbol=None,token_address=None,token_group=None):
+    res_tokens = get_tokens(token_symbol=token_symbol,token_address=token_address,token_group=token_group)
+    res_chains = [get_chain(chain_id=chain_id)]
+    res = func_left_join(res_tokens,res_chains,['chain_db_id'])
+    #有token，没关联上chain，过滤掉
+    res = [i for i in res if i.get('chain_name',None)]
+    return res[0] if res else {}
+
 def get_tokens_with_chains(token_symbol=None,token_address=None,token_group=None,is_mainnet=None):
     res_tokens = get_tokens(token_symbol=token_symbol,token_address=token_address,token_group=token_group)
     res_chains = get_chains(is_mainnet=is_mainnet)
     res = func_left_join(res_tokens,res_chains,['chain_db_id'])
+    #有token，没关联上chain，过滤掉
     res = [i for i in res if i.get('chain_name',None)]
     return res
 

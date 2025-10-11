@@ -28,6 +28,12 @@ wh.ghoti.finance {
         reverse_proxy 127.0.0.1:8168
 }
 
+webhook.ghoti.finance {
+        root * /var/www/wh.ghoti.finance
+        file_server
+        reverse_proxy 127.0.0.1:8168
+}
+
 api.toky.finance {
     # 处理预检请求
     @options method OPTIONS

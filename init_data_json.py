@@ -2,7 +2,7 @@ import json
 
 from util import func_left_join
 
-from data_util import pg_obj,read_json_file
+from local_util import pg_obj,read_json_file
 
 # token_infos = read_json_file('chain_token.json')
 token_infos = read_json_file('chain_token_now.json')
@@ -36,24 +36,34 @@ res_chain = pg_obj.query(sql_chain)
 res_join = func_left_join(token_infos,res_chain,['chain_name'])
 # print(res_join[0])
 
-for i in res_join:
-    is_native_token = 1 if i['token_address'] == '0x0000000000000000000000000000000000000000' else 0
-    sql = f"select * from token where token_address = '{i['token_address']}' and chain_db_id = {i['chain_db_id']}"
-    res_token = pg_obj.query(sql)
-    if res_token:
-        continue
-    print(i)
-    insert_dict = {
-        'chain_db_id':i['chain_db_id'],
-        'is_native_token':is_native_token,
-        'token_symbol':i['token_name'],
-        'token_name':i['token_name'],
-        'token_group':i['token_name'],
-        'token_note':'',
-        'token_address':i['token_address'],
-        'decimals':i['decimals'], 
-        # 'min_num':'', 
-        # 'max_num':'',
-        'token_logo_url':i['token_logo_url']
-    }
-    pg_obj.insert('token',insert_dict)
+# for i in res_join:
+#     is_native_token = 1 if i['token_address'] == '0x0000000000000000000000000000000000000000' else 0
+#     sql = f"select * from token where token_address = '{i['token_address']}' and chain_db_id = {i['chain_db_id']}"
+#     res_token = pg_obj.query(sql)
+#     if res_token:
+#         continue
+#     print(i)
+#     insert_dict = {
+#         'chain_db_id':i['chain_db_id'],
+#         'is_native_token':is_native_token,
+#         'token_symbol':i['token_name'],
+#         'token_name':i['token_name'],
+#         'token_group':i['token_name'],
+#         'token_note':'',
+#         'token_address':i['token_address'],
+#         'decimals':i['decimals'], 
+#         # 'min_num':'', 
+#         # 'max_num':'',
+#         'token_logo_url':i['token_logo_url']
+#     }
+#     pg_obj.insert('token',insert_dict)
+
+#update alchemy_network
+from alchemy_conf import ALCHEMY_NETWORK_MAP
+sql = 'select * from chain'
+res_chain = pg_obj.query(sql)
+for i in res_chain:
+    if not i['alchemy_network'] and i['chain_id'] in ALCHEMY_NETWORK_MAP:
+        sql = f"update chain set alchemy_network = '{ALCHEMY_NETWORK_MAP[i['chain_id']]}' where id = {i['id']}"
+        print(sql)
+        pg_obj.execute(sql)

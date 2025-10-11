@@ -2,8 +2,8 @@ import concurrent.futures
 
 from local_util import pg_obj,get_address_url
 from foundry_util import deploy_contract, verify_contract, deploy_add_vault_author,\
-        approve_token,transfer_eth,transfer_erc
-from data_util import get_chain,get_chains,get_tokens_with_chains
+        approve_token,transfer_eth,transfer_erc,cast_get_eth_balance,cast_get_erc_balance
+from data_util import get_chain,get_chains,get_tokens_with_chains,get_token_with_chain
 from my_conf import CLIENT_PRIVATE_KEY,VAULT_PRIVATE_KEY,CLIENT,DEPLOYER_PRIVATE_KEY,VAULT
 
 def deploy_contract_one(chain_dict,contract_type):
@@ -76,7 +76,8 @@ def verify_deposits(is_mainnet=False):
 
 #for test
 def print_contract_deposit_url():
-    chain_dicts = get_chains()
+    chain_dicts = get_chains(is_mainnet=True)
+    chain_dicts = [i for i in chain_dicts if i['contract_fillrelay'] is not None]
     for chain_dict in chain_dicts:
         url_contract_deposit = get_address_url(chain_dict['block_explorer'], chain_dict['contract_deposit'])
         url_contract_fillrelay = get_address_url(chain_dict['block_explorer'], chain_dict['contract_fillrelay'])
@@ -110,8 +111,9 @@ def deploy_add_vault_authors_concurrent(contract_type,is_mainnet=False):
 # deploy_add_vault_authors_concurrent(contract_type='deposit')
 # deploy_add_vault_authors_concurrent(contract_type='fill_relay')
 
-def approve_token_one(chain_dict):
-    approve_token(chain_dict['token_address'], chain_dict['contract_fillrelay'], chain_dict['rpc_url'], is_eip1559=chain_dict['is_eip1559'])
+def approve_token_one(token_dict):
+    if token_dict.get('token_address',None):
+        approve_token(token_dict['token_address'], token_dict['contract_fillrelay'], token_dict['rpc_url'], is_eip1559=token_dict['is_eip1559'])
 
 def approve_tokens(token_symbol=None,token_address=None,token_group=None,is_mainnet=False):
     token_dicts = get_tokens_with_chains(token_symbol=token_symbol,
@@ -139,8 +141,8 @@ def approve_tokens_concurrent(token_symbol=None, token_address=None, token_group
 # approve_token(chain_dict['token_address'], chain_dict['contract_fillrelay'],chain_dict['rpc_url'], 
 #                         private_key=CLIENT_PRIVATE_KEY, is_eip1559=chain_dict['is_eip1559'])
 
-def transfer_eth_one(chain_dict,amount=0.0005):
-    transfer_eth(recipient_address=CLIENT, amount_human=amount, decimals=chain_dict['native_token_decimals'],
+def transfer_eth_one(chain_dict,amount=0.0005,recipient_address=CLIENT):
+    transfer_eth(recipient_address=recipient_address, amount_human=amount, decimals=chain_dict['native_token_decimals'],
             rpc_url=chain_dict['rpc_url'], private_key=VAULT_PRIVATE_KEY, is_eip1559=chain_dict['is_eip1559'])
 
 def transfer_eths(amount=0.0005):
@@ -155,20 +157,45 @@ def transfer_eths_concurrent(amount=0.0005):
 
 # transfer_eths_concurrent()
 
-def transfer_erc_one(token_dict,recipient_address=CLIENT,amount=100):
+def transfer_erc_one(token_dict,recipient_address=CLIENT,amount=1):
     transfer_erc(token_dict['token_address'], recipient_address, amount, token_dict['rpc_url'], 
                 decimals=token_dict['decimals'],
-                private_key=DEPLOYER_PRIVATE_KEY, is_eip1559=token_dict['is_eip1559'])
+                private_key=VAULT_PRIVATE_KEY, is_eip1559=token_dict['is_eip1559'])
 
-def transfer_ercs(recipient_address=CLIENT, amount=100):
+def transfer_ercs(recipient_address=CLIENT, amount=1):
     token_dicts = get_tokens_with_chains(token_symbol='MBT')
     for token_dict in token_dicts:
         transfer_erc_one(token_dict, recipient_address, amount)
 
-def transfer_ercs_concurrent(recipient_address=CLIENT,amount=100):
+def transfer_ercs_concurrent(recipient_address=CLIENT,amount=1):
     token_dicts = get_tokens_with_chains(token_symbol='MBT')
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         executor.map(lambda token_dict: transfer_erc_one(token_dict, recipient_address, amount), token_dicts)
 
 # transfer_ercs()
 # transfer_ercs_concurrent(recipient_address=VAULT, amount=100)
+
+def cast_get_balance_one(chain_dict,account_address=CLIENT,human=True):
+    res =cast_get_eth_balance(account_address=account_address, rpc_url=chain_dict['rpc_url'], human=human, 
+            decimals=chain_dict['native_token_decimals'], is_eip1559=chain_dict['is_eip1559'])
+    return res
+
+def cast_get_erc_balance_one(token_dict,human=True):
+    res = cast_get_erc_balance(account_address=CLIENT, token_address=token_dict['token_address'], 
+            rpc_url=token_dict['rpc_url'], human=human, decimals=token_dict['decimals'],
+            is_eip1559=token_dict['is_eip1559'])
+    return res
+
+def cast_get_erc_balances():
+    token_dicts = get_tokens_with_chains(token_symbol='USDC')
+    for token_dict in token_dicts:
+        res = cast_get_erc_balance_one(token_dict)
+        print(token_dict['chain_name'],token_dict['token_symbol'],res)
+
+# chain_dict = get_chain(chain_id=8453)
+# token_dict = get_token_with_chain(chain_id=8453,token_symbol='USDC')
+# res = cast_get_balance_one(chain_dict,human=True)
+# print(res)
+# res = cast_get_erc_balance_one(token_dict,human=True)
+# print(res)
+# cast_get_erc_balances()

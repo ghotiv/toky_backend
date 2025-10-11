@@ -10,7 +10,7 @@ import arrow
 from pg_util import Postgresql
 from redis_util import Redis
 
-from my_conf import DB_HOST,DB_DB,DB_USER,DB_PWD,TZ
+from my_conf import DB_HOST,DB_DB,DB_USER,DB_PWD,TZ,POA_CHAIN_IDS
 
 DECIMALS_WEI_DICT = {len(str(v))-1:k for k,v in units.items()}
 # support decimals
@@ -82,11 +82,11 @@ def get_web3_wei_amount(human_amount,decimals):
     res = Web3.to_wei(human_amount,DECIMALS_WEI_DICT[decimals])
     return res
 
-def get_web3_human_amount(human_amount,decimals):
+def get_web3_human_amount(amount,decimals):
     '''
         return decimal
     '''
-    res = Web3.from_wei(human_amount, DECIMALS_WEI_DICT[decimals])
+    res = Web3.from_wei(amount, DECIMALS_WEI_DICT[decimals])
     return res
 
 def get_bytes32_address(address):
@@ -161,6 +161,106 @@ def get_decode_calldata(calldata):
         }
     return res
 
+def is_poa_chain(w3):
+    """检测是否为POA链"""
+    try:
+        chain_id = w3.eth.chain_id
+        if chain_id in POA_CHAIN_IDS:
+            return True, -2  # -2表示通过已知链ID识别
+    except:
+        pass
+    
+    try:
+        # 尝试获取最新区块
+        latest_block = w3.eth.get_block('latest')
+        # 检查extraData字段长度，POA链通常大于32字节
+        if hasattr(latest_block, 'extraData') and latest_block.extraData:
+            extra_data_length = len(latest_block.extraData)
+            # 标准以太坊区块的extraData最大32字节，POA链会更长
+            if extra_data_length > 32:
+                return True, extra_data_length
+        return False, 0
+    except Exception as e:
+        # 如果获取区块失败，可能就是因为extraData问题，说明是POA链
+        error_msg = str(e).lower()
+        if 'extradata' in error_msg and ('bytes' in error_msg or 'should be 32' in error_msg):
+            return True, -1  # -1表示通过错误信息推断
+        return False, 0
+
+def inject_poa_middleware(w3):
+    """注入POA中间件的通用函数"""
+    # 检查是否已经有POA中间件
+    middleware_names = [str(middleware) for middleware in w3.middleware_onion]
+    if any('poa' in name.lower() or 'extradata' in name.lower() for name in middleware_names):
+        return "already_exists"
+    
+    try:
+        # Web3.py 6.x+ 版本
+        from web3.middleware import ExtraDataToPOAMiddleware
+        w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+        return "ExtraDataToPOAMiddleware"
+    except ImportError:
+        try:
+            # Web3.py 5.x 版本
+            from web3.middleware import geth_poa_middleware
+            w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+            return "geth_poa_middleware"
+        except ImportError:
+            try:
+                # 备用导入路径
+                from web3.middleware.geth_poa import geth_poa_middleware
+                w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+                return "geth_poa_middleware(alt)"
+            except ImportError:
+                return None
+
+def auto_inject_poa_middleware_if_needed(w3):
+    """自动检测并注入POA中间件（如果需要）"""
+    try:
+        # 先检测是否为POA链
+        is_poa, extra_data_len = is_poa_chain(w3)
+        
+        if is_poa:
+            print(f"🔍 检测到POA链 (ExtraData长度: {extra_data_len}字节)，注入POA中间件...")
+            middleware_name = inject_poa_middleware(w3)
+            if middleware_name == "already_exists":
+                print(f"✅ POA中间件已存在")
+                return "already_exists"
+            elif middleware_name:
+                print(f"✅ 已注入POA中间件: {middleware_name}")
+                # 注入后立即验证
+                try:
+                    w3.eth.get_block('latest')
+                    print(f"✅ POA中间件验证成功")
+                except Exception as verify_e:
+                    print(f"⚠️ POA中间件验证失败: {verify_e}")
+                return middleware_name
+            else:
+                print(f"⚠️ 无法导入POA中间件")
+                return None
+        else:
+            # 不是POA链，不需要中间件
+            return "not_needed"
+            
+    except Exception as e:
+        # 如果检测过程中遇到extraData错误，直接注入中间件
+        error_msg = str(e).lower()
+        if 'extradata' in error_msg:
+            print(f"🔍 检测过程中遇到extraData错误，强制注入POA中间件...")
+            middleware_name = inject_poa_middleware(w3)
+            if middleware_name and middleware_name != "already_exists":
+                print(f"✅ 已注入POA中间件: {middleware_name}")
+                # 注入后立即验证
+                try:
+                    w3.eth.get_block('latest')
+                    print(f"✅ 强制注入的POA中间件验证成功")
+                except Exception as verify_e:
+                    print(f"⚠️ 强制注入的POA中间件验证失败: {verify_e}")
+            return middleware_name
+        else:
+            print(f"⚠️ POA检测失败: {e}")
+            return None
+
 def get_w3(rpc_url='',chain_id=''):
     if chain_id:
         sql = f'select rpc_url from chain where chain_id = {chain_id}'
@@ -172,7 +272,6 @@ def get_w3(rpc_url='',chain_id=''):
     w3 = Web3(Web3.HTTPProvider(rpc_url))
     
     # 自动检测并注入POA中间件（如果需要）
-    from web3_util import auto_inject_poa_middleware_if_needed
     poa_result = auto_inject_poa_middleware_if_needed(w3)
     if poa_result and poa_result not in ["not_needed", "already_exists"]:
         print(f"🔗 Chain {chain_id} POA中间件状态: {poa_result}")

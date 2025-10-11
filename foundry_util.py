@@ -3,7 +3,7 @@ import subprocess
 import json
 from eth_utils import is_checksum_address
 
-from local_util import get_web3_wei_amount
+from local_util import get_web3_wei_amount,get_web3_human_amount,str_to_int
 
 from my_conf import CMD_PATH,DEPLOYER_PRIVATE_KEY,ETHERSCAN_API_KEY,VAULT,DEPLOY_PATH_MAP,VERIFY_PATH_MAP,VAULT_PRIVATE_KEY
 
@@ -20,11 +20,11 @@ def deploy_contract(rpc_url, contract_type, private_key=DEPLOYER_PRIVATE_KEY, is
     legacy_flag = '--legacy' if not is_eip1559 else ''
     cmd_str = f"forge script {deploy_path} --rpc-url {rpc_url} --private-key {private_key} --broadcast {legacy_flag} --json"
     print(cmd_str)
-    res = run_cmd(cmd_str)
+    res_cmd = run_cmd(cmd_str)
 
     # print(res.stdout)
 
-    for line in res.stdout.strip().split('\n'):
+    for line in res_cmd.stdout.strip().split('\n'):
         try:
             line_dict = json.loads(line)
         except:
@@ -34,7 +34,7 @@ def deploy_contract(rpc_url, contract_type, private_key=DEPLOYER_PRIVATE_KEY, is
             return line_dict['contract_address']
 
     #有的只有logs
-    for line in res.stdout.strip().split('\n'):
+    for line in res_cmd.stdout.strip().split('\n'):
         try:
             line_dict = json.loads(line)
         except:
@@ -94,5 +94,35 @@ def transfer_erc(token_address, recipient_address, amount_human, rpc_url,
     cmd_str = f'cast send {token_address} "transfer(address,uint256)" {recipient_address} {amount_wei} --private-key {private_key} --rpc-url {rpc_url} {legacy_flag}'
     print(cmd_str)
     run_cmd(cmd_str)
-    return 
+    return
 
+def cast_get_eth_balance(account_address, rpc_url, is_eip1559=True, human=False, decimals=18):
+    legacy_flag = '--legacy' if not is_eip1559 else ''
+    cmd_str = f'cast balance {account_address} --rpc-url {rpc_url} {legacy_flag}'
+    print(cmd_str)
+    res_cmd = run_cmd(cmd_str)
+    res = None
+    try:
+        res = str_to_int(res_cmd.stdout.strip())
+    except Exception as e:
+        print(e)
+    if res and human and decimals:
+        res = get_web3_human_amount(res, decimals=decimals)
+    return res
+
+def cast_get_erc_balance(account_address, token_address, rpc_url, is_eip1559=True, human=False, decimals=18):
+    legacy_flag = '--legacy' if not is_eip1559 else ''
+    cmd_str = f'cast call {token_address} "balanceOf(address)" {account_address} --rpc-url {rpc_url} {legacy_flag}'
+    print(cmd_str)
+    res_cmd = run_cmd(cmd_str)
+    res = None
+    try:
+        res = str_to_int(res_cmd.stdout.strip())
+    except Exception as e:
+        print(e)
+    if res and human and decimals:
+        decimals_cmd = f'cast call {token_address} "decimals()" --rpc-url {rpc_url} {legacy_flag}'
+        res_cmd = run_cmd(decimals_cmd)
+        decimals = str_to_int(res_cmd.stdout.strip())
+        res = get_web3_human_amount(res, decimals=decimals)
+    return res
