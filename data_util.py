@@ -144,7 +144,7 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
     res = []
     sql_from = f'''
         select txline.id as txl_related_id,num as num_from,chain.chain_id as chain_id_from,
-               token_id as token_db_id,addr_from,tx_hash as tx_hash_from,tx_time,status,
+               token_id as token_db_id,addr_from,tx_hash as tx_hash_from,tx_time,status,create_time,
                 chain.alias_name as chain_alias_name_from,chain.block_explorer as block_explorer_from,
                 chain.explorer_template as explorer_template_from,chain.chain_logo_url as chain_logo_url_from,
                 token.decimals as decimals_from,
@@ -188,7 +188,8 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
         }) 
         for i in res_to if i['num_to']]
     res = func_left_join(res_from,res_to,['txl_related_id'])
-    res_sorted = sorted(res,key=lambda x: x.get('tx_time') or 0,reverse=True)
+    [i.update({'tx_time': i.get('tx_time') or i.get('create_time')}) for i in res]
+    res_sorted = sorted(res,key=lambda x: x['tx_time'],reverse=True)
     return res_sorted
 
 
