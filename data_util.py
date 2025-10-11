@@ -219,6 +219,14 @@ def api_get_token_groups():
             'token_group': 'MBT',
             'token_logo_url': 'https://owlto.finance/icon/token/USDT.png',
         },
+        {
+            'token_group': 'USDC',
+            'token_logo_url': 'https://owlto.finance/icon/token/USDC.png',
+        },
+        {
+            'token_group': 'USDT',
+            'token_logo_url': 'https://owlto.finance/icon/token/USDT.png',
+        },
     ]
     return res
 
