@@ -144,7 +144,7 @@ def get_txls_pair(addr='',status=None, limit=50, offset=0):
     res = []
     sql_from = f'''
         select txline.id as txl_related_id,num as num_from,chain.chain_id as chain_id_from,
-               token_id as token_db_id,addr_from,tx_hash as tx_hash_from,tx_time,status,create_time,
+               token_id as token_db_id,addr_from,tx_hash as tx_hash_from,tx_time,status,txline.create_time as create_time,
                 chain.alias_name as chain_alias_name_from,chain.block_explorer as block_explorer_from,
                 chain.explorer_template as explorer_template_from,chain.chain_logo_url as chain_logo_url_from,
                 token.decimals as decimals_from,
