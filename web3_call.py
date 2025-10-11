@@ -450,12 +450,12 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     # token_symbol_input = token_input_dict['token_symbol']
     token_group_input = token_input_dict['token_group']
 
-    output_token_dict = get_token(chain_id=block_chainid,token_group=token_group_input)
-    outputToken = output_token_dict.get('token_address',None)
+    token_out_dict = get_token(chain_id=block_chainid,token_group=token_group_input)
+    outputToken = token_out_dict.get('token_address',None)
 
     input_amount_human = get_web3_human_amount(calldata_dict['inputAmount'],int(token_input_dict['decimals']))
     input_amount_human_after = input_amount_human*Decimal(str(FILL_RATE))
-    outputAmount = get_web3_wei_amount(input_amount_human_after,int(output_token_dict['decimals']))
+    outputAmount = get_web3_wei_amount(input_amount_human_after,int(token_out_dict['decimals']))
 
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
@@ -464,14 +464,14 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
         print(f"check_fill_args 不通过")
         return res
 
-    res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-                            block_chainid, private_key=VAULT_PRIVATE_KEY)
+    # res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+    #                         block_chainid, private_key=VAULT_PRIVATE_KEY)
 
-    # try:
-    #     res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
-    #                             block_chainid, private_key=VAULT_PRIVATE_KEY)
-    # except Exception as e:
-    #     print(f"❌ call_fill_relay_by_alchemy失败: {e}")
+    try:
+        res = call_fill_relay(recipient, outputToken, outputAmount, originChainId, depositHash, message, 
+                                block_chainid, private_key=VAULT_PRIVATE_KEY)
+    except Exception as e:
+        print(f"❌ call_fill_relay_by_alchemy失败: {e}")
 
     if res:
         print(f"time: {time.time()}, create_fill_txl_etherscan: {res}")
