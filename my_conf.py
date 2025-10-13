@@ -1,7 +1,7 @@
 # TZ = 'Asia/Shanghai'
 TZ = 'UTC'
 
-FILL_RATE = 0.9
+FILL_RATE = 0.9995
 L1_CHAIN_IDS = [11155111, 1, 97, 56, 59141, 59144]  # Ethereum, BSC, Linea (gas行为类似L1)
 NOT_EIP1599_IDS = [2442]  # Metis Sepolia、Polygon zkEVM Cardona不支持EIP-1559
 # 注意：BSC网络现在已经支持EIP-1559了
@@ -28,6 +28,46 @@ VERIFY_PATH_MAP = {
     'fill_relay': 'src/TokyFillRelay.sol:TokyFillRelay',
 }
 
+ERROR_SELECTORS = {
+    '0x813dc85d': 'NotOwnerError()',
+    '0x5e874202': 'LengthError()',
+    '0x0f74927f': 'ZeroAddressError()',
+    '0x4ff64a9f': 'AmountError()',
+    '0x62787609': 'RecipientError()',
+    '0x6c9d47e8': 'CallError()',
+    '0xe55de02a': 'VaultNotWhitelistedError()',
+    '0x67b45f5a': 'VaultAlreadyWhitelistedError()',
+    '0x33ff682c': 'VaultNotFoundError()',
+    '0x3a1a1b5f': 'InvalidDestinationChainIdError()',
+    '0x7a2c8890': 'RelayAlreadyFilled()',
+    '0xea8e4eb5': 'NotAuthorized()',
+    '0x5b67e2c6': 'InsufficientBalance()',
+    '0x8c379a00': 'Error(string)',
+    '0x4e487b71': 'Panic(uint256)',
+    '0x08c379a0': 'Error(string)',
+    '0x1e4fbdf7': 'OwnableUnauthorizedAccount(address)',
+    '0x49df728c': 'OwnableInvalidOwner(address)',
+    '0x118cdaa7': 'AddressEmptyCode(address)',
+    '0x5274afe7': 'AddressInsufficientBalance(address)',
+    '0x7939f424': 'SafeERC20FailedOperation(address)',
+    '0xa9059cbb': 'transfer(address,uint256)',
+    '0x095ea7b3': 'approve(address,uint256)',
+}
+
+ACROSS_ETH_MAP = {
+    1:      '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',  # Ethereum Mainnet (WETH)
+    42161:  '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',  # Arbitrum One (WETH)
+    8453:   '0x4200000000000000000000000000000000000006',  # Base Mainnet (WETH)
+    10:     '0x4200000000000000000000000000000000000006',  # Optimism Mainnet (WETH)
+    137:    '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',  # Polygon PoS (WETH)
+    56:     '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',  # BNB Chain (ETH - wrapped)
+    59144:  '0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f',  # Linea (WETH)
+    534352: '0x5300000000000000000000000000000000000004',  # Scroll (WETH)
+    324:    '0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91',  # zkSync Era (WETH)
+    5000:   '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111',  # Mantle (ETH token)
+    34443:  '0x4200000000000000000000000000000000000006',  # Mode (WETH)
+    81457:  '0x4300000000000000000000000000000000000004',  # Blast (WETH)
+}
 
 #override my_private_conf
 '''

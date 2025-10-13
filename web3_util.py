@@ -3,7 +3,7 @@ import time
 from local_util import get_web3_human_amount,get_web3_human_amount,get_w3,\
     auto_inject_poa_middleware_if_needed
 
-from my_conf import CLIENT,ERC20_ABI
+from my_conf import CLIENT,ERC20_ABI,ERROR_SELECTORS
 
 def get_eth_balance(account_address, w3=None, chain_id=None, human=False, decimals=18):
     if chain_id:
@@ -25,26 +25,11 @@ def get_erc_balance(account_address, token_address, w3=None, chain_id=None, huma
 
 def decode_contract_error(error_data):
     """解码合约自定义错误"""
-    error_selectors = {
-        '0xea8e4eb5': 'NotAuthorized()',
-        '0x4ff64a9f': 'AmountError()',
-        '0x7a2c8890': 'RelayAlreadyFilled()',
-        '0x5b67e2c6': 'InsufficientBalance()', 
-        '0x8c379a00': 'Error(string)',  # 标准revert错误
-        '0x4e487b71': 'Panic(uint256)',  # Panic错误
-        '0x08c379a0': 'Error(string)',  # 另一种格式
-        '0x1e4fbdf7': 'OwnableUnauthorizedAccount(address)',
-        '0x49df728c': 'OwnableInvalidOwner(address)',
-        '0x118cdaa7': 'AddressEmptyCode(address)',
-        '0x5274afe7': 'AddressInsufficientBalance(address)',
-        '0x7939f424': 'SafeERC20FailedOperation(address)',
-        '0xa9059cbb': 'transfer(address,uint256)',  # ERC20 transfer
-        '0x095ea7b3': 'approve(address,uint256)',   # ERC20 approve
-    }
+
     if isinstance(error_data, tuple) and len(error_data) >= 1:
         error_selector = error_data[0]
-        if error_selector in error_selectors:
-            error_name = error_selectors[error_selector]
+        if error_selector in ERROR_SELECTORS:
+            error_name = ERROR_SELECTORS[error_selector]
             print(f"🔍 解码错误: {error_selector} -> {error_name}")
             return error_name
         else:

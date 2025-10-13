@@ -1,6 +1,7 @@
 import random
 import time
 import requests
+from decimal import Decimal
 
 from eth_utils import to_checksum_address,add_0x_prefix
 
@@ -8,7 +9,8 @@ from util import func_left_join,to_tztime
 from local_util import get_web3_human_amount,get_decode_calldata,get_web3_wei_amount,\
     pg_obj,str_to_int,get_tx_url
 
-from my_conf import ETHERSCAN_API_KEYS,NOT_EIP1599_IDS,L1_CHAIN_IDS,VAULT
+from my_conf import ETHERSCAN_API_KEYS,NOT_EIP1599_IDS,L1_CHAIN_IDS,\
+    VAULT,ACROSS_ETH_MAP
 
 
 def get_etherscan_apikey():
@@ -96,14 +98,6 @@ def get_tokens(token_symbol=None,token_address=None,token_group=None):
     [i.update({'token_db_id': i['id']}) for i in token_dicts]
     res = token_dicts
     return res
-
-def get_token_with_chain(chain_id=None,token_symbol=None,token_address=None,token_group=None):
-    res_tokens = get_tokens(token_symbol=token_symbol,token_address=token_address,token_group=token_group)
-    res_chains = [get_chain(chain_id=chain_id)]
-    res = func_left_join(res_tokens,res_chains,['chain_db_id'])
-    #有token，没关联上chain，过滤掉
-    res = [i for i in res if i.get('chain_name',None)]
-    return res[0] if res else {}
 
 def get_tokens_with_chains(token_symbol=None,token_address=None,token_group=None,is_mainnet=None):
     res_tokens = get_tokens(token_symbol=token_symbol,token_address=token_address,token_group=token_group)
@@ -247,6 +241,65 @@ def api_get_chains_by_token_group(token_group):
 
 def api_get_txls(addr):
     res = get_txls(addr)
+    return res
+
+def get_suggested_fees(origin_chain_id,dst_chain_id,input_amount_human,token_group):
+    input_token_dict = get_token(chain_id=origin_chain_id,token_group=token_group)
+    output_token_dict = get_token(chain_id=dst_chain_id,token_group=token_group)
+    input_decimals = input_token_dict['decimals']
+    output_decimals = output_token_dict['decimals']
+    if token_group == 'ETH':
+        input_token = ACROSS_ETH_MAP[origin_chain_id]
+        output_token = ACROSS_ETH_MAP[dst_chain_id]
+        print(f"input_token: {input_token}, output_token: {output_token}")
+        max_amount_human = 0.5
+    if token_group in ['USDC','USDT']:
+        input_token = input_token_dict.get('token_address',None)
+        output_token = output_token_dict.get('token_address',None)
+        max_amount_human = 300
+    input_amount_wei = get_web3_wei_amount(input_amount_human,decimals=input_decimals)
+    max_amount_wei = get_web3_wei_amount(max_amount_human,decimals=input_decimals)
+    url = "https://app.across.to/api/suggested-fees"
+    params = {
+        "originChainId": origin_chain_id,
+        "inputToken": input_token,
+        "amount": input_amount_wei,
+        "destinationChainId": dst_chain_id,
+        "outputToken": output_token,
+        'recipient': VAULT,
+    }
+    res = {}
+    res_json = {}
+    try:
+        response = requests.get(url, params=params)
+        res_json = response.json()
+        # print(f"res_json: {res_json}")
+    except Exception as e:
+        print(f"Internal error: get_suggested_fees error: {e}")
+        return None
+    if res_json:
+        output_amount = res_json.get('outputAmount',None)
+        output_amount_human = get_web3_human_amount(int(output_amount),decimals=output_decimals)
+        if output_amount_human>input_amount_human:
+            print(f"Internal Error: output_amount_human: {output_amount_human} > input_amount_human: {input_amount_human}")
+            return {'message': 'output_amount_human > input_amount_human'}
+        min_amount_wei = int(res_json['limits']['minDeposit'])
+        min_amount_human = get_web3_human_amount(min_amount_wei,decimals=input_decimals)
+        max_amount_human = get_web3_human_amount(max_amount_wei,decimals=input_decimals)
+        if input_amount_wei<min_amount_wei:
+            return {'message': 'amount too low, min_amount: ' + str(min_amount_human)}
+        if input_amount_wei>max_amount_wei:
+            return {'message': 'amount too high, max_amount: ' + str(max_amount_human)}
+        res = {
+            'input_amount': str(input_amount_wei),
+            'input_amount_human': str(input_amount_human),
+            'output_amount': str(output_amount),
+            'output_amount_human': str(output_amount_human),
+            'min_amount': str(min_amount_wei),
+            'max_amount': str(max_amount_wei),
+            'message': '',
+            'rate': str(Decimal(str(output_amount_human))/Decimal(str(input_amount_human))),
+        }
     return res
 
 def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):

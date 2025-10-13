@@ -14,7 +14,7 @@ from web3_util import decode_contract_error,get_gas_params,\
 
 from data_util import get_chain,get_token,create_txl_webhook,\
     create_fill_txl_etherscan_by_hash,get_etherscan_txs,\
-    create_txl_etherscan_txlist
+    create_txl_etherscan_txlist,get_suggested_fees
 
 from my_conf import DEPOSIT_ABI,FILL_RELAY_ABI,CHECK_RELAY_FILLED_ABI,VAULTS,FILL_RATE,\
     VAULT_PRIVATE_KEY
@@ -454,8 +454,20 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     outputToken = token_out_dict.get('token_address',None)
 
     input_amount_human = get_web3_human_amount(calldata_dict['inputAmount'],int(token_input_dict['decimals']))
-    input_amount_human_after = input_amount_human*Decimal(str(FILL_RATE))
-    outputAmount = get_web3_wei_amount(input_amount_human_after,int(token_out_dict['decimals']))
+
+    res_suggested_fees = get_suggested_fees(origin_chain_id=originChainId,dst_chain_id=block_chainid,
+                            input_amount_human=input_amount_human,token_group=token_group_input)
+    print(f"res_suggested_fees: {res_suggested_fees}")
+    outputAmount = res_suggested_fees.get('output_amount',None)
+    if outputAmount:
+        outputAmount = int(outputAmount)
+    else:
+        print(f"❌ res_suggested_fees: {res_suggested_fees['message']}")
+        return res
+
+    #todo,没获取到值，要在min和max之间才给默认rate
+    # input_amount_human_after = input_amount_human*Decimal(str(FILL_RATE))
+    # outputAmount = get_web3_wei_amount(input_amount_human_after,int(token_out_dict['decimals']))
 
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])

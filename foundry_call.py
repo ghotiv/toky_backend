@@ -3,7 +3,7 @@ import concurrent.futures
 from local_util import pg_obj,get_address_url
 from foundry_util import deploy_contract, verify_contract, deploy_add_vault_author,\
         approve_token,transfer_eth,transfer_erc,cast_get_eth_balance,cast_get_erc_balance
-from data_util import get_chain,get_chains,get_tokens_with_chains,get_token_with_chain
+from data_util import get_chain,get_chains,get_tokens_with_chains,get_token
 from my_conf import CLIENT_PRIVATE_KEY,VAULT_PRIVATE_KEY,CLIENT,DEPLOYER_PRIVATE_KEY,VAULT
 
 def deploy_contract_one(chain_dict,contract_type):
@@ -194,7 +194,7 @@ def cast_get_erc_balances():
         print(token_dict['chain_name'],token_dict['token_symbol'],res)
 
 # chain_dict = get_chain(chain_id=8453)
-# token_dict = get_token_with_chain(chain_id=8453,token_symbol='USDC')
+# token_dict = get_token(chain_id=8453,token_symbol='USDC')
 # res = cast_get_balance_one(chain_dict,human=True)
 # print(res)
 # res = cast_get_erc_balance_one(token_dict,human=True)
