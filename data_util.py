@@ -306,9 +306,9 @@ def get_suggested_fees(origin_chain_id,dst_chain_id,input_amount_human,token_gro
         }
     return res
 
-res = get_suggested_fees(origin_chain_id=1,dst_chain_id=8453,
-        input_amount_human=1,token_group='USDC')
-print(res)
+# res = get_suggested_fees(origin_chain_id=1,dst_chain_id=8453,
+#         input_amount_human=1,token_group='USDC')
+# print(res)
 
 
 def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
