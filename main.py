@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from data_util import get_vault_address, api_get_token_groups, \
-    api_get_chains_by_token_group, get_txls_pair, get_deposit_args
+    api_get_chains_by_token_group, get_txls_pair, get_deposit_args,\
+    get_suggested_fees
 from web3_call import call_erc_allowance
 
 app = FastAPI(title='bridge',description='bridge api')
@@ -68,6 +69,14 @@ def fast_get_erc_allowance(chain_id: int, token_address: str, spender_address: s
                 owner_address: str, human: bool = False):
     res = call_erc_allowance(chain_id, token_address, spender_address,
                 owner_address, human=human)
+    return res
+
+@app.get("/get_suggested_fees",summary='get suggested fees',
+        description='''
+            get suggested fees
+        ''')
+def fast_get_suggested_fees(origin_chain_id: int, dst_chain_id: int, input_amount_human: float, token_group: str):
+    res = get_suggested_fees(origin_chain_id, dst_chain_id, input_amount_human, token_group)
     return res
 
 #todo

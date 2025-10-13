@@ -276,8 +276,8 @@ def get_suggested_fees(origin_chain_id,dst_chain_id,input_amount_human,token_gro
         # print(f"res_json: {res_json}")
     except Exception as e:
         print(f"Internal error: get_suggested_fees error: {e}")
-        return None
-    if res_json:
+        return {}
+    if res_json and res_json.get('outputAmount',None):
         output_amount = res_json.get('outputAmount',None)
         output_amount_human = get_web3_human_amount(int(output_amount),decimals=output_decimals)
         if output_amount_human>input_amount_human:
@@ -298,9 +298,18 @@ def get_suggested_fees(origin_chain_id,dst_chain_id,input_amount_human,token_gro
             'min_amount': str(min_amount_wei),
             'max_amount': str(max_amount_wei),
             'message': '',
-            'rate': str(Decimal(str(output_amount_human))/Decimal(str(input_amount_human))),
+            # 'rate': str(Decimal(str(output_amount_human))/Decimal(str(input_amount_human))),
+        }
+    else:
+        res = {
+            'message': res_json.get('message',None),
         }
     return res
+
+res = get_suggested_fees(origin_chain_id=1,dst_chain_id=8453,
+        input_amount_human=1,token_group='USDC')
+print(res)
+
 
 def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
     res = []

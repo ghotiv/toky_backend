@@ -458,16 +458,25 @@ def call_fill_relay_by_calldata(calldata_dict,originChainId,depositHash):
     res_suggested_fees = get_suggested_fees(origin_chain_id=originChainId,dst_chain_id=block_chainid,
                             input_amount_human=input_amount_human,token_group=token_group_input)
     print(f"res_suggested_fees: {res_suggested_fees}")
-    outputAmount = res_suggested_fees.get('output_amount',None)
-    if outputAmount:
-        outputAmount = int(outputAmount)
+    if res_suggested_fees:
+        outputAmount = res_suggested_fees.get('output_amount',None)
+        if outputAmount:
+            outputAmount = int(outputAmount)
+        else:
+            if res_suggested_fees.get('message',None):
+                print(f"❌ res_suggested_fees: {res_suggested_fees['message']}")
+                return res
     else:
-        print(f"❌ res_suggested_fees: {res_suggested_fees['message']}")
-        return res
-
-    #todo,没获取到值，要在min和max之间才给默认rate
-    # input_amount_human_after = input_amount_human*Decimal(str(FILL_RATE))
-    # outputAmount = get_web3_wei_amount(input_amount_human_after,int(token_out_dict['decimals']))
+        min_amount = Decimal(str(token_input_dict['min_num']))
+        max_amount = Decimal(str(token_input_dict['max_num']))
+        if input_amount_human<min_amount:
+            print(f"❌ input_amount_human: {input_amount_human} < min_amount: {min_amount}")
+            return res
+        if input_amount_human>max_amount:
+            print(f"❌ input_amount_human: {input_amount_human} > max_amount: {max_amount}")
+            return res
+        input_amount_human_after = input_amount_human*Decimal(str(FILL_RATE))
+        outputAmount = get_web3_wei_amount(input_amount_human_after,int(token_out_dict['decimals']))
 
     message = b''
     recipient = to_checksum_address(calldata_dict['recipient'])
