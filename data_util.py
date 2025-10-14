@@ -10,7 +10,7 @@ from local_util import get_web3_human_amount,get_decode_calldata,get_web3_wei_am
     pg_obj,str_to_int,get_tx_url
 
 from my_conf import ETHERSCAN_API_KEYS,NOT_EIP1599_IDS,L1_CHAIN_IDS,\
-    VAULT,ACROSS_ETH_MAP
+    VAULT,ACROSS_ETH_MAP,MAX_AMOUNT_HUMAN_ETH,MAX_AMOUNT_HUMAN_USDT
 
 
 def get_etherscan_apikey():
@@ -208,20 +208,20 @@ def api_get_token_groups():
     res = [
         {
             'token_group': 'ETH',
-            'token_logo_url': 'https://owlto.finance/icon/token/ETH.png',
-        },
-        {
-            'token_group': 'MBT',
-            'token_logo_url': 'https://owlto.finance/icon/token/USDT.png',
+            'token_logo_url': 'https://www.toky.finance/icon/token/ETH.png',
         },
         {
             'token_group': 'USDC',
-            'token_logo_url': 'https://owlto.finance/icon/token/USDC.png',
+            'token_logo_url': 'https://www.toky.finance/icon/token/USDC.png',
         },
         {
             'token_group': 'USDT',
-            'token_logo_url': 'https://owlto.finance/icon/token/USDT.png',
+            'token_logo_url': 'https://www.toky.finance/icon/token/USDT.png',
         },
+        # {
+        #     'token_group': 'MBT',
+        #     'token_logo_url': 'https://owlto.finance/icon/token/USDT.png',
+        # },
     ]
     return res
 
@@ -252,11 +252,11 @@ def get_suggested_fees(origin_chain_id,dst_chain_id,input_amount_human,token_gro
         input_token = ACROSS_ETH_MAP[origin_chain_id]
         output_token = ACROSS_ETH_MAP[dst_chain_id]
         print(f"input_token: {input_token}, output_token: {output_token}")
-        max_amount_human = 0.5
+        max_amount_human = MAX_AMOUNT_HUMAN_ETH
     if token_group in ['USDC','USDT']:
         input_token = input_token_dict.get('token_address',None)
         output_token = output_token_dict.get('token_address',None)
-        max_amount_human = 300
+        max_amount_human = MAX_AMOUNT_HUMAN_USDT
     input_amount_wei = get_web3_wei_amount(input_amount_human,decimals=input_decimals)
     max_amount_wei = get_web3_wei_amount(max_amount_human,decimals=input_decimals)
     url = "https://app.across.to/api/suggested-fees"
@@ -305,10 +305,6 @@ def get_suggested_fees(origin_chain_id,dst_chain_id,input_amount_human,token_gro
             'message': res_json.get('message',None),
         }
     return res
-
-# res = get_suggested_fees(origin_chain_id=1,dst_chain_id=8453,
-#         input_amount_human=1,token_group='USDC')
-# print(res)
 
 
 def get_etherscan_txs(chain_id='',limit=2,contract_type='contract_deposit'):
@@ -393,8 +389,11 @@ def create_txl_webhook(tx_dict,calldata_dict):
 def create_fill_txl_etherscan_by_hash(tx_hash,chain_id):
     tx_dict = get_etherscan_tx_by_hash(chain_id=chain_id,tx_hash=tx_hash)
     if not tx_dict:
-        print(f"❌ tx_dict不存在: {tx_hash}")
-        return None
+        time.sleep(2)
+        tx_dict = get_etherscan_tx_by_hash(chain_id=chain_id,tx_hash=tx_hash)
+        if not tx_dict:
+            print(f"❌ tx_dict不存在: {tx_hash}")
+            return None
     print('create_fill_txl_etherscan_by_hash tx_dict : ',tx_dict)
     calldata_dict = get_decode_calldata(tx_dict['input'])
 
