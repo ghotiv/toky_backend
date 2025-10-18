@@ -7,7 +7,7 @@ from eth_utils import to_checksum_address,add_0x_prefix
 
 from util import func_left_join,to_tztime
 from local_util import get_web3_human_amount,get_decode_calldata,get_web3_wei_amount,\
-    pg_obj,str_to_int,get_tx_url
+    pg_obj,str_to_int,get_tx_url,get_tmp_key,set_tmp_key
 
 from my_ccxt import MyCcxt
 
@@ -119,6 +119,14 @@ def get_currency_prices(currency_list,exchange=None):
     if not exchange:
         exchange = MyCcxt(api_key='', secret='', ex_name='binance', proxies=None)
     res = {currency: get_currency_price(currency,exchange=exchange) for currency in currency_list}
+    return res
+
+def set_tmp_price(currency,price):
+    res = set_tmp_key(f'{currency}:price',str(price))
+    return res
+
+def get_tmp_price(currency):
+    res = get_tmp_key(f'{currency}:price')
     return res
 
 def get_vault_address():
