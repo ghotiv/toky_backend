@@ -39,12 +39,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     # Credentials (Authorization headers, Cookies, etc)
-    allow_credentials=True,
+    allow_credentials=False,
     # Specific HTTP methods (POST, PUT) or all of them with the wildcard "*".
     allow_methods=["*"],
     # Specific HTTP headers or all of them with the wildcard "*".
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 # @app.options("/{full_path:path}", include_in_schema=False)
