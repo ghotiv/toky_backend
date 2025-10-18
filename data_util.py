@@ -9,6 +9,8 @@ from util import func_left_join,to_tztime
 from local_util import get_web3_human_amount,get_decode_calldata,get_web3_wei_amount,\
     pg_obj,str_to_int,get_tx_url
 
+from my_ccxt import MyCcxt
+
 from my_conf import ETHERSCAN_API_KEYS,NOT_EIP1599_IDS,L1_CHAIN_IDS,\
     VAULT,ACROSS_ETH_MAP,MAX_AMOUNT_HUMAN_ETH,MAX_AMOUNT_HUMAN_USDT
 
@@ -105,6 +107,18 @@ def get_tokens_with_chains(token_symbol=None,token_address=None,token_group=None
     res = func_left_join(res_tokens,res_chains,['chain_db_id'])
     #有token，没关联上chain，过滤掉
     res = [i for i in res if i.get('chain_name',None)]
+    return res
+
+def get_currency_price(currency,exchange=None):
+    if not exchange:
+        exchange = MyCcxt(api_key='', secret='', ex_name='binance', proxies=None)
+    res = exchange.fetch_symbol_last_price(currency=currency)
+    return res
+
+def get_currency_prices(currency_list,exchange=None):
+    if not exchange:
+        exchange = MyCcxt(api_key='', secret='', ex_name='binance', proxies=None)
+    res = {currency: get_currency_price(currency,exchange=exchange) for currency in currency_list}
     return res
 
 def get_vault_address():
