@@ -146,6 +146,5 @@ def fast_create_refer(arg:CreateRefer):
             update refer
         ''')
 def fast_update_refer(arg:UpdateRefer):
-    # res = update_refer(arg.account_address, arg.refer_code)
-    res = 1
+    res = update_refer(arg.account_address, arg.refer_code)
     return res
