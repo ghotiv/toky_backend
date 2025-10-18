@@ -47,21 +47,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# @app.options("/{full_path:path}", include_in_schema=False)
-# def preflight_handler(full_path: str):
-#     return {}
-
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],
-#     # Credentials (Authorization headers, Cookies, etc)
-#     allow_credentials=False,
-#     # Specific HTTP methods (POST, PUT) or all of them with the wildcard "*".
-#     allow_methods=["*"],
-#     # Specific HTTP headers or all of them with the wildcard "*".
-#     allow_headers=["*"],
-# )
-
 @app.get("/get_vault_address",summary='get vault address',
         description='''
             get vault address
