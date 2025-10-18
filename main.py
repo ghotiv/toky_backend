@@ -101,6 +101,10 @@ def fast_get_txls_pair(addr: str, status: int = None, limit: int = 50, offset: i
 def fast_get_price(currency: str):
     return get_price(currency)
 
+@app.get("/get_refer",summary='get refer',
+        description='''
+            get refer
+        ''')
 def fast_get_refer(account_address: str):
     res = get_refer(account_address)
     return res
