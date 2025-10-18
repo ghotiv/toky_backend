@@ -27,12 +27,13 @@ origins = [
     "http://localhost:3000",
     "http://localhost:9090",
     "http://127.0.0.1",
-    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000",
     "http://43.134.49.56",
     "http://192.168.1.76:9090",
     "https://www.toky.finance",
+    "https://toky.finance",
     "https://api.toky.finance",
-    "*",
+    # "*",
 ]
 
 app.add_middleware(
