@@ -30,7 +30,7 @@ origins = [
     "http://192.168.1.76:9090",
     "https://www.toky.finance",
     "https://api.toky.finance",
-    # "*",
+    "*",
 ]
 
 app.add_middleware(
