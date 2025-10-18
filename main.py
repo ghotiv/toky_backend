@@ -38,7 +38,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     # Credentials (Authorization headers, Cookies, etc)
     allow_credentials=True,
     # Specific HTTP methods (POST, PUT) or all of them with the wildcard "*".
