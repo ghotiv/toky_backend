@@ -113,12 +113,12 @@ def get_currency_price(currency,exchange=None):
     if not exchange:
         exchange = MyCcxt(api_key='', secret='', ex_name='binance', proxies=None)
     res = exchange.fetch_symbol_last_price(currency=currency)
-    return res
+    return str(res)
 
 def get_currency_prices(currency_list,exchange=None):
     if not exchange:
         exchange = MyCcxt(api_key='', secret='', ex_name='binance', proxies=None)
-    res = {currency: get_currency_price(currency,exchange=exchange) for currency in currency_list}
+    res = {currency: str(get_currency_price(currency,exchange=exchange)) for currency in currency_list}
     return res
 
 def set_tmp_price(currency,price):
