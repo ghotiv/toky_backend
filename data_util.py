@@ -122,12 +122,19 @@ def get_currency_prices(currency_list,exchange=None):
     return res
 
 def set_tmp_price(currency,price):
-    res = set_tmp_key(f'{currency}:price',str(price))
+    res = set_tmp_key(f'{currency.lower()}:price',str(price))
     return res
 
 def get_tmp_price(currency):
-    res = get_tmp_key(f'{currency}:price')
+    res = get_tmp_key(f'{currency.lower()}:price')
     return res
+
+def get_price(currency: str):
+    price = get_tmp_price(currency)
+    if not price:
+        price = get_currency_price(currency,exchange=None)
+        set_tmp_price(currency,price)
+    return price
 
 def get_vault_address():
     return VAULT

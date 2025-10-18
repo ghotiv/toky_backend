@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from data_util import get_vault_address, api_get_token_groups, \
     api_get_chains_by_token_group, get_txls_pair, get_deposit_args,\
-    get_suggested_fees
+    get_suggested_fees, get_price
 from web3_call import call_erc_allowance
 
 app = FastAPI(title='bridge',description='bridge api')
@@ -79,9 +79,6 @@ def fast_get_suggested_fees(origin_chain_id: int, dst_chain_id: int, input_amoun
     res = get_suggested_fees(origin_chain_id, dst_chain_id, input_amount_human, token_group)
     return res
 
-#todo
-def get_balances():
-    return {}
 
 @app.get("/get_txls_pair",summary='get_txls_pair',
         description='''
@@ -90,3 +87,14 @@ def get_balances():
 def fast_get_txls_pair(addr: str, status: int = None, limit: int = 50, offset: int = 0):
     res = get_txls_pair(addr=addr, status=status, limit=limit, offset=offset)
     return res
+
+@app.get("/get_price",summary='get price',
+        description='''
+            get price
+        ''')
+def fast_get_price(currency: str):
+    return get_price(currency)
+
+#todo
+def get_balances():
+    return {}
