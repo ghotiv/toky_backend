@@ -260,3 +260,17 @@ CREATE INDEX idx_txline_tx_status ON txline(tx_status);
 CREATE INDEX idx_txline_tx_time ON txline(tx_time);
 CREATE INDEX idx_txline_create_time ON txline(create_time);
 CREATE INDEX idx_txline_eip_type ON txline(eip_type);
+
+#refer
+create table refer(
+    id SERIAL PRIMARY KEY,
+    refer_code varchar(256) not null,
+    account_address varchar(50) not null,
+    create_time TIMESTAMP DEFAULT NOW() NOT NULL
+);
+CREATE INDEX idx_refer_refer_code ON refer(refer_code);
+CREATE INDEX idx_refer_account_address ON refer(account_address);
+CREATE UNIQUE INDEX idx_refer_code_address ON refer(refer_code, account_address);
+
+-- 添加 user_address 唯一约束
+ALTER TABLE refer ADD CONSTRAINT unique_refer_account_address UNIQUE (account_address);

@@ -1,12 +1,18 @@
 from fastapi import FastAPI
 # from typing import Dict, Any, Optional
-# from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 
 from data_util import get_vault_address, api_get_token_groups, \
     api_get_chains_by_token_group, get_txls_pair, get_deposit_args,\
-    get_suggested_fees, get_price
+    get_suggested_fees, get_price, check_create_refer
+
 from web3_call import call_erc_allowance
+
+
+class CreateRefer(BaseModel):
+    refer_code:str = Field(..., description='refer code')
+    account_address:str = Field(..., description='account address')
 
 app = FastAPI(title='bridge',description='bridge api')
 
@@ -95,6 +101,12 @@ def fast_get_txls_pair(addr: str, status: int = None, limit: int = 50, offset: i
 def fast_get_price(currency: str):
     return get_price(currency)
 
-#todo
-def get_balances():
-    return {}
+
+@app.post("/create_refer", summary='create refer',
+        description='''
+            create refer
+        ''')
+def fast_create_refer(arg:CreateRefer):
+    res = check_create_refer({'refer_code':arg.refer_code,'account_address':arg.account_address})
+    return res
+

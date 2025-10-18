@@ -7,7 +7,7 @@ from eth_utils import to_checksum_address,add_0x_prefix
 
 from util import func_left_join,to_tztime
 from local_util import get_web3_human_amount,get_decode_calldata,get_web3_wei_amount,\
-    pg_obj,str_to_int,get_tx_url,get_tmp_key,set_tmp_key
+    pg_obj,str_to_int,get_tx_url,get_tmp_key,set_tmp_key,get_valid_evm_address
 
 from my_ccxt import MyCcxt
 
@@ -17,6 +17,20 @@ from my_conf import ETHERSCAN_API_KEYS,NOT_EIP1599_IDS,L1_CHAIN_IDS,\
 
 def get_etherscan_apikey():
     return random.choice(ETHERSCAN_API_KEYS)
+
+def check_create_refer(create_dict):
+    refer_code = get_valid_evm_address(create_dict['refer_code'])
+    account_address = get_valid_evm_address(create_dict['account_address'])
+    if not refer_code or not account_address:
+        return False
+    if refer_code == account_address:
+        return False
+    sql = f"select * from refer where account_address='{account_address}'"
+    res = pg_obj.query(sql)
+    if res:
+        return False
+    res = pg_obj.insert('refer',{'refer_code':refer_code,'account_address':account_address})
+    return res  
 
 def get_chain(chain_id=None,alchemy_network=None):
     res = None

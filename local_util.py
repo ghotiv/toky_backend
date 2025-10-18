@@ -89,6 +89,12 @@ def get_web3_human_amount(amount,decimals):
     res = Web3.from_wei(amount, DECIMALS_WEI_DICT[decimals])
     return res
 
+def get_valid_evm_address(address):
+    if Web3.is_address(address):
+        return to_checksum_address(address)
+    else:
+        return None
+
 def get_bytes32_address(address):
     #暂时支持evm
     #有没'0x'都支持
