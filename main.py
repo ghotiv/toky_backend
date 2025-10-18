@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from data_util import get_vault_address, api_get_token_groups, \
     api_get_chains_by_token_group, get_txls_pair, get_deposit_args,\
-    get_suggested_fees, get_price, check_create_refer
+    get_suggested_fees, get_price, check_create_refer, get_refer
 
 from web3_call import call_erc_allowance
 
@@ -101,6 +101,9 @@ def fast_get_txls_pair(addr: str, status: int = None, limit: int = 50, offset: i
 def fast_get_price(currency: str):
     return get_price(currency)
 
+def fast_get_refer(account_address: str):
+    res = get_refer(account_address)
+    return res
 
 @app.post("/create_refer", summary='create refer',
         description='''

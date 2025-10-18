@@ -18,6 +18,14 @@ from my_conf import ETHERSCAN_API_KEYS,NOT_EIP1599_IDS,L1_CHAIN_IDS,\
 def get_etherscan_apikey():
     return random.choice(ETHERSCAN_API_KEYS)
 
+def get_refer(account_address):
+    account_address = get_valid_evm_address(account_address)
+    if not account_address:
+        return None
+    sql = f"select * from refer where account_address='{account_address}'"
+    res = pg_obj.query(sql)
+    return res[0]['refer_code'] if res else None
+
 def check_create_refer(create_dict):
     refer_code = get_valid_evm_address(create_dict['refer_code'])
     account_address = get_valid_evm_address(create_dict['account_address'])
