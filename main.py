@@ -18,9 +18,6 @@ class UpdateRefer(BaseModel):
     account_address:str = Field(..., description='account address')
     refer_code:str = Field(..., description='refer code')
 
-class PostTest(BaseModel):
-    arg:str = Field(..., description='arg')
-
 app = FastAPI(title='bridge',description='bridge api')
 
 origins = [
@@ -149,13 +146,6 @@ def fast_create_refer(arg:CreateRefer):
             update refer
         ''')
 def fast_update_refer(arg:UpdateRefer):
-    res = update_refer(arg.account_address, arg.refer_code)
+    # res = update_refer(arg.account_address, arg.refer_code)
+    res = 1
     return res
-
-@app.post("/pos_test", summary='post test',
-        description='''
-            post test
-        ''')
-def fast_post_test(arg:PostTest):
-    res = arg
-    return res    
