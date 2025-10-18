@@ -20,24 +20,35 @@ class UpdateRefer(BaseModel):
 
 app = FastAPI(title='bridge',description='bridge api')
 
-origins = [
-    "http://localhost",
-    "http://localhost:8000",
-    "http://localhost:9090",
-    "http://127.0.0.1",
-    "http://127.0.0.1:8000",
-    "http://43.134.49.56",
-    "http://192.168.1.76:9090",
-    "https://www.toky.finance",
-    "https://api.toky.finance",
-    "*",
-]
+# origins = [
+#     "http://localhost",
+#     "http://localhost:8000",
+#     "http://localhost:9090",
+#     "http://127.0.0.1",
+#     "http://127.0.0.1:8000",
+#     "http://43.134.49.56",
+#     "http://192.168.1.76:9090",
+#     "https://www.toky.finance",
+#     "https://api.toky.finance",
+#     "*",
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     # Credentials (Authorization headers, Cookies, etc)
+#     allow_credentials=True,
+#     # Specific HTTP methods (POST, PUT) or all of them with the wildcard "*".
+#     allow_methods=["*"],
+#     # Specific HTTP headers or all of them with the wildcard "*".
+#     allow_headers=["*"],
+# )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     # Credentials (Authorization headers, Cookies, etc)
-    allow_credentials=True,
+    allow_credentials=False,
     # Specific HTTP methods (POST, PUT) or all of them with the wildcard "*".
     allow_methods=["*"],
     # Specific HTTP headers or all of them with the wildcard "*".
