@@ -10,7 +10,7 @@ def main():
             print(time.strftime('%Y-%m-%d %H:%M:%S'))
             print(f"set {currency} price: {price}")
             set_tmp_price(currency,price)
-        time.sleep(60)
+        time.sleep(30)
 
 if __name__ == '__main__':
     main()
