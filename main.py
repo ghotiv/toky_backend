@@ -23,6 +23,8 @@ app = FastAPI(title='bridge',description='bridge api')
 origins = [
     "http://localhost",
     "http://localhost:8000",
+    "http://localhost:3030",
+    "http://localhost:3000",
     "http://localhost:9090",
     "http://127.0.0.1",
     "http://127.0.0.1:8000",
@@ -45,9 +47,9 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-@app.options("/{full_path:path}", include_in_schema=False)
-def preflight_handler(full_path: str):
-    return {}
+# @app.options("/{full_path:path}", include_in_schema=False)
+# def preflight_handler(full_path: str):
+#     return {}
 
 # app.add_middleware(
 #     CORSMiddleware,
