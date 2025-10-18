@@ -40,6 +40,27 @@ def check_create_refer(create_dict):
     res = pg_obj.insert('refer',{'refer_code':refer_code,'account_address':account_address})
     return res  
 
+def update_refer(account_address,refer_code):
+    '''
+        无交易，无下级，才能更新refer_code
+    '''
+    account_address = get_valid_evm_address(account_address)
+    refer_code = get_valid_evm_address(refer_code)
+    if not account_address or not refer_code:
+        return False
+    #无交易
+    sql_txl = f"select id from txline where addr_from='{account_address}' limit 1"
+    res_txl = pg_obj.query(sql_txl)
+    if res_txl:
+        return False
+    #无下级
+    sql_refer_child = f"select id from refer where refer_code='{account_address}' limit 1"
+    res_refer_child = pg_obj.query(sql_refer_child)
+    if res_refer_child:
+        return False
+    res = pg_obj.update('refer',{'refer_code':refer_code},condition=f"account_address='{account_address}'")
+    return res
+
 def get_chain(chain_id=None,alchemy_network=None):
     res = None
     sql = ''

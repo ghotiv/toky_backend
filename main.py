@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from data_util import get_vault_address, api_get_token_groups, \
     api_get_chains_by_token_group, get_txls_pair, get_deposit_args,\
-    get_suggested_fees, get_price, check_create_refer, get_refer
+    get_suggested_fees, get_price, check_create_refer, get_refer, update_refer
 
 from web3_call import call_erc_allowance
 
@@ -117,3 +117,10 @@ def fast_create_refer(arg:CreateRefer):
     res = check_create_refer({'refer_code':arg.refer_code,'account_address':arg.account_address})
     return res
 
+@app.post("/update_refer", summary='update refer',
+        description='''
+            update refer
+        ''')
+def fast_update_refer(account_address: str, refer_code: str):
+    res = update_refer(account_address, refer_code)
+    return res
