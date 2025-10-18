@@ -28,6 +28,8 @@ origins = [
     "http://127.0.0.1:8000",
     "http://43.134.49.56",
     "http://192.168.1.76:9090",
+    "https://www.toky.finance",
+    "https://api.toky.finance",
     "*",
 ]
 
